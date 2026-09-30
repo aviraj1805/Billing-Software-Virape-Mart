@@ -115,6 +115,8 @@ SLF4J + Logback, Apache Commons CSV, JUnit Jupiter, `jpackage`. Library versions
 After UI changes, run the app and drive it with `scripts\dev\ui-automation.ps1` (Windows UI Automation):
 find windows and buttons by their text, type with `Send-Keys` (Marathi text works), and take screenshots
 of any window with `Capture-Window`. Look at each screenshot before calling a screen done.
+`Send-Keys` uses SendKeys syntax: `+` is Shift, `^` is Ctrl, `%` is Alt. Type a literal plus as `{+}`.
+In a TextArea, Tab types a tab; use `^{TAB}` to move to the next field.
 
 ## Code conventions
 
@@ -137,7 +139,13 @@ of any window with `Capture-Window`. Look at each screenshot before calling a sc
   warning, askText), `Background.run` (slow work off the FX thread), `Format.money` (₹ with Indian
   lakh grouping; Java's locale formatting does not do this).
 - `Dialogs.confirm` makes **Cancel the default button**, so Enter never deletes or saves a mistake. Keep it so.
-- Forms: catch `ValidationException` and highlight the field it names (see `ProductFormController`).
+- Forms: catch `ValidationException` and pass it to `ui.common.FormErrors`, which shows the message and
+  highlights the named field (see `CustomerFormController`).
+- Typed amounts: services use `Amounts.parsePositive` (accepts ₹, Rs, commas; 0 means "none" when optional).
+- Khata: `LedgerService` (statement with running balance, payments, owner corrections) and `CustomerService`
+  (customers, old dues as the OPENING entry). Never compute a balance anywhere else.
+- The main window opens maximized. Tables use `CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS` so columns share space;
+  use short date formats (`Format.dateTimeShort`) and row tooltips for long text.
 - Shared validation: a service `check(...)` method validates typed input once and is reused by forms and
   imports (see `ProductService.check`).
 - Owner-only buttons are hidden for STAFF, but the service still enforces the rule.
@@ -167,8 +175,8 @@ of any window with `Capture-Window`. Look at each screenshot before calling a sc
 | 0. Setup | JDK, Maven Wrapper, skeleton, docs, packaging smoke test | Done |
 | 1. Foundation | Paths, DB connection, transactions, migrations, V1 schema, Money/Quantity, logging, error handler, single-instance lock, session | Done |
 | 2. Products | Categories, products, search, deactivate/delete rules, CSV import | Done |
-| 3. Customers and ledger | Customers, opening balance, receive payment, balance and ledger view | Next |
-| 4. Billing | Billing screen, search, loose qty, one-off items, rate change, totals, split payments, save, hold | Not started |
+| 3. Customers and ledger | Customers, opening balance, receive payment, balance and ledger view | Done |
+| 4. Billing | Billing screen, search, loose qty, one-off items, rate change, totals, split payments, save, hold | Next |
 | 5. Printing | Shop settings, printer settings, receipt with Marathi, print and reprint | Not started |
 | 6. History and reports | Bill history, cancel with reversal, purchase history, reports | Not started |
 | 7. Users, security, backup | Login, first-run setup, staff users, audit view, backups, restore | Not started |

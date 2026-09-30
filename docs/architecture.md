@@ -71,7 +71,9 @@ starts `App`, the JavaFX application class. This is required when JavaFX is on t
 | `audit_log` | Who did what and when: rate changes, product edits, cancellations, restores, settings |
 | `schema_version` | Applied migrations and their checksums |
 
-Ledger entry types: OPENING, SALE_CREDIT, PAYMENT, CANCEL_REVERSAL, ADJUSTMENT.
+Ledger entry types: OPENING (old dues from the paper khata), SALE_CREDIT, PAYMENT, CANCEL_REVERSAL,
+ADJUSTMENT (owner correction with a reason). A customer's statement is the list of entries, oldest first,
+with the running balance after each one.
 
 Dates and times are stored as shop-local text such as `2026-09-30T14:05:09`, which sorts correctly
 for date-range searches. The full schema is in `src/main/resources/db/migration/V1__initial_schema.sql`.

@@ -4,6 +4,20 @@ All notable changes to this project are recorded here, newest first.
 
 ## [Unreleased]
 
+### Phase 3: Customers and khata
+
+- Customers screen: search by name, phone or number; filter to customers with dues; total dues of the shop.
+- Customer details with the khata on the right: dated entries with Added, Paid and a running balance,
+  balance shown in red (dues) or green (advance).
+- Add and edit customers with automatic numbers (C0001...), 10-digit phone check, and old dues from
+  the paper khata entered once as the opening entry.
+- Receive payment (Cash, UPI or Card) with a live "balance after payment" preview and advance warning.
+- Owner-only balance corrections with a required reason, added as a new khata entry.
+- Switch customers off/on (owner); customers are never deleted.
+- The app now opens maximized. Shared form error handling (`FormErrors`) and amount parsing (`Amounts`).
+- Typing 0 in an optional amount now means "none".
+- 220 automated tests.
+
 ### Phase 2: Products
 
 - Main window with a top bar and a menu: Billing, Products, Customers, History & Reports, Settings.

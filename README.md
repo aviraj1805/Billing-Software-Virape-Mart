@@ -6,7 +6,7 @@ prints bills on the store printer. It has two main areas:
 - **Products**: the list of items the store sells, with English and Marathi names, rates and MRP.
 - **Billing**: bills for walk-in and account (credit) customers, with purchase history and printing.
 
-Status: **Phase 2 complete.** Products can be added, edited, searched and imported from Excel.
+Status: **Phase 3 complete.** Products and customer khatas (dues, payments, corrections) work.
 Features arrive phase by phase.
 
 ## Documentation

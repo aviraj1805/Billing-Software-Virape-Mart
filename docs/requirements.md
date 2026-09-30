@@ -55,6 +55,23 @@ These product rules were chosen as sensible defaults and can be changed:
 - An import only adds new products. It never changes existing products; to change a rate, edit the product.
   Rows that already exist are skipped. Unknown category names in the sheet create new categories.
 
+## Customers and khata (confirmed in Phase 3)
+
+| Topic | Decision |
+|---|---|
+| Customer details | Name, phone, address and notes. Nothing else is needed. Customer numbers are automatic: C0001, C0002, and so on. |
+| Paper khata | The khata is kept both in the software and in the paper book. |
+| Old dues | When a customer is added, the owner copies their current dues from the paper khata into "Old dues from paper khata". From then on everything happens in the software. |
+| Corrections | The owner can correct a balance to match the paper khata. A reason is required, and the correction is added as a new khata entry; nothing is erased. |
+
+These customer rules were chosen as sensible defaults and can be changed:
+
+- Phone numbers are stored as 10 digits. "+91", spaces, dashes and a leading 0 are removed. Two customers cannot share a phone number; two customers may share a name.
+- Owner and helper can add and edit customers and receive payments. Only the owner can correct balances and switch customers off or on.
+- Customers are never deleted, only switched off, so their khata is always kept. Switching off a customer who still owes money shows a warning.
+- A payment larger than the dues is allowed; the extra is kept as advance and shown in green.
+- Typing 0 in an optional amount (old dues, MRP) means "none".
+
 ## Assumptions
 
 These were not asked directly. The user can change them at any time.
