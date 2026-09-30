@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<!-- Billing screen: add items on the left, customer and totals on the right. -->
+<VBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.virpemart.billing.ui.billing.BillingController"
+      fx:id="root"
+      styleClass="page"
+      spacing="10">
+
+    <HBox alignment="CENTER_LEFT" spacing="10">
+        <Label text="Billing" styleClass="page-title"/>
+        <Label fx:id="bannerLabel" styleClass="banner" wrapText="true" HBox.hgrow="ALWAYS" maxWidth="Infinity"
+               visible="false"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Button fx:id="heldButton" text="Held bills (0)" onAction="#resumeHeld" minWidth="-Infinity"/>
+        <Button text="Hold bill (F8)" onAction="#holdBill" minWidth="-Infinity"/>
+        <Button text="Clear bill" onAction="#clearBill" minWidth="-Infinity"/>
+    </HBox>
+
+    <HBox spacing="14" VBox.vgrow="ALWAYS">
+
+        <!-- ============ left: items ============ -->
+        <VBox spacing="8" HBox.hgrow="ALWAYS">
+            <HBox spacing="8" alignment="CENTER_LEFT">
+                <TextField fx:id="productSearch" styleClass="search-field" HBox.hgrow="ALWAYS"
+                           promptText="Type product name, Marathi name or code  (F2)"/>
+                <TextField fx:id="qtyField" styleClass="qty-field" prefWidth="110" promptText="Qty"/>
+                <Label fx:id="qtyUnitLabel" minWidth="40"/>
+                <Button text="Add" onAction="#addSelectedProduct" minWidth="-Infinity"/>
+            </HBox>
+            <Label fx:id="entryLabel" styleClass="muted" wrapText="true" minHeight="-Infinity"
+                   text="Search a product, press Enter, type the quantity, press Enter again."/>
+
+            <TableView fx:id="cartTable" VBox.vgrow="ALWAYS" styleClass="cart-table">
+                <columns>
+                    <TableColumn fx:id="lineNoColumn" text="#" prefWidth="40"/>
+                    <TableColumn fx:id="itemColumn" text="Item" prefWidth="300"/>
+                    <TableColumn fx:id="qtyColumn" text="Qty" prefWidth="90" styleClass="number-column"/>
+                    <TableColumn fx:id="rateColumn" text="Rate" prefWidth="120" styleClass="number-column"/>
+                    <TableColumn fx:id="mrpColumn" text="MRP" prefWidth="80" styleClass="number-column"/>
+                    <TableColumn fx:id="amountColumn" text="Amount" prefWidth="110" styleClass="number-column"/>
+                </columns>
+                <columnResizePolicy>
+                    <TableView fx:constant="CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS"/>
+                </columnResizePolicy>
+            </TableView>
+
+            <HBox spacing="8" alignment="CENTER_LEFT">
+                <Button fx:id="qtyButton" text="Change qty (Enter)" onAction="#changeQuantity"/>
+                <Button fx:id="rateButton" text="Change rate" onAction="#changeRate"/>
+                <Button fx:id="removeButton" text="Remove (Del)" styleClass="danger" onAction="#removeLine"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Button text="+ Item not in list (F4)" onAction="#addOneOff"/>
+            </HBox>
+            <Label styleClass="hint"
+                   text="F2 product   ·   F3 khata customer   ·   F4 item not in list   ·   F8 hold   ·   F12 save and pay   ·   Del remove line"/>
+        </VBox>
+
+        <!-- ============ right: customer and totals ============ -->
+        <VBox spacing="10" prefWidth="370" minWidth="340" maxWidth="400">
+            <VBox styleClass="card" spacing="6">
+                <Label text="Customer" styleClass="section-title"/>
+                <TextField fx:id="customerSearch" promptText="Khata customer: name, phone or number  (F3)"/>
+
+                <VBox fx:id="walkInBox" spacing="6">
+                    <Label text="Walk-in customer (pays now)" styleClass="muted"/>
+                    <TextField fx:id="walkInNameField" promptText="Name on bill (optional)"/>
+                </VBox>
+
+                <VBox fx:id="khataBox" spacing="4" visible="false" managed="false">
+                    <HBox alignment="CENTER_LEFT" spacing="6">
+                        <Label fx:id="customerNameLabel" styleClass="detail-title" wrapText="true" HBox.hgrow="ALWAYS"
+                               maxWidth="Infinity"/>
+                        <Button text="Walk-in instead" onAction="#useWalkIn" minWidth="-Infinity"/>
+                    </HBox>
+                    <Label fx:id="customerInfoLabel" styleClass="muted" wrapText="true" minHeight="-Infinity"/>
+                    <Label fx:id="customerDuesLabel" styleClass="balance-small"/>
+                    <Label text="Recent bills" styleClass="hint"/>
+                    <ListView fx:id="recentBillsList" prefHeight="110" styleClass="recent-bills" focusTraversable="false"/>
+                </VBox>
+                <Button text="+ New khata customer" onAction="#newCustomer"/>
+            </VBox>
+
+            <VBox styleClass="card" spacing="4">
+                <GridPane hgap="10" vgap="4">
+                    <columnConstraints>
+                        <ColumnConstraints hgrow="ALWAYS"/>
+                        <ColumnConstraints halignment="RIGHT"/>
+                    </columnConstraints>
+                    <Label fx:id="itemsLabel" text="Items" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+                    <Label fx:id="subtotalLabel" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+                    <Label text="Round off" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+                    <Label fx:id="roundOffLabel" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+                    <Label text="Bill total" styleClass="total-label" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+                    <Label fx:id="totalLabel" styleClass="total-big" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+                    <Label fx:id="savingsLabel" styleClass="savings" GridPane.rowIndex="3" GridPane.columnIndex="0"
+                           GridPane.columnSpan="2"/>
+                    <Label fx:id="previousDuesTitle" text="Previous dues" GridPane.rowIndex="4" GridPane.columnIndex="0"/>
+                    <Label fx:id="previousDuesLabel" GridPane.rowIndex="4" GridPane.columnIndex="1"/>
+                    <Label fx:id="withDuesTitle" text="Total with dues" styleClass="total-label"
+                           GridPane.rowIndex="5" GridPane.columnIndex="0"/>
+                    <Label fx:id="withDuesLabel" styleClass="total-with-dues" GridPane.rowIndex="5" GridPane.columnIndex="1"/>
+                </GridPane>
+            </VBox>
+
+            <Region VBox.vgrow="ALWAYS"/>
+            <Button fx:id="saveButton" text="Save and pay  (F12)" styleClass="primary,save-button" maxWidth="Infinity"
+                    onAction="#saveAndPay"/>
+        </VBox>
+    </HBox>
+</VBox>

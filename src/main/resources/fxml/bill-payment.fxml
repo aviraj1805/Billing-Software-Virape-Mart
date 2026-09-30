@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<!-- Payment for the bill being saved. -->
+<VBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.virpemart.billing.ui.billing.BillPaymentController"
+      styleClass="dialog"
+      spacing="12"
+      prefWidth="600">
+
+    <Label fx:id="customerLabel" styleClass="detail-title" wrapText="true"/>
+
+    <GridPane styleClass="card" hgap="10" vgap="4">
+        <columnConstraints>
+            <ColumnConstraints hgrow="ALWAYS"/>
+            <ColumnConstraints halignment="RIGHT"/>
+        </columnConstraints>
+        <Label text="This bill" styleClass="total-label" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+        <Label fx:id="billTotalLabel" styleClass="total-big" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+        <Label fx:id="previousTitle" text="Previous dues" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+        <Label fx:id="previousLabel" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+        <Label fx:id="withDuesTitle" text="Total with dues" styleClass="total-label" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+        <Label fx:id="withDuesLabel" styleClass="total-with-dues" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+    </GridPane>
+
+    <HBox fx:id="khataQuickBox" spacing="8">
+        <Button fx:id="payBillButton" onAction="#payBillAmount" minWidth="-Infinity"/>
+        <Button fx:id="payAllButton" onAction="#payFullTotal" minWidth="-Infinity"/>
+        <Button text="Nothing now" onAction="#payNothing" minWidth="-Infinity"/>
+    </HBox>
+    <HBox fx:id="walkInQuickBox" spacing="8">
+        <Button text="All cash" onAction="#allCash"/>
+        <Button text="All UPI" onAction="#allUpi"/>
+        <Button text="All card" onAction="#allCard"/>
+    </HBox>
+
+    <GridPane hgap="12" vgap="8">
+        <columnConstraints>
+            <ColumnConstraints minWidth="140"/>
+            <ColumnConstraints hgrow="ALWAYS"/>
+        </columnConstraints>
+        <Label text="Cash (₹)" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+        <TextField fx:id="cashField" styleClass="big-input" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+        <Label text="UPI (₹)" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+        <TextField fx:id="upiField" styleClass="big-input" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+        <Label text="Card (₹)" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+        <TextField fx:id="cardField" styleClass="big-input" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+        <Label fx:id="receivedTitle" text="Cash given by customer" wrapText="true" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
+        <TextField fx:id="receivedField" promptText="Optional: to work out the change" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
+    </GridPane>
+
+    <Label fx:id="statusLabel" styleClass="preview" wrapText="true" minHeight="-Infinity"/>
+    <Label fx:id="errorLabel" styleClass="error-text" wrapText="true" minHeight="-Infinity"/>
+
+    <HBox spacing="10" alignment="CENTER_RIGHT">
+        <Label text="Enter = Save bill, Esc = back to the bill" styleClass="muted"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Button text="Back" cancelButton="true" onAction="#cancel"/>
+        <Button text="Save bill" defaultButton="true" styleClass="primary" onAction="#save"/>
+    </HBox>
+</VBox>

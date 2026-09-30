@@ -183,6 +183,101 @@
     -fx-text-fill: #1f6a3a;
 }
 
+/* ---------------------------------------------------------------- billing */
+
+.card {
+    -fx-background-color: white;
+    -fx-border-color: #dde3dd;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-padding: 12;
+}
+
+.total-label {
+    -fx-font-weight: bold;
+    -fx-font-size: 15px;
+}
+
+.total-big {
+    -fx-font-size: 26px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #1f3a2e;
+}
+
+.total-with-dues {
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #a12a2a;
+}
+
+.savings {
+    -fx-text-fill: #1f6a3a;
+    -fx-font-weight: bold;
+}
+
+.balance-small {
+    -fx-font-weight: bold;
+}
+
+.balance-small:dues {
+    -fx-text-fill: #a12a2a;
+}
+
+.balance-small:advance {
+    -fx-text-fill: #1f6a3a;
+}
+
+.qty-field {
+    -fx-font-size: 15px;
+    -fx-pref-height: 36;
+}
+
+.save-button {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-padding: 14 10 14 10;
+}
+
+.banner {
+    -fx-background-color: #eef1ee;
+    -fx-background-radius: 6;
+    -fx-padding: 6 12 6 12;
+    -fx-text-fill: #1f3a2e;
+}
+
+.banner:success {
+    -fx-background-color: #dff1e4;
+    -fx-text-fill: #14532d;
+    -fx-font-weight: bold;
+}
+
+.button:has-held {
+    -fx-background-color: #f7e7b4;
+    -fx-font-weight: bold;
+}
+
+.cart-table .table-row-cell:rate-changed .table-cell {
+    -fx-text-fill: #8a4b00;
+}
+
+.cart-table {
+    -fx-font-size: 15px;
+}
+
+.search-popup {
+    -fx-font-size: 15px;
+    -fx-border-color: #2f6f4f;
+    -fx-border-width: 1;
+}
+
+.recent-bills {
+    -fx-font-size: 12px;
+}
+
+.preview:warning {
+    -fx-text-fill: #a12a2a;
+}
+
 /* ---------------------------------------------------------------- forms */
 
 .preview {

@@ -185,11 +185,15 @@ public class CustomersController {
         String text = switch (entry.type()) {
             case OPENING -> "Old dues (paper khata)";
             case SALE_CREDIT -> "Bill " + entry.billNo() + " (on account)";
-            case PAYMENT -> "Payment received, " + entry.paymentMode().label();
+            case PAYMENT -> entry.billNo() != null
+                    ? "Paid with bill " + entry.billNo() + " (" + entry.paymentMode().label() + ")"
+                    : "Payment received, " + entry.paymentMode().label();
             case CANCEL_REVERSAL -> "Bill " + entry.billNo() + " cancelled";
             case ADJUSTMENT -> "Correction";
         };
-        boolean showNote = entry.note() != null && entry.type() != com.virpemart.billing.model.LedgerEntryType.OPENING;
+        boolean automaticNote = entry.type() == com.virpemart.billing.model.LedgerEntryType.OPENING
+                || (entry.type() == com.virpemart.billing.model.LedgerEntryType.PAYMENT && entry.billNo() != null);
+        boolean showNote = entry.note() != null && !automaticNote;
         return showNote ? text + ": " + entry.note() : text;
     }
 

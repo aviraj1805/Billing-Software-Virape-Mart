@@ -7,6 +7,8 @@ import java.util.Map;
 import com.virpemart.billing.AppContext;
 import com.virpemart.billing.config.AppInfo;
 import com.virpemart.billing.model.User;
+import com.virpemart.billing.ui.billing.BillingController;
+import com.virpemart.billing.ui.common.Dialogs;
 import com.virpemart.billing.ui.common.Format;
 import com.virpemart.billing.ui.common.Views;
 
@@ -28,6 +30,7 @@ public class MainWindowController {
 
     private final AppContext context;
     private final Map<Toggle, Node> screens = new HashMap<>();
+    private BillingController billingController;
 
     @FXML
     private ToggleGroup navGroup;
@@ -73,8 +76,23 @@ public class MainWindowController {
                 content.getChildren().setAll(screens.computeIfAbsent(newToggle, this::createScreen));
             }
         });
-        // Products is the first finished screen; Billing becomes the start screen in Phase 4.
-        productsNav.setSelected(true);
+        billingNav.setSelected(true); // billing is what the shop uses most
+    }
+
+    /**
+     * Asks before closing if bills would be lost. Called when the window's close button is clicked.
+     *
+     * @return true if the app may close
+     */
+    public boolean confirmClose() {
+        if (billingController == null) {
+            return true;
+        }
+        return billingController.unsavedWork()
+                .map(work -> Dialogs.confirm(content.getScene().getWindow(), "Close Virpe Mart",
+                        "Not saved yet: " + work + ".\nThese are lost if the app closes now.\n\n"
+                                + "Close anyway?", "Close and lose them"))
+                .orElse(true);
     }
 
     private Node createScreen(Toggle toggle) {
@@ -82,7 +100,9 @@ public class MainWindowController {
             return Views.load("products.fxml", context).root();
         }
         if (toggle == billingNav) {
-            return comingSoon("Billing", "The billing screen arrives in Phase 4.");
+            Views.Loaded<BillingController> billing = Views.load("billing.fxml", context);
+            billingController = billing.controller();
+            return billing.root();
         }
         if (toggle == customersNav) {
             return Views.load("customers.fxml", context).root();

@@ -1,6 +1,7 @@
 package com.virpemart.billing;
 
 import com.virpemart.billing.config.AppInfo;
+import com.virpemart.billing.ui.MainWindowController;
 import com.virpemart.billing.ui.common.ErrorHandler;
 import com.virpemart.billing.ui.common.Views;
 
@@ -46,8 +47,14 @@ public class App extends Application {
         }
         ErrorHandler.install(context.paths().logsDir());
 
-        Parent root = Views.load("main-window.fxml", context).root();
+        Views.Loaded<MainWindowController> main = Views.load("main-window.fxml", context);
+        Parent root = main.root();
         Scene scene = Views.scene(root);
+        stage.setOnCloseRequest(event -> {
+            if (!main.controller().confirmClose()) {
+                event.consume(); // stay open
+            }
+        });
 
         stage.setTitle(AppInfo.name() + " " + AppInfo.version());
         stage.setScene(scene);
