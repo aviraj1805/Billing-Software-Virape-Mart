@@ -31,6 +31,10 @@ if ($env:JAVA_HOME -and (Test-Path (Join-Path $env:JAVA_HOME 'bin\jpackage.exe')
 
 Push-Location $root
 try {
+    # ---- 0. Remove the previous package (jpackage marks the launcher read-only, which blocks "mvnw clean") ----
+    $oldDist = Join-Path $root 'target\dist'
+    if (Test-Path $oldDist) { Remove-Item -Recurse -Force $oldDist }
+
     # ---- 1. Build with Maven ----
     $mvnArgs = @('-B', 'clean', 'package')
     if ($SkipTests) { $mvnArgs += '-DskipTests' }
@@ -60,6 +64,9 @@ try {
         --java-options '--enable-native-access=ALL-UNNAMED' `
         --dest $distDir
     if ($LASTEXITCODE -ne 0) { throw "jpackage failed (exit code $LASTEXITCODE)." }
+
+    # Clear read-only flags so a later "mvnw clean" can delete the package folder.
+    Get-ChildItem $distDir -Recurse -File | Where-Object { $_.IsReadOnly } | ForEach-Object { $_.IsReadOnly = $false }
 
     Write-Host ''
     Write-Host "Done. App folder: $distDir\VirpeMart"
