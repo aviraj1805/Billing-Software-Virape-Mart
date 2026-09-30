@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<!-- Backups card on the Settings screen. -->
+<VBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.virpemart.billing.ui.settings.BackupsController"
+      fx:id="root"
+      styleClass="card"
+      spacing="8">
+
+    <Label text="Backups" styleClass="section-title"/>
+    <Label styleClass="hint" wrapText="true" minHeight="-Infinity"
+           text="The app makes a backup on this laptop every day, when it opens and when it closes. Daily backups are kept for 30 days, and one backup per month for a year. For extra safety, also copy a backup to a pendrive from time to time."/>
+    <Label fx:id="lastBackupLabel" wrapText="true" minHeight="-Infinity"/>
+    <Label fx:id="folderLabel" styleClass="muted" wrapText="true" minHeight="-Infinity"/>
+    <Label fx:id="statusLabel" wrapText="true" minHeight="-Infinity"/>
+    <HBox spacing="10" alignment="CENTER_RIGHT">
+        <Region HBox.hgrow="ALWAYS"/>
+        <Button fx:id="restoreButton" text="Restore a backup…" styleClass="danger" onAction="#restore"
+                minWidth="-Infinity"/>
+        <Button fx:id="backupButton" text="Back up now to a folder or pendrive…" styleClass="primary"
+                onAction="#backupNow" minWidth="-Infinity"/>
+    </HBox>
+</VBox>

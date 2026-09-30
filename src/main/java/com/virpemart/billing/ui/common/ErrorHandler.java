@@ -11,6 +11,7 @@ import com.virpemart.billing.service.UserFacingException;
 import javafx.application.Platform;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
+import javafx.scene.layout.Region;
 
 /**
  * Catches any error that no screen handled and shows a calm message instead of a crash.
@@ -67,6 +68,7 @@ public final class ErrorHandler {
         alert.setTitle(title);
         alert.setHeaderText(null);
         alert.setContentText(message);
+        alert.getDialogPane().setMinHeight(Region.USE_PREF_SIZE); // show long messages in full
         alert.showAndWait();
     }
 

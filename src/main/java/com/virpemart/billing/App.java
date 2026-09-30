@@ -20,6 +20,7 @@ import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBar.ButtonData;
 import javafx.scene.control.ButtonType;
+import javafx.scene.layout.Region;
 import javafx.stage.Stage;
 
 /**
@@ -104,6 +105,9 @@ public class App extends Application {
                 + "\n\nRestore this backup?", restore, close);
         alert.setTitle("Virpe Mart Billing");
         alert.setHeaderText(null);
+        // Grow to fit the whole message; otherwise JavaFX cuts it off with "...".
+        alert.getDialogPane().setPrefWidth(560);
+        alert.getDialogPane().setMinHeight(Region.USE_PREF_SIZE);
         ((Button) alert.getDialogPane().lookupButton(restore)).setDefaultButton(false);
         ((Button) alert.getDialogPane().lookupButton(close)).setDefaultButton(true);
         if (alert.showAndWait().filter(restore::equals).isEmpty()) {

@@ -11,6 +11,7 @@ import com.virpemart.billing.ui.billing.BillingController;
 import com.virpemart.billing.ui.common.Dialogs;
 import com.virpemart.billing.ui.common.Format;
 import com.virpemart.billing.ui.common.Views;
+import com.virpemart.billing.ui.history.ActivityLogController;
 import com.virpemart.billing.ui.history.BillHistoryController;
 import com.virpemart.billing.ui.history.ReportsController;
 
@@ -35,6 +36,7 @@ public class MainWindowController {
     private BillingController billingController;
     private BillHistoryController billHistoryController;
     private ReportsController reportsController;
+    private ActivityLogController activityLogController;
     private TabPane historyTabs;
 
     @FXML
@@ -121,7 +123,7 @@ public class MainWindowController {
         return Views.load("settings.fxml", context).root();
     }
 
-    /** Bills tab for everyone; Reports tab for the owner only (the report service checks this too). */
+    /** Bills tab for everyone; Reports and Activity log tabs for the owner only (the services check this too). */
     private Node createHistoryScreen() {
         Views.Loaded<BillHistoryController> bills = Views.load("bill-history.fxml", context);
         billHistoryController = bills.controller();
@@ -132,6 +134,9 @@ public class MainWindowController {
             Views.Loaded<ReportsController> reports = Views.load("reports.fxml", context);
             reportsController = reports.controller();
             historyTabs.getTabs().add(new Tab("Reports", reports.root()));
+            Views.Loaded<ActivityLogController> activity = Views.load("activity-log.fxml", context);
+            activityLogController = activity.controller();
+            historyTabs.getTabs().add(new Tab("Activity log", activity.root()));
         }
         historyTabs.getSelectionModel().selectedIndexProperty().addListener((obs, oldTab, newTab) ->
                 refreshHistoryTab());
@@ -140,10 +145,10 @@ public class MainWindowController {
 
     /** Bills and figures change while billing, so the open tab loads again each time it is shown. */
     private void refreshHistoryTab() {
-        if (historyTabs.getSelectionModel().getSelectedIndex() == 1 && reportsController != null) {
-            reportsController.refresh();
-        } else {
-            billHistoryController.refresh();
+        switch (historyTabs.getSelectionModel().getSelectedIndex()) {
+            case 1 -> reportsController.refresh();
+            case 2 -> activityLogController.refresh();
+            default -> billHistoryController.refresh();
         }
     }
 }

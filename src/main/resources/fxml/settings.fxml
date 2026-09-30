@@ -96,6 +96,8 @@
                                 onAction="#savePrinter" minWidth="-Infinity"/>
                     </HBox>
                 </VBox>
+
+                <fx:include source="backups.fxml"/>
             </VBox>
         </ScrollPane>
 

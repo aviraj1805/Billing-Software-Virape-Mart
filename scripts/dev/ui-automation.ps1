@@ -35,6 +35,26 @@ function Find-Window([string]$titlePrefix, [int]$timeoutSec = 20) {
     throw "Window '$titlePrefix' not found"
 }
 
+# Finds a window of one process. Use this when two copies of the app are open (they have the same title).
+function Find-ProcessWindow([int]$processId, [string]$titlePrefix, [int]$timeoutSec = 30) {
+    $deadline = (Get-Date).AddSeconds($timeoutSec)
+    while ((Get-Date) -lt $deadline) {
+        $cond = New-Object System.Windows.Automation.PropertyCondition(
+            [System.Windows.Automation.AutomationElement]::ProcessIdProperty, $processId)
+        $all = $script:Root.FindAll($script:TreeScope::Children, $cond)
+        foreach ($w in $all) {
+            if ($w.Current.Name.StartsWith($titlePrefix, [StringComparison]::Ordinal)) { return $w }
+            $inner = $w.FindAll($script:TreeScope::Descendants, (New-Object System.Windows.Automation.PropertyCondition(
+                [System.Windows.Automation.AutomationElement]::ControlTypeProperty, [System.Windows.Automation.ControlType]::Window)))
+            foreach ($d in $inner) {
+                if ($d.Current.Name.StartsWith($titlePrefix, [StringComparison]::Ordinal)) { return $d }
+            }
+        }
+        Start-Sleep -Milliseconds 300
+    }
+    throw "Window '$titlePrefix' of process $processId not found"
+}
+
 function Find-Element($parent, [string]$name, [int]$timeoutSec = 10) {
     $cond = New-Object System.Windows.Automation.PropertyCondition([System.Windows.Automation.AutomationElement]::NameProperty, $name)
     $deadline = (Get-Date).AddSeconds($timeoutSec)
