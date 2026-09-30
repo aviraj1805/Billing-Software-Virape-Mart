@@ -4,6 +4,19 @@ All notable changes to this project are recorded here, newest first.
 
 ## [Unreleased]
 
+### Phase 5: Printing
+
+- Settings screen (owner): shop details for the bill heading (name, second line such as the Marathi name,
+  address, phone, closing lines) and the bill printer (any Windows printer; 58 mm roll, 80 mm roll or A4).
+  A live preview shows a sample bill as it will print, and "Print a test bill" checks the printer before saving.
+- Bills are drawn with the Windows "Nirmala UI" font, so Marathi item names print correctly.
+- Khata bills print this bill, previous dues, total with dues, paid now and the balance.
+- After saving a bill: ask "Print?" (default), print automatically, or do not print. Printing runs in the
+  background; if it fails, the bill stays saved and the screen says so.
+- "Reprint bill" button and double-click on a customer's recent bill: preview with a Print button.
+  Reprints say "DUPLICATE COPY" and are recorded in the audit log.
+- 288 automated tests.
+
 ### Phase 4: Billing
 
 - Billing screen, now the start screen. Keyboard flow: type a product (F2), Enter, quantity, Enter.

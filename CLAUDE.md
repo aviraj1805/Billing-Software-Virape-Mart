@@ -107,6 +107,8 @@ SLF4J + Logback, Apache Commons CSV, JUnit Jupiter, `jpackage`. Library versions
 - A wrapped `Label` inside a `VBox` gets squeezed and shows "...". Give it `minHeight="-Infinity"`.
   Buttons next to a growing label need `minWidth="-Infinity"`.
 - JavaFX hides hint (prompt) text in a focused box; `app.css` overrides this so hints stay visible.
+- A focused JavaFX button takes the Enter key, even if another button is the default. In a window where Enter
+  should press a button, focus that button when the window opens (see `ReceiptPreviewController`).
 - The packaged runtime has less locale data than the JDK (e.g. "Sep" instead of "Sept"). Do not depend on
   locale formatting for anything important.
 
@@ -119,6 +121,9 @@ of any window with `Capture-Window`. Look at each screenshot before calling a sc
 In a TextArea, Tab types a tab; use `^{TAB}` to move to the next field.
 Call `Focus-Window` right before sending function keys (F12 etc.); if the window lost focus, keys go nowhere.
 The search drop-down is a separate popup window: capture the whole screen to see it.
+`Invoke-Button` waits until a dialog opened by that button closes; to open a dialog, `SetFocus()` the button and
+send a space instead. Check printing with "Microsoft Print to PDF": Windows asks for a file name
+(`Save Print Output As`), and the PDF shows exactly what the printer would get.
 
 ## Code conventions
 
@@ -155,6 +160,11 @@ The search drop-down is a separate popup window: capture the whole screen to see
 - Shared validation: a service `check(...)` method validates typed input once and is reused by forms and
   imports (see `ProductService.check`).
 - Owner-only buttons are hidden for STAFF, but the service still enforces the rule.
+- Printing: `print.ReceiptBuilder` decides the bill's lines (test it with `Receipt.toPlainText()`),
+  `print.ReceiptRenderer` draws them (Nirmala UI font) for paper and for preview pictures, and
+  `service.PrintService` prints, reprints (audited, "DUPLICATE COPY") and test-prints. Printing always runs
+  after the bill is saved and off the FX thread. Tests use `FakePrinter`; never print in tests.
+- Settings: `SettingsService` reads and saves shop details and printer setup in the `settings` table (owner only).
 - Money: `model.Money` (paise) and `model.Quantity` (thousandths). `Money.times(Quantity)` and
   `Money.roundToRupee()` hold the only rounding logic; do not round anywhere else.
 
@@ -183,15 +193,16 @@ The search drop-down is a separate popup window: capture the whole screen to see
 | 2. Products | Categories, products, search, deactivate/delete rules, CSV import | Done |
 | 3. Customers and ledger | Customers, opening balance, receive payment, balance and ledger view | Done |
 | 4. Billing | Billing screen, search, loose qty, one-off items, rate change, totals, split payments, save, hold | Done |
-| 5. Printing | Shop settings, printer settings, receipt with Marathi, print and reprint | Next |
-| 6. History and reports | Bill history, cancel with reversal, purchase history, reports | Not started |
+| 5. Printing | Shop settings, printer settings, receipt with Marathi, print and reprint | Done (store printer test pending) |
+| 6. History and reports | Bill history, cancel with reversal, purchase history, reports | Next |
 | 7. Users, security, backup | Login, first-run setup, staff users, audit view, backups, restore | Not started |
 | 8. Packaging and go-live | Install on store laptop, import products, user guide, training | Not started |
 
 ## Pending inputs from the user
 
 - Publish the repository to GitHub as a private repo.
-- Printer brand and model, and shop details for the bill header: needed before Phase 5.
+- Printer brand and model, and a test print on the real store printer (Settings > Print a test bill).
+  Shop details are typed by the owner in Settings; the user should confirm the exact wording.
 - Store laptop Windows version and RAM, and the product Excel sheet: needed before Phase 8.
   The user never pasted the sheet's header row; the import accepts common column names
   (see `docs/product-import-guide.md`). If their real sheet uses other names, add them to

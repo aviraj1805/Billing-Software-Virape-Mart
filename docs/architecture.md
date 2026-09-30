@@ -14,7 +14,7 @@ SQLite file     One database file on the laptop.
 
 Everything runs in one process, so layers talk through plain method calls. For example, the billing
 screen calls `billingService.saveBill(draft)`. The service validates, opens one transaction, calls the
-repositories, commits, and returns the saved bill. The screen then calls `printService.print(bill)`.
+repositories, commits, and returns the saved bill. The screen then calls `printing.printBill(billNo, false)` on a background thread.
 Slow work such as backup, import and reports runs on a background thread so the screen never freezes.
 
 **Why a desktop app and not a web app:** there is one laptop, the shop must work offline, and receipt
@@ -117,6 +117,22 @@ All of these happen in one database transaction. Either everything is saved or n
 
 Printing happens after the transaction commits, so a printer problem never loses a bill.
 
+## Printing
+
+Printing is split so that the content can be tested without a printer:
+
+1. `print.ReceiptBuilder` turns a saved bill (`BillingService.bill(billNo)`, read back exactly as saved) and the
+   shop details into a list of lines: text, "left text + amount" pairs and dashed rules.
+2. `print.ReceiptRenderer` draws those lines with Java 2D. It uses the Windows font "Nirmala UI", which has
+   English and Marathi letters and the rupee sign; Java's text layout joins Marathi letters correctly. Long text
+   wraps to the paper width (48 mm on a 58 mm roll, 72 mm on an 80 mm roll, a 150 mm column on A4).
+   The same drawing makes the on-screen preview picture, so the preview matches the paper.
+3. `print.SystemReceiptPrinter` sends it to the Windows printer chosen in Settings, through the printer's own
+   driver. For a roll it asks for paper exactly as long as the bill; if the driver cannot do that, a long bill
+   continues on the next page (`ReceiptPrintable`).
+4. `service.PrintService` ties it together, records reprints in the audit log and turns printer errors into a
+   clear message (`PrintFailedException`). Tests use a fake `ReceiptPrinter`.
+
 ## Security
 
 - No network ports are opened.
@@ -133,7 +149,7 @@ Printing happens after the transaction commits, so a printer problem never loses
 | Invalid input | Friendly message next to the field; nothing saved |
 | Business rule broken | Clear dialog explaining what to do next |
 | Database error while saving | Transaction rolled back; friendly message; details in the log |
-| Printer off or out of paper | Bill already saved; reprint later from History |
+| Printer off or out of paper | Bill already saved; amber "NOT printed" note; reprint with "Reprint bill" |
 | Power cut during billing | SQLite commits atomically: a bill is fully saved or not at all |
 | App opened twice | A single-instance lock stops the second copy |
 | Unexpected error | Friendly dialog; full details in the log file |

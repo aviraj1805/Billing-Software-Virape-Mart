@@ -36,7 +36,7 @@ It has two main areas:
 | Existing product list | Kept in Excel or Google Sheets, so the app provides a CSV import. |
 | Backups | Kept on the store laptop only. The user accepted the risk of theft or disk failure. |
 | Laptops | Developed on one laptop. The packaged app is installed on a different store laptop. |
-| Printer | Model not known yet. Printing must work for both thermal receipt printers and normal A4 printers. |
+| Printer | Model not known yet. Printing works with any printer installed in Windows: 58 mm or 80 mm receipt rolls, or A4 sheets. |
 
 ## Products (confirmed in Phase 2)
 
@@ -89,6 +89,25 @@ These billing rules were chosen as sensible defaults and can be changed:
 - Adding the same product again increases its quantity on the existing line.
 - Held bills are kept only while the app is open; closing the app with an open or held bill asks first.
 
+## Printing (built in Phase 5)
+
+The printer model and the exact bill heading were not known yet, so both are **settings the owner fills in**
+(Settings screen) instead of fixed values. These defaults were chosen and can be changed:
+
+- The bill heading is the shop name, an optional second line (for example the name in Marathi), up to 3 address
+  lines, a phone number, and up to 2 closing lines at the bottom. Until the owner saves them, the bill shows
+  "Virpe Mart" and "Thank you! Please visit again."
+- After a bill is saved, the app **asks "Print?"** (Enter prints, Esc skips). The owner can switch this to
+  "Print every bill automatically" or "Do not print".
+- Paper starts as an **80 mm roll**. 58 mm rolls and A4 sheets can be chosen.
+- Each line shows the English name with pack size, the Marathi name under it, then quantity x rate and the amount.
+  Loose quantities print with three decimals (0.500 kg). MRP is printed when it is above the rate.
+- A khata bill prints: this bill, previous dues (an advance as a minus amount), total with dues, paid now by mode,
+  and the balance dues (or advance left).
+- Printing a bill again is marked **"DUPLICATE COPY"** and recorded in the audit log. Anyone can reprint.
+- A printer problem never affects the saved bill: the screen says "saved but NOT printed" and the bill can be
+  reprinted with "Reprint bill".
+
 ## Assumptions
 
 These were not asked directly. The user can change them at any time.
@@ -114,6 +133,7 @@ These were not asked directly. The user can change them at any time.
 
 ## Inputs still needed
 
-- **Before Phase 5 (printing)**: printer brand and model; shop name, address, phone and footer text for the bill.
+- **Printer brand and model**: needed to test a real printout on the store printer. The owner types the shop
+  details in Settings; please confirm the exact wording.
 - **Before Phase 8 (go-live)**: store laptop Windows version and RAM; the product Excel sheet
   (it can be imported any time, following [product-import-guide.md](product-import-guide.md)).
