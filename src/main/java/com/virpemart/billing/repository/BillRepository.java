@@ -118,14 +118,13 @@ public final class BillRepository {
     }
 
     /**
-     * Bills matching the search, newest first. The text matches the bill number exactly, or part of the name on the
-     * bill, the customer number or the customer's phone.
+     * Bills matching the search, newest first. The text matches part of the name on the bill, the customer number
+     * or the customer's phone.
      */
     public List<BillSummary> search(Connection connection, BillSearch search) throws SQLException {
         String from = search.from() == null ? null : DbTime.format(search.from().atStartOfDay());
         String before = search.to() == null ? null : DbTime.format(search.to().plusDays(1).atStartOfDay());
         String like = search.text() == null ? null : "%" + ProductRepository.escapeLike(search.text()) + "%";
-        long billNo = parseBillNo(search.text());
         List<BillSummary> bills = new ArrayList<>();
         try (PreparedStatement statement = connection.prepareStatement(
                 "SELECT b.id, b.bill_no, b.created_at, c.customer_no, b.customer_name, b.total_paise, b.paid_paise,"
@@ -135,7 +134,8 @@ public final class BillRepository {
                         + " WHERE (? IS NULL OR b.created_at >= ?)"
                         + " AND (? IS NULL OR b.created_at < ?)"
                         + " AND (? IS NULL OR b.customer_id = ?)"
-                        + " AND (? IS NULL OR b.bill_no = ? OR b.customer_name LIKE ? ESCAPE '\\'"
+                        + " AND (? IS NULL OR b.bill_no = ?)"
+                        + " AND (? IS NULL OR b.customer_name LIKE ? ESCAPE '\\'"
                         + "      OR c.customer_no LIKE ? ESCAPE '\\' OR c.phone LIKE ? ESCAPE '\\')"
                         + " ORDER BY b.bill_no DESC LIMIT ?")) {
             statement.setString(1, from);
@@ -144,12 +144,13 @@ public final class BillRepository {
             statement.setString(4, before);
             AuditRepository.setNullableLong(statement, 5, search.customerId());
             AuditRepository.setNullableLong(statement, 6, search.customerId());
-            statement.setString(7, like);
-            statement.setLong(8, billNo);
+            AuditRepository.setNullableLong(statement, 7, search.billNo());
+            AuditRepository.setNullableLong(statement, 8, search.billNo());
             statement.setString(9, like);
             statement.setString(10, like);
             statement.setString(11, like);
-            statement.setInt(12, search.limit());
+            statement.setString(12, like);
+            statement.setInt(13, search.limit());
             try (ResultSet rs = statement.executeQuery()) {
                 while (rs.next()) {
                     bills.add(new BillSummary(
@@ -202,13 +203,6 @@ public final class BillRepository {
         }
     }
 
-    /** The text as a bill number, or -1 (no bill has that number) if it is not a number. */
-    private static long parseBillNo(String text) {
-        if (text == null || !text.matches("\\d{1,9}")) {
-            return -1;
-        }
-        return Long.parseLong(text);
-    }
 
     /** The highest bill number used so far, or empty if no bill was ever saved. */
     public Optional<Long> lastBillNo(Connection connection) throws SQLException {

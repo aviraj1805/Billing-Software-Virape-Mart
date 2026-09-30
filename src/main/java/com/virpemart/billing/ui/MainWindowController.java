@@ -11,16 +11,18 @@ import com.virpemart.billing.ui.billing.BillingController;
 import com.virpemart.billing.ui.common.Dialogs;
 import com.virpemart.billing.ui.common.Format;
 import com.virpemart.billing.ui.common.Views;
+import com.virpemart.billing.ui.history.BillHistoryController;
+import com.virpemart.billing.ui.history.ReportsController;
 
 import javafx.fxml.FXML;
-import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
+import javafx.scene.control.Tab;
+import javafx.scene.control.TabPane;
 import javafx.scene.control.Toggle;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
 
 /**
  * The main window: top bar, menu on the left and the chosen screen in the middle.
@@ -31,6 +33,9 @@ public class MainWindowController {
     private final AppContext context;
     private final Map<Toggle, Node> screens = new HashMap<>();
     private BillingController billingController;
+    private BillHistoryController billHistoryController;
+    private ReportsController reportsController;
+    private TabPane historyTabs;
 
     @FXML
     private ToggleGroup navGroup;
@@ -74,6 +79,9 @@ public class MainWindowController {
                 oldToggle.setSelected(true); // one screen is always selected
             } else {
                 content.getChildren().setAll(screens.computeIfAbsent(newToggle, this::createScreen));
+                if (newToggle == historyNav) {
+                    refreshHistoryTab();
+                }
             }
         });
         billingNav.setSelected(true); // billing is what the shop uses most
@@ -108,18 +116,34 @@ public class MainWindowController {
             return Views.load("customers.fxml", context).root();
         }
         if (toggle == historyNav) {
-            return comingSoon("History & Reports", "Bill history and reports arrive in Phase 6.");
+            return createHistoryScreen();
         }
         return Views.load("settings.fxml", context).root();
     }
 
-    private static Node comingSoon(String title, String message) {
-        Label heading = new Label(title);
-        heading.getStyleClass().add("page-title");
-        Label text = new Label(message);
-        text.getStyleClass().add("muted");
-        VBox box = new VBox(8, heading, text);
-        box.setAlignment(Pos.CENTER);
-        return box;
+    /** Bills tab for everyone; Reports tab for the owner only (the report service checks this too). */
+    private Node createHistoryScreen() {
+        Views.Loaded<BillHistoryController> bills = Views.load("bill-history.fxml", context);
+        billHistoryController = bills.controller();
+        historyTabs = new TabPane(new Tab("Bills", bills.root()));
+        historyTabs.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
+        boolean owner = context.session().currentUser().map(User::isOwner).orElse(false);
+        if (owner) {
+            Views.Loaded<ReportsController> reports = Views.load("reports.fxml", context);
+            reportsController = reports.controller();
+            historyTabs.getTabs().add(new Tab("Reports", reports.root()));
+        }
+        historyTabs.getSelectionModel().selectedIndexProperty().addListener((obs, oldTab, newTab) ->
+                refreshHistoryTab());
+        return historyTabs;
+    }
+
+    /** Bills and figures change while billing, so the open tab loads again each time it is shown. */
+    private void refreshHistoryTab() {
+        if (historyTabs.getSelectionModel().getSelectedIndex() == 1 && reportsController != null) {
+            reportsController.refresh();
+        } else {
+            billHistoryController.refresh();
+        }
     }
 }

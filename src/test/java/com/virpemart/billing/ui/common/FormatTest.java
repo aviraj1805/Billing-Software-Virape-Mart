@@ -33,4 +33,15 @@ class FormatTest {
         assertEquals("30/09/26 2:05 PM", Format.dateTimeShort(java.time.LocalDateTime.of(2026, 9, 30, 14, 5)));
         assertEquals("Wed, 30 Sep 2026", Format.date(java.time.LocalDate.of(2026, 9, 30)));
     }
+
+    @Test
+    void dateBoxesUseDayMonthYear() {
+        var converter = Format.dateInput();
+        assertEquals("01/10/2026", converter.toString(java.time.LocalDate.of(2026, 10, 1)));
+        assertEquals(java.time.LocalDate.of(2026, 10, 1), converter.fromString(" 1/10/2026 "));
+        assertEquals(java.time.LocalDate.of(2026, 10, 1), converter.fromString("01/10/2026"));
+        assertEquals(null, converter.fromString("31/02/2026x"));
+        assertEquals(null, converter.fromString(""));
+        assertEquals("", converter.toString(null));
+    }
 }

@@ -277,6 +277,25 @@
     -fx-background: #f7f7f5;
 }
 
+/* ---------------------------------------------------------------- history and reports */
+
+.table-row-cell:cancelled .table-cell {
+    -fx-text-fill: #9a9a9a;
+}
+
+.table-row-cell:cancelled:filled:selected .table-cell {
+    -fx-text-fill: -fx-selection-bar-text;
+}
+
+.tab-pane > .tab-header-area {
+    -fx-padding: 6 18 0 18;
+}
+
+.tab {
+    -fx-padding: 4 14 4 14;
+    -fx-font-size: 15px;
+}
+
 .button:has-held {
     -fx-background-color: #f7e7b4;
     -fx-font-weight: bold;

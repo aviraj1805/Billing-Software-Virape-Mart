@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.DatePicker?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<!-- Sales report (owner): one day or a date range, with the Cash / UPI / Card split. -->
+<VBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.virpemart.billing.ui.history.ReportsController"
+      fx:id="root"
+      styleClass="page"
+      spacing="10">
+
+    <HBox alignment="CENTER_LEFT" spacing="10">
+        <Label text="Sales report" styleClass="page-title"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Button text="Today" onAction="#showToday" minWidth="-Infinity"/>
+        <Button text="Yesterday" onAction="#showYesterday" minWidth="-Infinity"/>
+        <Button text="This month" onAction="#showThisMonth" minWidth="-Infinity"/>
+        <Button text="Last month" onAction="#showLastMonth" minWidth="-Infinity"/>
+    </HBox>
+
+    <HBox alignment="CENTER_LEFT" spacing="10">
+        <Label text="From" minWidth="-Infinity"/>
+        <DatePicker fx:id="fromPicker" prefWidth="150"/>
+        <Label text="To" minWidth="-Infinity"/>
+        <DatePicker fx:id="toPicker" prefWidth="150"/>
+        <Button fx:id="showButton" text="Show" styleClass="primary" onAction="#load" minWidth="-Infinity"/>
+        <Label fx:id="messageLabel" styleClass="muted" wrapText="true" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+    </HBox>
+
+    <HBox spacing="14">
+        <VBox styleClass="card" spacing="6" HBox.hgrow="ALWAYS" maxWidth="Infinity">
+            <Label fx:id="periodLabel" styleClass="section-title"/>
+            <GridPane hgap="16" vgap="6">
+                <columnConstraints>
+                    <ColumnConstraints hgrow="ALWAYS"/>
+                    <ColumnConstraints halignment="RIGHT"/>
+                </columnConstraints>
+                <Label text="Bills" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+                <Label fx:id="billsLabel" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+                <Label text="Total sales" styleClass="total-label" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+                <Label fx:id="salesLabel" styleClass="total-big" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+                <Label text="Given on khata (credit)" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+                <Label fx:id="onKhataLabel" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+                <Label text="Cancelled bills (not counted)" styleClass="muted" GridPane.rowIndex="3"
+                       GridPane.columnIndex="0"/>
+                <Label fx:id="cancelledLabel" styleClass="muted" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
+            </GridPane>
+        </VBox>
+
+        <VBox styleClass="card" spacing="6" HBox.hgrow="ALWAYS" maxWidth="Infinity">
+            <Label text="Money received" styleClass="section-title"/>
+            <GridPane fx:id="moneyGrid" hgap="16" vgap="6">
+                <columnConstraints>
+                    <ColumnConstraints hgrow="ALWAYS"/>
+                    <ColumnConstraints halignment="RIGHT"/>
+                    <ColumnConstraints halignment="RIGHT"/>
+                    <ColumnConstraints halignment="RIGHT"/>
+                </columnConstraints>
+            </GridPane>
+        </VBox>
+    </HBox>
+
+    <Label text="Day by day" styleClass="section-title"/>
+    <TableView fx:id="dayTable" VBox.vgrow="ALWAYS">
+        <columns>
+            <TableColumn fx:id="dayColumn" text="Date" prefWidth="130"/>
+            <TableColumn fx:id="dayBillsColumn" text="Bills" prefWidth="60" styleClass="number-column"/>
+            <TableColumn fx:id="daySalesColumn" text="Sales" prefWidth="120" styleClass="number-column"/>
+            <TableColumn fx:id="dayKhataColumn" text="On khata" prefWidth="110" styleClass="number-column"/>
+            <TableColumn fx:id="dayCashColumn" text="Cash received" prefWidth="120" styleClass="number-column"/>
+            <TableColumn fx:id="dayUpiColumn" text="UPI received" prefWidth="120" styleClass="number-column"/>
+            <TableColumn fx:id="dayCardColumn" text="Card received" prefWidth="120" styleClass="number-column"/>
+            <TableColumn fx:id="dayTotalColumn" text="Total received" prefWidth="130" styleClass="number-column"/>
+            <TableColumn fx:id="dayCancelledColumn" text="Cancelled" prefWidth="90" styleClass="number-column"/>
+        </columns>
+        <columnResizePolicy>
+            <TableView fx:constant="CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS"/>
+        </columnResizePolicy>
+    </TableView>
+    <Label styleClass="hint" wrapText="true" minHeight="-Infinity"
+           text="Received = money paid at billing plus khata payments received that day. Cancelled bills are not counted in sales or money received."/>
+</VBox>

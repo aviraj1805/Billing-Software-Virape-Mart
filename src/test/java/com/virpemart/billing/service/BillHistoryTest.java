@@ -119,6 +119,15 @@ class BillHistoryTest {
     }
 
     @Test
+    void aShortNumberFindsOnlyThatBillNotPhoneNumbersWithIt() {
+        billing.save(new BillRequest(ramesh, null, lines(), List.of())); // phone 9876543210 contains "2"
+        billing.save(new BillRequest(null, null, lines(), List.of(cash("122"))));
+
+        assertEquals(List.of(2L), search(null, null, "2"));
+        assertEquals(List.of(1L), search(null, null, "9876543210"), "a full phone number is not a bill number");
+    }
+
+    @Test
     void oneCustomersBillsAreTheirPurchaseHistory() {
         billing.save(new BillRequest(ramesh, null, lines(), List.of()));
         billing.save(new BillRequest(null, null, lines(), List.of(cash("122"))));
@@ -142,7 +151,8 @@ class BillHistoryTest {
 
         CancelledBill result = billing.cancel(1, "  Wrong  items ");
 
-        assertEquals(new CancelledBill(1, Money.parse("122"), Money.ZERO), result);
+        assertEquals(new CancelledBill(1, null, Money.parse("122"), Money.parse("122"), Money.ZERO, Money.ZERO),
+                result);
         assertEquals("Wrong items", billing.bill(1).cancelReason());
         assertTrue(billing.searchBills(new BillSearch(null, null, null, null, 10)).getFirst().cancelled());
         assertEquals(1, fixture.count("SELECT COUNT(*) FROM audit_log WHERE action = 'BILL_CANCELLED'"
@@ -159,7 +169,8 @@ class BillHistoryTest {
 
         CancelledBill result = billing.cancel(1, "Customer returned everything");
 
-        assertEquals(new CancelledBill(1, Money.ZERO, Money.parse("122")), result);
+        assertEquals(new CancelledBill(1, "Ramesh Patil", Money.parse("122"), Money.ZERO, Money.parse("122"),
+                Money.ZERO), result);
         assertEquals(Money.parse("1200"), fixture.services.customers().find(ramesh).orElseThrow().balance());
         StatementLine reversal = fixture.services.ledger().statement(ramesh).getLast();
         assertEquals(LedgerEntryType.CANCEL_REVERSAL, reversal.entry().type());
@@ -183,10 +194,13 @@ class BillHistoryTest {
         // Bill 122, paid 622: 122 for the bill and 500 towards old dues. Balance 1200 -> 700.
         billing.save(new BillRequest(ramesh, null, lines(), List.of(cash("622"))));
 
+        CancelledBill preview = billing.cancelPreview(1);
         CancelledBill result = billing.cancel(1, "Mistake");
 
+        assertEquals(preview, result, "the preview matches what cancelling does");
         assertEquals(Money.parse("122"), result.giveBack());
         assertEquals(Money.ZERO, result.takenOffKhata());
+        assertEquals(Money.parse("500"), result.duesPaymentKept());
         assertEquals(Money.parse("700"), fixture.services.customers().find(ramesh).orElseThrow().balance());
     }
 
@@ -201,9 +215,11 @@ class BillHistoryTest {
 
         fixture.signInStaff();
         assertThrows(PermissionDeniedException.class, () -> billing.cancel(1, "Mistake"));
+        assertThrows(PermissionDeniedException.class, () -> billing.cancelPreview(1));
         fixture.signInOwner();
 
         billing.cancel(1, "Mistake");
+        assertThrows(BusinessRuleException.class, () -> billing.cancelPreview(1));
         BusinessRuleException twice = assertThrows(BusinessRuleException.class, () -> billing.cancel(1, "Again"));
         assertEquals("Bill 1 is already cancelled.", twice.getMessage());
         assertEquals("Mistake", billing.bill(1).cancelReason(), "the first reason is kept");

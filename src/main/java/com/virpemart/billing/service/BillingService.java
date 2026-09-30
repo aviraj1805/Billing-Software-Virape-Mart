@@ -93,7 +93,8 @@ public final class BillingService {
 
     /**
      * Bills for the Bill History screen, newest first. Owner and staff.
-     * A short number (up to 7 digits) is treated as a bill number and found on any date.
+     * A short number (up to 7 digits) is a bill number: only that bill is found, on any date. Longer numbers are
+     * matched against phone numbers.
      *
      * @throws ValidationException (field "from") if the first day is after the last day
      */
@@ -102,13 +103,16 @@ public final class BillingService {
         String text = Texts.clean(search.text());
         LocalDate from = search.from();
         LocalDate to = search.to();
+        Long billNo = null;
         if (text != null && text.matches("\\d{1,7}")) {
-            from = null; // a bill number: look on every date
+            billNo = Long.parseLong(text); // a bill number: look only for it, on every date
+            text = null;
+            from = null;
             to = null;
         } else if (from != null && to != null && from.isAfter(to)) {
             throw new ValidationException("from", "The first date is after the last date. Please check the dates.");
         }
-        BillSearch clean = new BillSearch(from, to, text, search.customerId(), search.limit());
+        BillSearch clean = new BillSearch(from, to, text, search.customerId(), search.limit(), billNo);
         return database.query(c -> bills.search(c, clean));
     }
 
@@ -144,8 +148,18 @@ public final class BillingService {
             }
             audit.insert(c, user.id(), "BILL_CANCELLED", "bills", bill.id(), "Bill " + billNo + " ("
                     + bill.totals().total().toPlainString() + ") cancelled: " + cleanReason, now);
-            return new CancelledBill(billNo, bill.paidForBillTotal(), bill.toAccount());
+            return CancelledBill.of(bill);
         });
+    }
+
+    /** What cancelling the bill would do, shown before the owner confirms. Owner only. Nothing is changed. */
+    public CancelledBill cancelPreview(long billNo) {
+        session.requireOwner();
+        BillDetails bill = bill(billNo);
+        if (bill.isCancelled()) {
+            throw new BusinessRuleException("Bill " + billNo + " is already cancelled.");
+        }
+        return CancelledBill.of(bill);
     }
 
     /** A saved bill with everything needed to print it again. Owner and staff. */

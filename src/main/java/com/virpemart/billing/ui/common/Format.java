@@ -3,9 +3,12 @@ package com.virpemart.billing.ui.common;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.Locale;
 
 import com.virpemart.billing.model.Money;
+
+import javafx.util.StringConverter;
 
 /**
  * How numbers, dates and phone numbers look on screen: Indian digit grouping and the rupee sign.
@@ -16,6 +19,8 @@ public final class Format {
     private static final DateTimeFormatter DATE = DateTimeFormatter.ofPattern("EEE, d MMM uuuu", Locale.ENGLISH);
     private static final DateTimeFormatter DATE_TIME = DateTimeFormatter.ofPattern("d MMM uuuu, h:mm a", Locale.ENGLISH);
     private static final DateTimeFormatter DATE_TIME_SHORT = DateTimeFormatter.ofPattern("dd/MM/yy h:mm a", Locale.ENGLISH);
+    private static final DateTimeFormatter DATE_INPUT = DateTimeFormatter.ofPattern("dd/MM/uuuu", Locale.ENGLISH);
+    private static final DateTimeFormatter DATE_INPUT_TYPED = DateTimeFormatter.ofPattern("d/M/uuuu", Locale.ENGLISH);
 
     private Format() {
     }
@@ -51,6 +56,31 @@ public final class Format {
             return "";
         }
         return digits.length() == 10 ? digits.substring(0, 5) + " " + digits.substring(5) : digits;
+    }
+
+    /**
+     * Shows and reads dates in date boxes as "30/09/2026". Typing "1/10/2026" also works. Text that is not a date
+     * is ignored (the box keeps its old date).
+     */
+    public static StringConverter<LocalDate> dateInput() {
+        return new StringConverter<>() {
+            @Override
+            public String toString(LocalDate date) {
+                return date == null ? "" : date.format(DATE_INPUT);
+            }
+
+            @Override
+            public LocalDate fromString(String text) {
+                if (text == null || text.isBlank()) {
+                    return null;
+                }
+                try {
+                    return LocalDate.parse(text.strip(), DATE_INPUT_TYPED);
+                } catch (DateTimeParseException e) {
+                    return null;
+                }
+            }
+        };
     }
 
     /** For example "Wed, 30 Sep 2026". */

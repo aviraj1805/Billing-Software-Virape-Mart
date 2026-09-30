@@ -15,6 +15,7 @@ import com.virpemart.billing.service.CustomerService;
 import com.virpemart.billing.service.LedgerService;
 import com.virpemart.billing.ui.common.Dialogs;
 import com.virpemart.billing.ui.common.Format;
+import com.virpemart.billing.ui.history.BillHistoryController;
 
 import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyStringWrapper;
@@ -294,6 +295,13 @@ public class CustomersController {
         if (shown != null) {
             CustomerFormController.open(window(), context, shown)
                     .ifPresent(saved -> reloadAfterChange(saved.customer().id()));
+        }
+    }
+
+    @FXML
+    private void showBills() {
+        if (shown != null) {
+            BillHistoryController.openForCustomer(window(), context, shown);
         }
     }
 
