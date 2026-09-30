@@ -251,6 +251,32 @@
     -fx-font-weight: bold;
 }
 
+.banner:warning {
+    -fx-background-color: #fbe8c2;
+    -fx-text-fill: #7a4100;
+    -fx-font-weight: bold;
+}
+
+/* ---------------------------------------------------------------- bill preview */
+
+.receipt-scroll {
+    -fx-background-color: #d9ddd9;
+    -fx-background: #d9ddd9;
+}
+
+.receipt-desk {
+    -fx-padding: 16;
+}
+
+.receipt-desk .image-view {
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.25), 8, 0, 0, 2);
+}
+
+.plain-scroll {
+    -fx-background-color: transparent;
+    -fx-background: #f7f7f5;
+}
+
 .button:has-held {
     -fx-background-color: #f7e7b4;
     -fx-font-weight: bold;

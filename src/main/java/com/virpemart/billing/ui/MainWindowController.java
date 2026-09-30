@@ -110,7 +110,7 @@ public class MainWindowController {
         if (toggle == historyNav) {
             return comingSoon("History & Reports", "Bill history and reports arrive in Phase 6.");
         }
-        return comingSoon("Settings", "Shop details and printer settings arrive in Phase 5.");
+        return Views.load("settings.fxml", context).root();
     }
 
     private static Node comingSoon(String title, String message) {

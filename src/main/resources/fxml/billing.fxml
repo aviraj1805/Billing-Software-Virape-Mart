@@ -25,6 +25,7 @@
         <Label fx:id="bannerLabel" styleClass="banner" wrapText="true" HBox.hgrow="ALWAYS" maxWidth="Infinity"
                visible="false"/>
         <Region HBox.hgrow="ALWAYS"/>
+        <Button text="Reprint bill" onAction="#reprintBill" minWidth="-Infinity"/>
         <Button fx:id="heldButton" text="Held bills (0)" onAction="#resumeHeld" minWidth="-Infinity"/>
         <Button text="Hold bill (F8)" onAction="#holdBill" minWidth="-Infinity"/>
         <Button text="Clear bill" onAction="#clearBill" minWidth="-Infinity"/>
@@ -88,7 +89,7 @@
                     </HBox>
                     <Label fx:id="customerInfoLabel" styleClass="muted" wrapText="true" minHeight="-Infinity"/>
                     <Label fx:id="customerDuesLabel" styleClass="balance-small"/>
-                    <Label text="Recent bills" styleClass="hint"/>
+                    <Label text="Recent bills (double-click to see or reprint)" styleClass="hint"/>
                     <ListView fx:id="recentBillsList" prefHeight="110" styleClass="recent-bills" focusTraversable="false"/>
                 </VBox>
                 <Button text="+ New khata customer" onAction="#newCustomer"/>

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<!-- Shows a bill exactly as it prints, with a Print button. -->
+<VBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.virpemart.billing.ui.billing.ReceiptPreviewController"
+      styleClass="dialog"
+      spacing="10">
+
+    <Label fx:id="infoLabel" styleClass="muted" wrapText="true" minHeight="-Infinity"/>
+
+    <ScrollPane VBox.vgrow="ALWAYS" fitToWidth="true" hbarPolicy="NEVER" styleClass="receipt-scroll">
+        <StackPane styleClass="receipt-desk">
+            <ImageView fx:id="receiptView" preserveRatio="true" smooth="true"/>
+        </StackPane>
+    </ScrollPane>
+
+    <Label fx:id="statusLabel" styleClass="muted" wrapText="true" minHeight="-Infinity"/>
+
+    <HBox spacing="10" alignment="CENTER_RIGHT">
+        <Label text="Enter = Print, Esc = Close" styleClass="muted"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Button text="Close" cancelButton="true" onAction="#close"/>
+        <Button fx:id="printButton" text="Print" defaultButton="true" styleClass="primary" onAction="#print"/>
+    </HBox>
+</VBox>

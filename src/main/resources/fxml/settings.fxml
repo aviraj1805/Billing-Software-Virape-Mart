@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<!-- Settings: shop details for the bill heading, and the bill printer. -->
+<VBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.virpemart.billing.ui.settings.SettingsController"
+      styleClass="page"
+      spacing="10">
+
+    <HBox alignment="CENTER_LEFT" spacing="10">
+        <Label text="Settings" styleClass="page-title"/>
+        <Label fx:id="ownerOnlyLabel" text="Only the owner can change settings." styleClass="banner"
+               visible="false" managed="false"/>
+    </HBox>
+
+    <HBox spacing="18" VBox.vgrow="ALWAYS">
+
+        <!-- ============ left: the forms ============ -->
+        <ScrollPane fitToWidth="true" HBox.hgrow="ALWAYS" styleClass="plain-scroll">
+            <VBox spacing="14">
+
+                <VBox styleClass="card" spacing="8">
+                    <Label text="Shop details on the bill" styleClass="section-title"/>
+                    <GridPane hgap="12" vgap="8">
+                        <columnConstraints>
+                            <ColumnConstraints minWidth="130"/>
+                            <ColumnConstraints hgrow="ALWAYS"/>
+                        </columnConstraints>
+                        <Label text="Shop name *" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+                        <TextField fx:id="nameField" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+                        <Label text="Second line" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+                        <TextField fx:id="secondLineField" promptText="Optional, for example the shop name in Marathi"
+                                   GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+                        <Label text="Address" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+                        <TextArea fx:id="addressArea" prefRowCount="3" wrapText="true"
+                                  promptText="Up to 3 lines" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+                        <Label text="Phone" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
+                        <TextField fx:id="phoneField" promptText="Optional, for example 98765 43210"
+                                   GridPane.rowIndex="3" GridPane.columnIndex="1"/>
+                        <Label text="Closing line" GridPane.rowIndex="4" GridPane.columnIndex="0"/>
+                        <TextArea fx:id="footerArea" prefRowCount="2" wrapText="true"
+                                  promptText="Up to 2 lines, for example: Thank you! Please visit again."
+                                  GridPane.rowIndex="4" GridPane.columnIndex="1"/>
+                    </GridPane>
+                    <Label fx:id="shopErrorLabel" styleClass="error-text" wrapText="true" minHeight="-Infinity"/>
+                    <HBox spacing="10" alignment="CENTER_RIGHT">
+                        <Label fx:id="shopSavedLabel" styleClass="muted"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Button fx:id="saveShopButton" text="Save shop details" styleClass="primary"
+                                onAction="#saveShop"/>
+                    </HBox>
+                </VBox>
+
+                <VBox styleClass="card" spacing="8">
+                    <Label text="Bill printer" styleClass="section-title"/>
+                    <GridPane hgap="12" vgap="8">
+                        <columnConstraints>
+                            <ColumnConstraints minWidth="130"/>
+                            <ColumnConstraints hgrow="ALWAYS"/>
+                        </columnConstraints>
+                        <Label text="Printer" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+                        <HBox spacing="8" GridPane.rowIndex="0" GridPane.columnIndex="1">
+                            <ComboBox fx:id="printerBox" maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
+                            <Button fx:id="refreshButton" text="Refresh list" onAction="#loadPrinters"
+                                    minWidth="-Infinity"/>
+                        </HBox>
+                        <Label text="Paper" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+                        <ComboBox fx:id="paperBox" maxWidth="Infinity" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+                        <Label text="After saving a bill" wrapText="true" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+                        <ComboBox fx:id="afterSaveBox" maxWidth="Infinity" GridPane.rowIndex="2"
+                                  GridPane.columnIndex="1"/>
+                    </GridPane>
+                    <Label styleClass="hint" wrapText="true" minHeight="-Infinity"
+                           text="Choose the printer and its paper, then print a test bill. Check that the lines fit the paper and the Marathi names print correctly. The printer must be installed in Windows first (use the CD or website of the printer maker)."/>
+                    <Label fx:id="printerErrorLabel" styleClass="error-text" wrapText="true" minHeight="-Infinity"/>
+                    <HBox spacing="10" alignment="CENTER_RIGHT">
+                        <Label fx:id="printerSavedLabel" styleClass="muted"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Button fx:id="testPrintButton" text="Print a test bill" onAction="#testPrint"
+                                minWidth="-Infinity"/>
+                        <Button fx:id="savePrinterButton" text="Save printer settings" styleClass="primary"
+                                onAction="#savePrinter" minWidth="-Infinity"/>
+                    </HBox>
+                </VBox>
+            </VBox>
+        </ScrollPane>
+
+        <!-- ============ right: preview ============ -->
+        <VBox spacing="6" minWidth="420" maxWidth="420">
+            <Label text="Preview" styleClass="section-title"/>
+            <Label text="A made-up bill with these details, as it will print." styleClass="muted"/>
+            <ScrollPane fitToWidth="true" hbarPolicy="NEVER" VBox.vgrow="ALWAYS" styleClass="receipt-scroll">
+                <StackPane styleClass="receipt-desk">
+                    <ImageView fx:id="previewView" preserveRatio="true" smooth="true"/>
+                </StackPane>
+            </ScrollPane>
+        </VBox>
+    </HBox>
+</VBox>

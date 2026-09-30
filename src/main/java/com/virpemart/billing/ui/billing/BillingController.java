@@ -15,12 +15,18 @@ import com.virpemart.billing.model.Cart;
 import com.virpemart.billing.model.CartLine;
 import com.virpemart.billing.model.CustomerSummary;
 import com.virpemart.billing.model.Money;
+import com.virpemart.billing.model.PrintAfterSave;
 import com.virpemart.billing.model.Product;
 import com.virpemart.billing.model.Quantity;
 import com.virpemart.billing.service.BillingService;
+import com.virpemart.billing.service.BusinessRuleException;
 import com.virpemart.billing.service.CustomerService;
+import com.virpemart.billing.service.PrintService;
 import com.virpemart.billing.service.ProductService;
+import com.virpemart.billing.service.SettingsService;
+import com.virpemart.billing.ui.common.Background;
 import com.virpemart.billing.ui.common.Dialogs;
+import com.virpemart.billing.ui.common.ErrorHandler;
 import com.virpemart.billing.ui.common.Format;
 import com.virpemart.billing.ui.common.SearchPopup;
 import com.virpemart.billing.ui.customers.CustomerFormController;
@@ -74,6 +80,8 @@ public class BillingController {
     private final ProductService products;
     private final CustomerService customers;
     private final BillingService billing;
+    private final PrintService printing;
+    private final SettingsService settings;
 
     private final Cart cart = new Cart();
     private final List<HeldBill> held = new ArrayList<>();
@@ -158,6 +166,8 @@ public class BillingController {
         this.products = context.services().products();
         this.customers = context.services().customers();
         this.billing = context.services().billing();
+        this.printing = context.services().printing();
+        this.settings = context.services().settings();
     }
 
     @FXML
@@ -194,6 +204,12 @@ public class BillingController {
             }
         });
         recentBillsList.setPlaceholder(new Label("No bills yet."));
+        recentBillsList.setOnMouseClicked(event -> {
+            BillSummary bill = recentBillsList.getSelectionModel().getSelectedItem();
+            if (event.getButton() == MouseButton.PRIMARY && event.getClickCount() == 2 && bill != null) {
+                showBill(bill.billNo());
+            }
+        });
 
         root.addEventFilter(KeyEvent.KEY_PRESSED, this::onKeyPressed);
         // When the screen is shown again, refresh the customer's balance and put the cursor in product search.
@@ -531,7 +547,58 @@ public class BillingController {
         BillPaymentController.open(window(), context, customer, walkInNameField.getText(), cart).ifPresent(result -> {
             resetBill();
             showBanner(result.summary(), true);
+            printAfterSave(result.bill().billNo(), result.summary());
         });
+    }
+
+    /** Prints the new bill, asks first, or does nothing, as chosen in Settings. */
+    private void printAfterSave(long billNo, String summary) {
+        PrintAfterSave choice = settings.printerSetup().afterSave();
+        boolean print = switch (choice) {
+            case ALWAYS -> true;
+            case NEVER -> false;
+            case ASK -> Dialogs.question(window(), "Print bill", "Bill " + billNo + " is saved.\n\nPrint it now?",
+                    "Print", "Don't print");
+        };
+        productSearch.requestFocus();
+        if (!print) {
+            return;
+        }
+        showBanner(summary + "  ·  Printing...", true);
+        Background.run("print-bill-" + billNo, () -> {
+            printing.printBill(billNo, false);
+            return null;
+        }, done -> showBanner(summary + "  ·  Printed", true), error -> {
+            showBanner("Bill " + billNo + " is saved but was NOT printed. Use \"Reprint bill\" to print it.", false);
+            ErrorHandler.handle(error);
+        });
+    }
+
+    /** Asks for a bill number (the newest bill is filled in) and shows that bill with a Print button. */
+    @FXML
+    private void reprintBill() {
+        Optional<Long> last = billing.lastBillNo();
+        if (last.isEmpty()) {
+            Dialogs.info(window(), "Reprint bill", "No bills have been saved yet.");
+            return;
+        }
+        Dialogs.askText(window(), "Reprint bill", "Bill number:", String.valueOf(last.get())).ifPresent(text -> {
+            try {
+                showBill(Long.parseLong(text.strip()));
+            } catch (NumberFormatException e) {
+                Dialogs.warning(window(), "Reprint bill", "Please type a bill number, for example "
+                        + last.get() + ".");
+            }
+        });
+        productSearch.requestFocus();
+    }
+
+    private void showBill(long billNo) {
+        try {
+            ReceiptPreviewController.openBill(window(), context, billNo);
+        } catch (BusinessRuleException e) {
+            Dialogs.warning(window(), "Reprint bill", e.getMessage());
+        }
     }
 
     /** Empties the bill and goes back to a walk-in customer, ready for the next customer. */
@@ -556,10 +623,12 @@ public class BillingController {
         heldButton.pseudoClassStateChanged(PseudoClass.getPseudoClass("has-held"), !held.isEmpty());
     }
 
+    /** The message at the top: green for good news, amber when something needs attention. */
     private void showBanner(String text, boolean success) {
         bannerLabel.setText(text);
         bannerLabel.setVisible(true);
         bannerLabel.pseudoClassStateChanged(PseudoClass.getPseudoClass("success"), success);
+        bannerLabel.pseudoClassStateChanged(PseudoClass.getPseudoClass("warning"), !success);
     }
 
     /**

@@ -48,7 +48,16 @@ function Find-Element($parent, [string]$name, [int]$timeoutSec = 10) {
 
 function Invoke-Button($parent, [string]$name) {
     $b = Find-Element $parent $name
-    $b.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern).Invoke()
+    $pattern = $null
+    if ($b.TryGetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern, [ref]$pattern)) {
+        $pattern.Invoke()
+    } elseif ($b.TryGetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern, [ref]$pattern)) {
+        $pattern.Select()   # menu toggle buttons such as "Settings"
+    } elseif ($b.TryGetCurrentPattern([System.Windows.Automation.TogglePattern]::Pattern, [ref]$pattern)) {
+        $pattern.Toggle()
+    } else {
+        throw "Element '$name' cannot be clicked"
+    }
     Start-Sleep -Milliseconds 700
 }
 

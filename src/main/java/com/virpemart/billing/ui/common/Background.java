@@ -34,6 +34,28 @@ public final class Background {
             onDone.run();
             ErrorHandler.handle(task.getException());
         });
+        start(name, task);
+    }
+
+    /**
+     * Like {@link #run(String, Callable, Consumer, Runnable)}, but the screen handles a failure itself,
+     * for example to say "the bill is saved but was not printed" before showing the error.
+     *
+     * @param onFailure receives the error on the screen thread
+     */
+    public static <T> void run(String name, Callable<T> work, Consumer<T> onSuccess, Consumer<Throwable> onFailure) {
+        Task<T> task = new Task<>() {
+            @Override
+            protected T call() throws Exception {
+                return work.call();
+            }
+        };
+        task.setOnSucceeded(event -> onSuccess.accept(task.getValue()));
+        task.setOnFailed(event -> onFailure.accept(task.getException()));
+        start(name, task);
+    }
+
+    private static void start(String name, Task<?> task) {
         Thread thread = new Thread(task, name);
         thread.setDaemon(true);
         thread.start();
