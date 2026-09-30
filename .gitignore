@@ -1,0 +1,35 @@
+# ---- Build output ----
+target/
+out/
+*.class
+
+# ---- Local application data: NEVER commit real shop data ----
+dev-data/
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+backups/
+logs/
+*.log
+
+# ---- Maven wrapper download (fetched automatically) ----
+.mvn/wrapper/maven-wrapper.jar
+
+# ---- IDE files ----
+.idea/
+*.iml
+.settings/
+.project
+.classpath
+.factorypath
+.vscode/*
+!.vscode/extensions.json
+
+# ---- Claude Code personal settings ----
+.claude/settings.local.json
+
+# ---- OS files ----
+Thumbs.db
+Desktop.ini
+.DS_Store
