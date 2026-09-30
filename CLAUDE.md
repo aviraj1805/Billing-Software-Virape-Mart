@@ -69,16 +69,41 @@ SLF4J + Logback, Apache Commons CSV, JUnit Jupiter, `jpackage`. Library versions
 
 ## Database and migrations
 
-- Migration files: `src/main/resources/db/migration/V{n}__{description}.sql`.
-- **Never edit a migration after it is committed.** Add a new one instead.
-- The built-in runner records version and checksum in `schema_version`, and backs up the database first.
-- Every connection sets `PRAGMA foreign_keys=ON`, `journal_mode=WAL` and a `busy_timeout`.
+- Migration files: `src/main/resources/db/migration/V{n}__{description}.sql`, and **each must be listed
+  in `index.txt`** in the same folder. A test fails if a file is missing from the index.
+- **Never edit a migration after it is committed.** Add a new one instead. The runner stops on a checksum mismatch.
+- The built-in runner (`db.MigrationRunner`) records version and checksum in `schema_version`, and backs up
+  an existing database before upgrading.
+- `db.Database` sets foreign keys ON, WAL, synchronous FULL, busy timeout and IMMEDIATE transactions.
+  Use `inTransaction` / `runInTransaction` for writes, `query` for reads, and `executeOutsideTransaction`
+  only for statements like `VACUUM`.
+- Repositories take the `Connection` as a method parameter; services decide the transaction boundary.
+- Dates: `db.DbTime` text format `yyyy-MM-ddTHH:mm:ss`, shop-local. Services take a `java.time.Clock`
+  so tests can fix the time (`TestDatabases.FIXED_CLOCK`).
+- Product units: `KG` and `L` are loose (decimal quantity), `PCS` is packed (whole quantity).
+- V1 triggers block deleting or editing bills, bill lines, payments, ledger and audit rows. The only allowed
+  bill update is FINAL to CANCELLED with reason, user and time. Do not work around these triggers.
 
 ## Data locations
 
 - Store laptop: `%LOCALAPPDATA%\VirpeMart\{data,backups,logs}`.
-- Development: `-Dvirpemart.dataDir=<repo>\dev-data`, which is git-ignored. Never point a dev run at real shop data.
+- Development: `mvnw.cmd javafx:run` passes `-Dvirpemart.dataDir=dev-data` (git-ignored). The
+  `VIRPEMART_DATA_DIR` environment variable also works, e.g. to test the packaged exe against a temp folder.
+  Never point a dev run at real shop data.
+- With an overridden data folder, startup signs in `dev-owner` automatically (`service.DevOwnerBootstrap`).
+  Its password hash `!` can never match. Real login comes in Phase 7.
 - Never commit databases, backups, logs or real customer data.
+
+## Known pitfalls
+
+- The project folder name contains a space. The JavaFX Maven plugin splits `<option>` values at spaces,
+  so never put `${project.basedir}` in its options. Use paths relative to the project folder.
+- `jpackage` marks `VirpeMart.exe` read-only, which blocks `mvnw clean`. `scripts\package.ps1` removes the old
+  package first and clears the flag afterwards. If clean fails, delete `target\dist` with PowerShell `-Force`.
+- Logging: `Startup` sets the `virpemart.logDir` system property before the first logger is created.
+  Do not add `static` loggers to `App`, `Launcher` or `Startup`. Tests log WARN+ to the console only
+  (`src/test/resources/logback-test.xml`).
+- JavaFX runs from the classpath (non-modular), so `--enable-native-access=ALL-UNNAMED` is the right flag.
 
 ## Code conventions
 
@@ -88,9 +113,16 @@ SLF4J + Logback, Apache Commons CSV, JUnit Jupiter, `jpackage`. Library versions
 - Naming: `XxxService`, `XxxRepository`, `XxxController`. Use Java records for simple immutable data.
 - Every public class gets a short Javadoc saying what it does in plain words.
 - User-facing messages are simple English and tell the user what to do next.
-- Errors: invalid input raises a validation exception with a field message. A broken business rule
-  raises a business-rule exception with a clear message. Unexpected errors are logged and shown as a
-  friendly dialog. Never swallow an exception silently.
+- Errors: invalid input raises `service.ValidationException` (with a field name). A broken business rule
+  raises `service.BusinessRuleException`; a permission problem raises `service.PermissionDeniedException`.
+  These are `UserFacingException`s: their message is shown as-is, so write it for the shop user.
+  Anything else is a bug: `ui.common.ErrorHandler` logs it and shows a friendly dialog.
+  Never swallow an exception silently.
+- Permissions: services call `session.requireOwner()` or `session.requireSignedIn()` first.
+- Controllers are created by `ui.common.ControllerFactory`; give a controller a constructor taking
+  `AppContext` to receive the database, clock and session.
+- Money: `model.Money` (paise) and `model.Quantity` (thousandths). `Money.times(Quantity)` and
+  `Money.roundToRupee()` hold the only rounding logic; do not round anywhere else.
 
 ## Testing
 
@@ -113,8 +145,8 @@ SLF4J + Logback, Apache Commons CSV, JUnit Jupiter, `jpackage`. Library versions
 | Phase | Scope | Status |
 |---|---|---|
 | 0. Setup | JDK, Maven Wrapper, skeleton, docs, packaging smoke test | Done |
-| 1. Foundation | Paths, DB connection, transactions, migrations, V1 schema, Money/Quantity, logging, error handler, single-instance lock, session | Next |
-| 2. Products | Categories, products, search, deactivate/delete rules, CSV import | Not started |
+| 1. Foundation | Paths, DB connection, transactions, migrations, V1 schema, Money/Quantity, logging, error handler, single-instance lock, session | Done |
+| 2. Products | Categories, products, search, deactivate/delete rules, CSV import | Next |
 | 3. Customers and ledger | Customers, opening balance, receive payment, balance and ledger view | Not started |
 | 4. Billing | Billing screen, search, loose qty, one-off items, rate change, totals, split payments, save, hold | Not started |
 | 5. Printing | Shop settings, printer settings, receipt with Marathi, print and reprint | Not started |

@@ -1,0 +1,2 @@
+CREATE TABLE gamma (id INTEGER PRIMARY KEY);
+INSERT INTO no_such_table VALUES (1);

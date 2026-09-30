@@ -3,7 +3,7 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.layout.VBox?>
 
-<!-- Temporary Phase 0 window. Replaced by the real main window in later phases. -->
+<!-- Temporary window until the real screens arrive. Shows startup status. -->
 <VBox xmlns="http://javafx.com/javafx"
       xmlns:fx="http://javafx.com/fxml"
       fx:controller="com.virpemart.billing.ui.MainWindowController"
@@ -12,8 +12,11 @@
       spacing="12">
 
     <Label text="Virpe Mart" styleClass="title"/>
-    <Label text="Billing software setup is working." styleClass="subtitle"/>
+    <Label text="Billing software foundation is working." styleClass="subtitle"/>
     <!-- Marathi test line: proves Devanagari text renders. Means "Marathi names will appear here". -->
     <Label text="मराठी नावे येथे दिसतील" styleClass="subtitle"/>
+    <Label fx:id="databaseLabel" styleClass="status"/>
+    <Label fx:id="userLabel" styleClass="status"/>
+    <Label fx:id="dataFolderLabel" styleClass="muted"/>
     <Label fx:id="versionLabel" styleClass="muted"/>
 </VBox>

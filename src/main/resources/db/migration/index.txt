@@ -1,0 +1,3 @@
+# Migration files, applied in this order. Add new files at the end: V2__..., V3__...
+# Never edit or remove a line once it has been committed.
+V1__initial_schema.sql

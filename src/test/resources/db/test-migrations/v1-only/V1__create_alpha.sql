@@ -1,0 +1,2 @@
+CREATE TABLE alpha (id INTEGER PRIMARY KEY, name TEXT NOT NULL);
+INSERT INTO alpha (name) VALUES ('one');

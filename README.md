@@ -6,7 +6,8 @@ prints bills on the store printer. It has two main areas:
 - **Products**: the list of items the store sells, with English and Marathi names, rates and MRP.
 - **Billing**: bills for walk-in and account (credit) customers, with purchase history and printing.
 
-Status: **Phase 0 complete.** The project skeleton, build and packaging work. Features arrive phase by phase.
+Status: **Phase 1 complete.** The database, migrations, logging and safety foundation work.
+Features arrive phase by phase.
 
 ## Documentation
 

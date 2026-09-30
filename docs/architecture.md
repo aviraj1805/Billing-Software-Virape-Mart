@@ -62,7 +62,7 @@ starts `App`, the JavaFX application class. This is required when JavaFX is on t
 | `settings` | Shop name, address, phone, footer, printer, paper width |
 | `users` | Username, display name, password hash and salt, role OWNER or STAFF, active flag |
 | `categories` | Category name, active flag |
-| `products` | Short code, name, Marathi name, category, sale type LOOSE or PACKED, unit, pack size, rate, optional MRP, active flag |
+| `products` | Short code, name, Marathi name, category, unit (KG or L for loose items, PCS for packed items), pack size text, rate, optional MRP, active flag |
 | `customers` | Customer number, name, phone, address, notes, active flag |
 | `bills` | Bill number, date and time, customer or walk-in, subtotal, round-off, total, paid now, added to account, status, cancel details, created by |
 | `bill_items` | Bill, product or none for one-off items, snapshot fields, quantity, rate, original rate if changed, line total |
@@ -73,11 +73,37 @@ starts `App`, the JavaFX application class. This is required when JavaFX is on t
 
 Ledger entry types: OPENING, SALE_CREDIT, PAYMENT, CANCEL_REVERSAL, ADJUSTMENT.
 
+Dates and times are stored as shop-local text such as `2026-09-30T14:05:09`, which sorts correctly
+for date-range searches. The full schema is in `src/main/resources/db/migration/V1__initial_schema.sql`.
+
+### Database guards
+
+The database itself enforces the most important rules, so even a bug in the app cannot break them:
+
+- Saved bills, bill lines, bill payments, ledger entries and audit records cannot be deleted or edited.
+- The only allowed change to a bill is FINAL to CANCELLED, and only with a reason, a user and a time.
+- A bill's totals must add up: total equals subtotal plus round-off, and paid plus to-account equals total.
+- A walk-in bill cannot put money on an account. Round-off must be between -0.49 and +0.50.
+- Packed (PCS) lines must have whole quantities. Payment modes must be CASH, UPI or CARD.
+- Ledger signs must match the entry type: payments are negative, sale credit is positive.
+- A product that appears on any bill cannot be deleted (foreign key).
+
+### Migrations
+
+Schema changes are SQL files in `src/main/resources/db/migration/`, listed in order in `index.txt`.
+At startup the runner:
+
+1. refuses to touch an SQLite file that was not created by this app;
+2. refuses to run if an applied migration file was edited (SHA-256 checksum, line endings ignored);
+3. refuses a database created by a newer app version;
+4. backs up an existing database before upgrading it;
+5. applies each new migration in its own transaction.
+
 ## Saving a bill
 
 All of these happen in one database transaction. Either everything is saved or nothing is.
 
-1. Take the next bill number.
+1. Take the next bill number: the highest bill number plus one. Bills are never deleted, so numbers never repeat.
 2. Insert the bill, its lines and its payments.
 3. If part of the total goes to the customer's account, insert a SALE_CREDIT ledger entry.
 4. Insert audit rows, for example for changed rates.
@@ -114,7 +140,11 @@ Printing happens after the transaction commits, so a printer problem never loses
 | Backups | `%LOCALAPPDATA%\VirpeMart\backups\` | `dev-data\backups\` |
 | Logs | `%LOCALAPPDATA%\VirpeMart\logs\` | `dev-data\logs\` |
 
-Development runs pass `-Dvirpemart.dataDir=<repo>\dev-data`, so test data never mixes with shop data.
+Development runs pass `-Dvirpemart.dataDir=dev-data`, so test data never mixes with shop data.
+The `VIRPEMART_DATA_DIR` environment variable does the same, which is handy for testing the packaged app.
+
+When the data folder is overridden like this, the app signs in a development owner called `dev-owner`
+automatically. Its password hash can never match any password. The real login arrives in Phase 7.
 
 ## Backups
 

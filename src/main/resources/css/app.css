@@ -21,6 +21,10 @@
     -fx-text-fill: #333333;
 }
 
+.status {
+    -fx-text-fill: #1f5a3a;
+}
+
 .muted {
     -fx-text-fill: #777777;
 }
