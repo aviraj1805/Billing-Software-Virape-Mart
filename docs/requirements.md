@@ -118,6 +118,26 @@ The printer model and the exact bill heading were not known yet, so both are **s
 - A printer problem never affects the saved bill: the screen says "saved but NOT printed" and the bill can be
   reprinted with "Reprint bill".
 
+## History and reports (built in Phase 6)
+
+These rules were chosen as sensible defaults and can be changed:
+
+- **Bill history** (owner and helper): bills of one day, a date range or all dates, newest first. The search box
+  finds the name on the bill, customer number or phone. A short number (up to 7 digits) finds only that bill
+  number, on any date. Any bill can be seen and reprinted.
+- **Cancel a bill** (owner only, reason required, any date):
+  - The bill is kept, marked CANCELLED and still listed. Its number is never used again.
+  - The part of the bill that went on the khata is taken off it automatically (a "Bill N cancelled" khata entry).
+  - Money paid for the bill at the counter is **given back** to the customer. The app says how much.
+  - Money paid towards old dues together with the bill **stays paid**, because it was not for this bill.
+  - If the customer still takes some items, the owner makes a new bill.
+  - Every cancel is recorded in the audit log. A cancelled bill cannot be "un-cancelled".
+- **Purchase history**: the "Bills" button on a customer shows all of that customer's bills.
+- **Reports** (owner only): one day or a date range (up to one year), with Today, Yesterday, This month and Last
+  month shortcuts. They show the number of bills, total sales, credit given on khata, and money received split
+  into Cash, UPI and Card: money paid at billing plus khata payments received that day. Cancelled bills are
+  shown separately and are not counted in sales or money received.
+
 ## Assumptions
 
 These were not asked directly. The user can change them at any time.

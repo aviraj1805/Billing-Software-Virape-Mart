@@ -133,6 +133,14 @@ Printing is split so that the content can be tested without a printer:
 4. `service.PrintService` ties it together, records reprints in the audit log and turns printer errors into a
    clear message (`PrintFailedException`). Tests use a fake `ReceiptPrinter`.
 
+## Cancelling a bill and reports
+
+- `BillingService.cancel` runs in one transaction: mark the bill CANCELLED (the only update the database
+  trigger allows), add a CANCEL_REVERSAL khata entry for the amount that went on the khata, and write an audit row.
+  `cancelPreview` shows the same effect before the owner confirms.
+- `ReportService.sales` reads `ReportRepository.daily`: bills and their payments are grouped by the bill's day
+  (FINAL bills only), and khata PAYMENT entries by the day they were received.
+
 ## Security
 
 - No network ports are opened.

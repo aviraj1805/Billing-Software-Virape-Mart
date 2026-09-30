@@ -4,6 +4,17 @@ All notable changes to this project are recorded here, newest first.
 
 ## [Unreleased]
 
+### Phase 6: History and reports
+
+- History & Reports screen with two tabs. Bills: find bills by date range, bill number, customer name, customer
+  number or phone; see and reprint them; the owner can cancel a bill with a reason.
+- Cancelling keeps the bill (marked Cancelled, number never reused), takes its khata part back automatically,
+  tells the owner how much money to give back, and records it in the audit log.
+- Customers screen: "Bills" button shows a customer's purchase history.
+- Reports tab (owner): daily summary and date-range sales with bills, sales, credit given, and money received by
+  Cash, UPI and Card (at billing and khata payments), plus a day-by-day table. Cancelled bills are not counted.
+- 308 automated tests.
+
 ### Phase 5: Printing
 
 - Printed labels in Marathi: एकूण (bill total), मागील बाकी (previous dues), जमा (paid now, one line for all

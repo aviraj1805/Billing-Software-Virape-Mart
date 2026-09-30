@@ -122,7 +122,10 @@ In a TextArea, Tab types a tab; use `^{TAB}` to move to the next field.
 Call `Focus-Window` right before sending function keys (F12 etc.); if the window lost focus, keys go nowhere.
 The search drop-down is a separate popup window: capture the whole screen to see it.
 `Invoke-Button` waits until a dialog opened by that button closes; to open a dialog, `SetFocus()` the button and
-send a space instead. Check printing with "Microsoft Print to PDF": Windows asks for a file name
+send a space instead.
+Test anything that cannot be undone (such as cancelling a bill) on a copy of `dev-data`: `javafx:run` always uses
+`dev-data`, so run `com.virpemart.billing.Launcher` with `java -cp` (classpath from
+`mvnw dependency:build-classpath` plus `target\classes`) and `-Dvirpemart.dataDir=<copy>`. Check printing with "Microsoft Print to PDF": Windows asks for a file name
 (`Save Print Output As`), and the PDF shows exactly what the printer would get.
 
 ## Code conventions
@@ -164,6 +167,14 @@ send a space instead. Check printing with "Microsoft Print to PDF": Windows asks
   `print.ReceiptRenderer` draws them (Nirmala UI font) for paper and for preview pictures, and
   `service.PrintService` prints, reprints (audited, "DUPLICATE COPY") and test-prints. Printing always runs
   after the bill is saved and off the FX thread. Tests use `FakePrinter`; never print in tests.
+- History: `BillingService.searchBills` (a short number is a bill number on any date), `cancel` / `cancelPreview`
+  (owner; CANCEL_REVERSAL for the khata part; counter money is given back). `ui.history.BillHistoryController` is
+  the Bills tab and, via `openForCustomer`, a customer's purchase history. `MainWindowController` refreshes the
+  open History tab each time it is shown (tab content does not get a new parent, so "reload when shown" there
+  does not work).
+- Reports: `ReportService.sales(from, to)` (owner) returns `SalesReport` of `DaySummary` rows; FINAL bills only;
+  khata payments count on the day received. Work it out with `Background.run`.
+- Date boxes: `DatePicker.setConverter(Format.dateInput())` for dd/MM/yyyy.
 - Settings: `SettingsService` reads and saves shop details and printer setup in the `settings` table (owner only).
 - Money: `model.Money` (paise) and `model.Quantity` (thousandths). `Money.times(Quantity)` and
   `Money.roundToRupee()` hold the only rounding logic; do not round anywhere else.
@@ -194,8 +205,8 @@ send a space instead. Check printing with "Microsoft Print to PDF": Windows asks
 | 3. Customers and ledger | Customers, opening balance, receive payment, balance and ledger view | Done |
 | 4. Billing | Billing screen, search, loose qty, one-off items, rate change, totals, split payments, save, hold | Done |
 | 5. Printing | Shop settings, printer settings, receipt with Marathi, print and reprint | Done (store printer test pending) |
-| 6. History and reports | Bill history, cancel with reversal, purchase history, reports | Next |
-| 7. Users, security, backup | Login, first-run setup, staff users, audit view, backups, restore | Not started |
+| 6. History and reports | Bill history, cancel with reversal, purchase history, reports | Done |
+| 7. Users, security, backup | Login, first-run setup, staff users, audit view, backups, restore | Next |
 | 8. Packaging and go-live | Install on store laptop, import products, user guide, training | Not started |
 
 ## Pending inputs from the user
