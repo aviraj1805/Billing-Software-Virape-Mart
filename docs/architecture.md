@@ -34,7 +34,6 @@ second counter is ever needed, the service layer can be exposed through a small 
 | Logging | SLF4J + Logback | Rolling log files for diagnosing problems |
 | CSV import | Apache Commons CSV | Correct quoting and UTF-8 Marathi text |
 | Printing | Java 2D printing through the Windows driver | Custom thermal paper widths and Marathi text |
-| Passwords | PBKDF2-HMAC-SHA256, built into Java | No extra dependency |
 | Tests | JUnit, service tests on a real temporary SQLite file | Tests real SQL and transactions |
 | Packaging | `jpackage` app image with a bundled Java runtime | Store laptop needs no Java install |
 
@@ -144,9 +143,9 @@ Printing is split so that the content can be tested without a printer:
 ## Security
 
 - No network ports are opened.
-- OWNER and STAFF logins. Passwords are stored only as salted PBKDF2 hashes.
-- First-run setup shows a one-time recovery code so a forgotten owner password cannot lock the shop out.
-- Role checks happen in the service layer, not only by hiding buttons.
+- No login screen (the user's decision): at every start `OwnerBootstrap` signs in the first active OWNER account,
+  creating "Owner" on a new database. Its password hash is "!", which can never match a password.
+- Role checks still happen in the service layer, so helper accounts could be added later without changing rules.
 - All SQL uses parameters, which prevents SQL injection.
 - Sensitive actions are written to the audit log.
 
@@ -174,13 +173,19 @@ Printing is split so that the content can be tested without a printer:
 Development runs pass `-Dvirpemart.dataDir=dev-data`, so test data never mixes with shop data.
 The `VIRPEMART_DATA_DIR` environment variable does the same, which is handy for testing the packaged app.
 
-When the data folder is overridden like this, the app signs in a development owner called `dev-owner`
-automatically. Its password hash can never match any password. The real login arrives in Phase 7.
+The development data has an older `dev-owner` account; as the first owner it is the one signed in there.
 
 ## Backups
 
-- A snapshot is taken automatically at the first start of each day and when the app closes.
-- The app keeps 30 daily and 12 monthly snapshots.
-- A backup is also taken before every schema upgrade and before every restore.
-- The owner can back up to any folder, such as a pendrive, and restore from a backup.
+- `BackupService` takes a `VACUUM INTO` snapshot, `auto-YYYY-MM-DD.db`, when the app opens (if today's is missing)
+  and replaces it when the app closes. It keeps 30 days, then the last file of each month for 12 months. Files with
+  other names are never touched.
+- A backup is also taken before every schema upgrade (`pre-upgrade-...db`).
+- The owner can back up to any folder, such as a pendrive (`VirpeMart-backup-...db`).
+- Restore works in two steps because the open data file cannot be swapped: `DatabaseCheck` checks the chosen file
+  (read-only), `PendingRestore.stage` copies it next to the data file and the app closes; at the next start
+  `PendingRestore.finish` moves the current data to `backups\replaced-...db` and puts the backup in place, before the
+  database is opened. The audit log records `BACKUP_RESTORED`.
+- At every start `DatabaseCheck` runs SQLite's `quick_check`. A damaged file stops the start with
+  `DamagedDataException`, and `App` offers the newest good backup.
 - Updating the app replaces only the program folder, so data is never touched.

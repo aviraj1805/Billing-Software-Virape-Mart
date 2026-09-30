@@ -4,6 +4,19 @@ All notable changes to this project are recorded here, newest first.
 
 ## [Unreleased]
 
+### Phase 7: Backups, restore and activity log
+
+- No login screen (the user's decision). The app signs in the shop owner automatically at every start, creating an
+  "Owner" account on a new database. Before this, the app only worked on development data.
+- Automatic daily backup on this laptop when the app opens and when it closes; 30 days plus one per month for a
+  year are kept.
+- Settings > Backups: last backup time, "Back up now to a folder or pendrive", and "Restore a backup" (checked,
+  confirmed, finished when the app opens again; the replaced data is kept).
+- The app checks the data file at every start and offers the newest good backup if it is damaged.
+- History & Reports > Activity log: every recorded change in plain words, with date range and search.
+- Long error messages are no longer cut off.
+- 330 automated tests.
+
 ### Phase 6: History and reports
 
 - History & Reports screen with two tabs. Bills: find bills by date range, bill number, customer name, customer

@@ -90,8 +90,9 @@ SLF4J + Logback, Apache Commons CSV, JUnit Jupiter, `jpackage`. Library versions
 - Development: `mvnw.cmd javafx:run` passes `-Dvirpemart.dataDir=dev-data` (git-ignored). The
   `VIRPEMART_DATA_DIR` environment variable also works, e.g. to test the packaged exe against a temp folder.
   Never point a dev run at real shop data.
-- With an overridden data folder, startup signs in `dev-owner` automatically (`service.DevOwnerBootstrap`).
-  Its password hash `!` can never match. Real login comes in Phase 7.
+- There is **no login screen** (user's decision): every start signs in the first active OWNER
+  (`service.OwnerBootstrap`, creates "Owner" on a new database; password hash `!` never matches). On dev-data that
+  is the older `dev-owner` account. Keep the role checks in services anyway.
 - Never commit databases, backups, logs or real customer data.
 
 ## Known pitfalls
@@ -107,6 +108,10 @@ SLF4J + Logback, Apache Commons CSV, JUnit Jupiter, `jpackage`. Library versions
 - A wrapped `Label` inside a `VBox` gets squeezed and shows "...". Give it `minHeight="-Infinity"`.
   Buttons next to a growing label need `minWidth="-Infinity"`.
 - JavaFX hides hint (prompt) text in a focused box; `app.css` overrides this so hints stay visible.
+- An `fx:include`d FXML with its own controller needs its own `fx:id="root"` if the controller uses `root`.
+- Long `Alert` messages get cut off with "..." unless the dialog pane has `setMinHeight(Region.USE_PREF_SIZE)`.
+- To refresh a screen when it is shown again, listen to `sceneProperty()` (a node inside a tab or an included
+  file keeps its parent, so `parentProperty()` does not change).
 - A focused JavaFX button takes the Enter key, even if another button is the default. In a window where Enter
   should press a button, focus that button when the window opens (see `ReceiptPreviewController`).
 - The packaged runtime has less locale data than the JDK (e.g. "Sep" instead of "Sept"). Do not depend on
@@ -123,6 +128,8 @@ Call `Focus-Window` right before sending function keys (F12 etc.); if the window
 The search drop-down is a separate popup window: capture the whole screen to see it.
 `Invoke-Button` waits until a dialog opened by that button closes; to open a dialog, `SetFocus()` the button and
 send a space instead.
+If the user has the app open too, both windows have the same title: start your test app with `Start-Process -PassThru`
+and use `Find-ProcessWindow <pid>` so you never click in the user's app.
 Test anything that cannot be undone (such as cancelling a bill) on a copy of `dev-data`: `javafx:run` always uses
 `dev-data`, so run `com.virpemart.billing.Launcher` with `java -cp` (classpath from
 `mvnw dependency:build-classpath` plus `target\classes`) and `-Dvirpemart.dataDir=<copy>`. Check printing with "Microsoft Print to PDF": Windows asks for a file name
@@ -175,6 +182,12 @@ Test anything that cannot be undone (such as cancelling a bill) on a copy of `de
 - Reports: `ReportService.sales(from, to)` (owner) returns `SalesReport` of `DaySummary` rows; FINAL bills only;
   khata payments count on the day received. Work it out with `Background.run`.
 - Date boxes: `DatePicker.setConverter(Format.dateInput())` for dd/MM/yyyy.
+- Backups: `BackupService` (automatic `auto-YYYY-MM-DD.db` at open and close, retention, back up now, check and
+  restore). Restore = `PendingRestore.stage`, close, `finish` at the next start; never delete the replaced data.
+  `DatabaseCheck.inspect` checks a file read-only. `Startup` refuses a damaged file with `DamagedDataException`.
+- Activity log: `AuditService.search` (owner); plain-word action names live in `ActivityLogController.ACTIONS`,
+  so add one there for every new audit action code.
+- `Services.create(database, session, clock, backupsDir)` for the app; tests use the overload with a printer.
 - Settings: `SettingsService` reads and saves shop details and printer setup in the `settings` table (owner only).
 - Money: `model.Money` (paise) and `model.Quantity` (thousandths). `Money.times(Quantity)` and
   `Money.roundToRupee()` hold the only rounding logic; do not round anywhere else.
@@ -206,8 +219,8 @@ Test anything that cannot be undone (such as cancelling a bill) on a copy of `de
 | 4. Billing | Billing screen, search, loose qty, one-off items, rate change, totals, split payments, save, hold | Done |
 | 5. Printing | Shop settings, printer settings, receipt with Marathi, print and reprint | Done (store printer test pending) |
 | 6. History and reports | Bill history, cancel with reversal, purchase history, reports | Done |
-| 7. Users, security, backup | Login, first-run setup, staff users, audit view, backups, restore | Next |
-| 8. Packaging and go-live | Install on store laptop, import products, user guide, training | Not started |
+| 7. Backup and audit | No login (user's decision), automatic owner sign-in, backups, restore, damaged-file check, activity log | Done |
+| 8. Packaging and go-live | Install on store laptop, import products, user guide, training | Next |
 
 ## Pending inputs from the user
 
@@ -228,4 +241,4 @@ Test anything that cannot be undone (such as cancelling a bill) on a copy of `de
 - **MRP**: Maximum Retail Price printed on a packet.
 - **Loose item**: sold by weight at a rate per kg or per litre.
 - **One-off item**: an item typed directly on a bill that is not in the product list.
-- **OWNER / STAFF**: the father and his helper, with different permissions.
+- **OWNER / STAFF**: roles in the code. With no login, the app always works as OWNER; STAFF is unused for now.

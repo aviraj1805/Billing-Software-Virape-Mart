@@ -31,7 +31,7 @@ It has two main areas:
 | Returns and mistakes | The owner cancels the whole bill with a reason and makes a new bill. Any credit from the cancelled bill is reversed automatically. |
 | Bill numbers | Continuous: 1, 2, 3 and so on. Never reset and never reused, even for cancelled bills. |
 | Hold bill | A bill can be put on hold to serve another customer, then resumed. Held bills are kept in memory only. |
-| Users | The father logs in as OWNER. A helper logs in as STAFF. |
+| Users | **No login screen** (decided in Phase 7: one laptop, practically no risk of other people using it). The app always works as the owner, so the helper can use every screen. Every change is still recorded in the activity log. |
 | Reports | Daily sales summary with the Cash, UPI and Card split. Sales for a date range. |
 | Existing product list | Kept in Excel or Google Sheets, so the app provides a CSV import. |
 | Backups | Kept on the store laptop only. The user accepted the risk of theft or disk failure. |
@@ -138,6 +138,21 @@ These rules were chosen as sensible defaults and can be changed:
   into Cash, UPI and Card: money paid at billing plus khata payments received that day. Cancelled bills are
   shown separately and are not counted in sales or money received.
 
+## Backups and activity log (built in Phase 7)
+
+These rules were chosen as sensible defaults and can be changed:
+
+- **Automatic backups** on this laptop: one file per day, made when the app opens and brought up to date when it
+  closes. Daily backups are kept for 30 days; older ones only as the last backup of each month, for 12 months.
+- **Back up now**: Settings > Backups copies the data to any folder, for example a pendrive.
+- **Restore a backup**: Settings > Backups. The app shows when the backup was saved and how many bills it has, asks
+  to confirm, then closes. The backup is put in place when the app is opened again. The data it replaces is never
+  deleted; it is kept in the backups folder as "replaced-...", so a restore can be undone.
+- **Damaged data file**: when the app opens, it checks the data file. If it is damaged, the app offers to restore the
+  newest good backup (the damaged file is kept).
+- **Activity log** (History & Reports): every change to rates, bills, products, customers, khata corrections,
+  settings and backups, with date, time and who did it. Records cannot be changed or deleted.
+
 ## Assumptions
 
 These were not asked directly. The user can change them at any time.
@@ -150,6 +165,10 @@ These were not asked directly. The user can change them at any time.
 - The app warns before closing if any bills are on hold.
 
 ## Permissions
+
+Because there is no login, the app always works as the OWNER and everything below is available at the counter.
+The STAFF column is kept in the code (services still check roles), so helper accounts could be added later if
+the shop ever wants them.
 
 | Action | OWNER | STAFF |
 |---|---|---|
