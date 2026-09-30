@@ -1,5 +1,6 @@
 package com.virpemart.billing.service;
 
+import java.nio.file.Path;
 import java.time.Clock;
 
 import com.virpemart.billing.db.Database;
@@ -27,15 +28,23 @@ public record Services(
         BillingService billing,
         SettingsService settings,
         PrintService printing,
-        ReportService reports) {
+        ReportService reports,
+        BackupService backups,
+        AuditService audit) {
 
-    /** Wires every service to the database, session and clock, printing on real Windows printers. */
-    public static Services create(Database database, Session session, Clock clock) {
-        return create(database, session, clock, new SystemReceiptPrinter());
+    /** Wires every service for the running app: real Windows printers and the app's backups folder. */
+    public static Services create(Database database, Session session, Clock clock, Path backupsDir) {
+        return create(database, session, clock, new SystemReceiptPrinter(), backupsDir);
     }
 
-    /** Wires every service, with the given printer. Tests pass a fake printer. */
+    /** For tests: the given (fake) printer, and backups in a "backups" folder next to the database file. */
     public static Services create(Database database, Session session, Clock clock, ReceiptPrinter printer) {
+        return create(database, session, clock, printer, database.file().resolveSibling("backups"));
+    }
+
+    /** Wires every service to the database, session, clock, printer and backups folder. */
+    public static Services create(Database database, Session session, Clock clock, ReceiptPrinter printer,
+                                  Path backupsDir) {
         AuditRepository audit = new AuditRepository();
         CategoryRepository categoryRepository = new CategoryRepository();
         ProductRepository productRepository = new ProductRepository();
@@ -54,7 +63,9 @@ public record Services(
         SettingsService settings = new SettingsService(database, new SettingsRepository(), audit, session, clock);
         PrintService printing = new PrintService(database, billing, settings, audit, printer, session, clock);
         ReportService reports = new ReportService(database, new ReportRepository(), session);
+        BackupService backups = new BackupService(database, backupsDir, audit, session, clock);
+        AuditService auditLog = new AuditService(database, audit, session);
         return new Services(categories, products, productImport, customers, ledger, billing, settings, printing,
-                reports);
+                reports, backups, auditLog);
     }
 }

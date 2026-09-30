@@ -1,6 +1,7 @@
 package com.virpemart.billing;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.time.Clock;
 import java.util.Optional;
 
@@ -11,10 +12,17 @@ import com.virpemart.billing.config.AppInfo;
 import com.virpemart.billing.config.AppPaths;
 import com.virpemart.billing.config.SingleInstanceLock;
 import com.virpemart.billing.db.Database;
+import com.virpemart.billing.db.DatabaseCheck;
+import com.virpemart.billing.db.DatabaseException;
+import com.virpemart.billing.db.DbTime;
 import com.virpemart.billing.db.MigrationException;
 import com.virpemart.billing.db.MigrationRunner;
+import com.virpemart.billing.db.PendingRestore;
+import com.virpemart.billing.model.User;
+import com.virpemart.billing.repository.AuditRepository;
 import com.virpemart.billing.repository.UserRepository;
-import com.virpemart.billing.service.DevOwnerBootstrap;
+import com.virpemart.billing.service.BackupService;
+import com.virpemart.billing.service.OwnerBootstrap;
 import com.virpemart.billing.service.Services;
 import com.virpemart.billing.service.Session;
 
@@ -24,8 +32,11 @@ import com.virpemart.billing.service.Session;
  *   <li>find and create the app folders;</li>
  *   <li>start logging into the logs folder;</li>
  *   <li>make sure no other copy of the app is running;</li>
+ *   <li>finish a backup restore, if one is waiting;</li>
+ *   <li>check that the data file is not damaged;</li>
  *   <li>open the database and upgrade its schema (with a backup first);</li>
- *   <li>prepare the session (development folders sign in a development owner automatically).</li>
+ *   <li>sign in the owner (the shop uses no login screen);</li>
+ *   <li>make today's automatic backup.</li>
  * </ol>
  */
 public final class Startup {
@@ -53,25 +64,64 @@ public final class Startup {
         SingleInstanceLock lock = acquireLock(paths, log);
         try {
             Clock clock = Clock.systemDefaultZone();
+            Optional<String> restored = finishPendingRestore(paths, clock, log);
             Database database = new Database(paths.databaseFile());
+            checkNotDamaged(paths, database, log);
             MigrationRunner.Result migration =
                     new MigrationRunner(database, MigrationRunner.DEFAULT_LOCATION, paths.backupsDir(), clock).migrate();
 
             Session session = new Session();
-            if (paths.isOverridden()) {
-                session.signIn(new DevOwnerBootstrap(database, new UserRepository(), clock).ensureDevOwner());
-                log.info("Development data folder: signed in as {}", DevOwnerBootstrap.USERNAME);
-            }
+            User owner = new OwnerBootstrap(database, new UserRepository(), clock).ensureOwner();
+            session.signIn(owner);
+            log.info("Signed in as {}", owner.username());
+            restored.ifPresent(note -> database.runInTransaction(c -> new AuditRepository().insert(c, null,
+                    "BACKUP_RESTORED", null, null, note, DbTime.now(clock))));
 
-            Services services = Services.create(database, session, clock);
+            Services services = Services.create(database, session, clock, paths.backupsDir());
+            services.backups().backupOnStartup();
             log.info("Startup complete, schema version {}", migration.toVersion());
             return new AppContext(paths, database, clock, session, services, migration.toVersion(), lock);
+        } catch (StartupException e) {
+            closeQuietly(lock, e);
+            throw e;
         } catch (RuntimeException e) {
             log.error("Startup failed", e);
             closeQuietly(lock, e);
             String reason = (e instanceof MigrationException) ? e.getMessage() + "\n\n" : "";
             throw new StartupException("The app could not open its database. Nothing was changed.\n\n"
                     + reason + "Details were saved in the log folder:\n" + paths.logsDir(), e);
+        }
+    }
+
+    /** Puts a backup in place if the owner chose "Restore" last time. The replaced data is kept. */
+    private static Optional<String> finishPendingRestore(AppPaths paths, Clock clock, Logger log)
+            throws StartupException {
+        try {
+            Optional<String> restored = PendingRestore.finish(paths.databaseFile(), paths.backupsDir(), clock);
+            restored.ifPresent(note -> log.info("Backup restore finished: {}", note));
+            return restored;
+        } catch (IOException e) {
+            log.error("Could not finish restoring a backup", e);
+            throw new StartupException("A backup could not be put in place. Close other programs and open the app "
+                    + "again. Nothing was deleted.\n\nDetails were saved in the log folder:\n" + paths.logsDir(), e);
+        }
+    }
+
+    /** Stops the start if SQLite finds the data file damaged, offering the newest good backup instead. */
+    private static void checkNotDamaged(AppPaths paths, Database database, Logger log) throws DamagedDataException {
+        if (!Files.exists(database.file())) {
+            return; // first start: the file is created by the upgrade step
+        }
+        DatabaseCheck.Problem problem;
+        try {
+            problem = database.query(DatabaseCheck::inspect).problem();
+        } catch (DatabaseException e) {
+            log.error("The data file cannot be opened", e);
+            problem = DatabaseCheck.Problem.NOT_A_DATABASE;
+        }
+        if (problem == DatabaseCheck.Problem.DAMAGED || problem == DatabaseCheck.Problem.NOT_A_DATABASE) {
+            log.error("The data file {} is damaged ({})", database.file(), problem);
+            throw new DamagedDataException(database.file(), BackupService.newestGoodBackup(paths.backupsDir()));
         }
     }
 

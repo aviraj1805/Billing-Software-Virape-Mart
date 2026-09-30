@@ -2,8 +2,15 @@ package com.virpemart.billing.repository;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+
+import com.virpemart.billing.db.DbTime;
+import com.virpemart.billing.model.AuditEntry;
 
 /** All SQL for the {@code audit_log} table: a permanent record of who changed what. */
 public final class AuditRepository {
@@ -29,6 +36,40 @@ public final class AuditRepository {
             statement.setString(6, details);
             statement.executeUpdate();
         }
+    }
+
+    /**
+     * Audit records from {@code from} to {@code to} (both days included, either may be null), newest first.
+     * The text, if given, matches part of the details or the action code.
+     */
+    public List<AuditEntry> search(Connection connection, LocalDate from, LocalDate to, String text, int limit)
+            throws SQLException {
+        String start = from == null ? null : DbTime.format(from.atStartOfDay());
+        String before = to == null ? null : DbTime.format(to.plusDays(1).atStartOfDay());
+        String like = text == null ? null : "%" + ProductRepository.escapeLike(text) + "%";
+        List<AuditEntry> entries = new ArrayList<>();
+        try (PreparedStatement statement = connection.prepareStatement(
+                "SELECT a.id, a.created_at, u.display_name, a.action, a.details"
+                        + " FROM audit_log a LEFT JOIN users u ON u.id = a.user_id"
+                        + " WHERE (? IS NULL OR a.created_at >= ?) AND (? IS NULL OR a.created_at < ?)"
+                        + " AND (? IS NULL OR a.details LIKE ? ESCAPE '\\' OR a.action LIKE ? ESCAPE '\\')"
+                        + " ORDER BY a.id DESC LIMIT ?")) {
+            statement.setString(1, start);
+            statement.setString(2, start);
+            statement.setString(3, before);
+            statement.setString(4, before);
+            statement.setString(5, like);
+            statement.setString(6, like);
+            statement.setString(7, like);
+            statement.setInt(8, limit);
+            try (ResultSet rs = statement.executeQuery()) {
+                while (rs.next()) {
+                    entries.add(new AuditEntry(rs.getLong("id"), DbTime.parse(rs.getString("created_at")),
+                            rs.getString("display_name"), rs.getString("action"), rs.getString("details")));
+                }
+            }
+        }
+        return entries;
     }
 
     static void setNullableLong(PreparedStatement statement, int index, Long value) throws SQLException {

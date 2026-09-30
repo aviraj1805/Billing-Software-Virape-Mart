@@ -33,6 +33,14 @@ public final class UserRepository {
         }
     }
 
+    /** The oldest active OWNER account, if any. */
+    public Optional<User> findFirstActiveOwner(Connection connection) throws SQLException {
+        try (PreparedStatement statement = connection.prepareStatement(
+                "SELECT " + COLUMNS + " FROM users WHERE role = 'OWNER' AND active = 1 ORDER BY id LIMIT 1")) {
+            return readOne(statement);
+        }
+    }
+
     public Optional<User> findById(Connection connection, long id) throws SQLException {
         try (PreparedStatement statement = connection.prepareStatement(
                 "SELECT " + COLUMNS + " FROM users WHERE id = ?")) {
