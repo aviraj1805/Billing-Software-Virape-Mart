@@ -27,6 +27,7 @@
         <sqlite.version>3.53.4.0</sqlite.version>
         <slf4j.version>2.0.19</slf4j.version>
         <logback.version>1.6.4</logback.version>
+        <commons-csv.version>1.14.1</commons-csv.version>
         <junit.version>6.1.3</junit.version>
 
         <!-- Plugin versions -->
@@ -80,6 +81,13 @@
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
             <version>${logback.version}</version>
+        </dependency>
+
+        <!-- Reading product lists saved from Excel as CSV (handles quotes and Marathi text) -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-csv</artifactId>
+            <version>${commons-csv.version}</version>
         </dependency>
 
         <!-- Tests -->

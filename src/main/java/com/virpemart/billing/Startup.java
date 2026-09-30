@@ -15,6 +15,7 @@ import com.virpemart.billing.db.MigrationException;
 import com.virpemart.billing.db.MigrationRunner;
 import com.virpemart.billing.repository.UserRepository;
 import com.virpemart.billing.service.DevOwnerBootstrap;
+import com.virpemart.billing.service.Services;
 import com.virpemart.billing.service.Session;
 
 /**
@@ -62,8 +63,9 @@ public final class Startup {
                 log.info("Development data folder: signed in as {}", DevOwnerBootstrap.USERNAME);
             }
 
+            Services services = Services.create(database, session, clock);
             log.info("Startup complete, schema version {}", migration.toVersion());
-            return new AppContext(paths, database, clock, session, migration.toVersion(), lock);
+            return new AppContext(paths, database, clock, session, services, migration.toVersion(), lock);
         } catch (RuntimeException e) {
             log.error("Startup failed", e);
             closeQuietly(lock, e);
