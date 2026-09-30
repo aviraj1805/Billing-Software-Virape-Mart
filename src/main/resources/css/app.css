@@ -1,0 +1,26 @@
+/* Shared styles for the whole application. */
+
+.root {
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 14px;
+    -fx-background-color: #f7f7f5;
+}
+
+.welcome {
+    -fx-padding: 40;
+}
+
+.title {
+    -fx-font-size: 32px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #1f3a2e;
+}
+
+.subtitle {
+    -fx-font-size: 16px;
+    -fx-text-fill: #333333;
+}
+
+.muted {
+    -fx-text-fill: #777777;
+}
