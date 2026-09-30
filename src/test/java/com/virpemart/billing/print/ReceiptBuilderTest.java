@@ -82,7 +82,7 @@ class ReceiptBuilderTest {
                 3. टाटा मीठ
                      2 x 28.00 | 56.00
                 ----
-                BILL TOTAL | ₹82.00
+                एकूण | ₹82.00
                 ----
                 Paid by Cash | ₹50.00
                 Paid by UPI | ₹32.00
@@ -98,43 +98,49 @@ class ReceiptBuilderTest {
     }
 
     @Test
-    void khataBillShowsPreviousDuesAndTotalWithDues() {
+    void khataBillShowsPreviousDuesPaidAndBalanceInMarathi() {
         String text = ReceiptBuilder.forBill(khata(Money.parse("480"), List.of(cash("50")), List.of()), SHOP, false)
                 .toPlainText();
 
         assertTrue(text.contains("Customer: Sunita Patil (C0003)"), text);
         assertTrue(text.endsWith("""
                 ----
-                BILL TOTAL | ₹82.00
+                एकूण | ₹82.00
                 ----
-                Previous dues | ₹480.00
-                Total with dues | ₹562.00
-                Paid now (Cash) | ₹50.00
-                Balance dues | ₹512.00
+                मागील बाकी | ₹480.00
+                जमा | ₹50.00
+                एकूण बाकी | ₹512.00
                 ----
                 Thank you, visit again"""), text);
     }
 
     @Test
-    void khataPaymentTowardsOldDuesIsAddedToPaidNow() {
+    void allMoneyPaidWithTheBillIsOneJamaLine() {
         String text = ReceiptBuilder.forBill(
                 khata(Money.parse("480"), List.of(cash("82")), List.of(cash("18"), upi("100"))), SHOP, false)
                 .toPlainText();
 
-        assertTrue(text.contains("Paid now (Cash) | ₹100.00\nPaid now (UPI) | ₹100.00\nBalance dues | ₹362.00"),
-                text);
+        assertTrue(text.contains("मागील बाकी | ₹480.00\nजमा | ₹200.00\nएकूण बाकी | ₹362.00"), text);
     }
 
     @Test
     void khataWithNothingPaidAndAnAdvance() {
         String nothing = ReceiptBuilder.forBill(khata(Money.ZERO, List.of(), List.of()), SHOP, false).toPlainText();
-        assertTrue(nothing.contains("Previous dues | ₹0.00\nTotal with dues | ₹82.00\nPaid now | ₹0.00\n"
-                + "Balance dues | ₹82.00"), nothing);
+        assertTrue(nothing.contains("मागील बाकी | ₹0.00\nजमा | ₹0.00\nएकूण बाकी | ₹82.00"), nothing);
 
         String advance = ReceiptBuilder.forBill(khata(Money.parse("-200"), List.of(), List.of()), SHOP, false)
                 .toPlainText();
-        assertTrue(advance.contains("Previous advance | -₹200.00\nTotal with dues | -₹118.00"), advance);
-        assertTrue(advance.contains("Advance left | ₹118.00"), advance);
+        assertTrue(advance.contains("मागील बाकी | -₹200.00\nजमा | ₹0.00\nएकूण बाकी | -₹118.00"), advance);
+    }
+
+    @Test
+    void englishTotalsWordingIsNotPrinted() {
+        String khata = ReceiptBuilder.forBill(khata(Money.parse("-200"), List.of(cash("50")), List.of()), SHOP, false)
+                .toPlainText();
+
+        for (String word : List.of("BILL TOTAL", "Total with dues", "Previous", "Paid now", "Balance", "Advance")) {
+            assertFalse(khata.contains(word), word + " should not be printed:\n" + khata);
+        }
     }
 
     @Test
@@ -181,7 +187,7 @@ class ReceiptBuilderTest {
     void totalIsPrintedLarge() {
         Receipt receipt = ReceiptBuilder.forBill(walkIn(null, List.of(cash("82")), null), SHOP, false);
 
-        assertTrue(receipt.lines().contains(new Pair("BILL TOTAL", "₹82.00", Style.LARGE)));
+        assertTrue(receipt.lines().contains(new Pair("एकूण", "₹82.00", Style.LARGE)));
     }
 
     @Test
@@ -197,7 +203,7 @@ class ReceiptBuilderTest {
 
         assertTrue(text.contains("TEST PRINT - NOT A REAL BILL"), text);
         assertTrue(text.contains("तूर डाळ"), text);
-        assertTrue(text.contains("Total with dues | ₹596.00"), text);
-        assertTrue(text.contains("Balance dues | ₹496.00"), text);
+        assertFalse(text.contains("Total with dues"), text);
+        assertTrue(text.contains("मागील बाकी | ₹480.00\nजमा | ₹100.00\nएकूण बाकी | ₹496.00"), text);
     }
 }

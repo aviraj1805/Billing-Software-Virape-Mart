@@ -103,10 +103,12 @@ The printer model and the exact bill heading were not known yet, so both are **s
 - Corrected by the user after the first Phase 5 test print (the demo bill is the reference; do not add other wording):
   - Each item prints **only the Marathi name**, then quantity x rate and the amount. No English name, pack size or
     MRP. An item without a Marathi name (for example a one-off item) prints its English name so the line is not blank.
-  - Only **BILL TOTAL** is printed. Subtotal, round off and "You saved" are not printed (they are still saved with the
-    bill and shown on screen).
-  - A khata bill prints previous dues (an advance as a minus amount), total with dues, paid now by mode, and the
-    balance dues (or advance left). There is no "This bill" line; BILL TOTAL above already shows it.
+  - Only the bill total is printed, labelled **एकूण**. Subtotal, round off and "You saved" are not printed (they are
+    still saved with the bill and shown on screen).
+  - A khata bill prints **मागील बाकी** (previous dues), **जमा** (all money paid with the bill, in any mix of Cash,
+    UPI and Card, as one line) and **एकूण बाकी** (balance after the bill). An advance prints as a minus amount under
+    the same labels. "This bill" and "Total with dues" are never printed.
+  - These Marathi labels are the only wording for these lines; no English is printed next to them.
 - Loose quantities print with three decimals (0.500 kg).
 - Printing happens when the owner presses **Print** (the "Print?" question after saving, or the Print button when
   reprinting).

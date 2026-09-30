@@ -28,7 +28,7 @@ import com.virpemart.billing.print.ReceiptLine.Text;
  *
  * <p>Layout, top to bottom: shop heading, bill number and date, customer, items (Marathi name, then
  * quantity x rate and amount), the bill total, then payment. A khata customer's bill shows the previous dues,
- * the total with dues, what was paid now and the balance left. Subtotal, round off, MRP and savings are
+ * what was paid now and the balance left, in the user's Marathi wording. Subtotal, round off, MRP and savings are
  * not printed (the user's choice); they are still saved with the bill.
  */
 public final class ReceiptBuilder {
@@ -36,6 +36,12 @@ public final class ReceiptBuilder {
     private static final DateTimeFormatter DATE_TIME =
             DateTimeFormatter.ofPattern("dd/MM/yyyy h:mm a", Locale.ENGLISH);
     private static final Rule RULE = new Rule();
+
+    // Printed wording chosen by the user. Do not add English next to it.
+    static final String BILL_TOTAL = "एकूण";
+    static final String PREVIOUS_DUES = "मागील बाकी";
+    static final String PAID_NOW = "जमा";
+    static final String BALANCE_DUES = "एकूण बाकी";
     private static final String INDENT = "     ";
 
     private ReceiptBuilder() {
@@ -140,9 +146,9 @@ public final class ReceiptBuilder {
         return line.nameMr() != null ? line.nameMr() : line.displayName();
     }
 
-    /** Only the final total is printed; subtotal, round off and savings are not. */
+    /** Only the final total ("एकूण") is printed; subtotal, round off and savings are not. */
     private static void totals(List<ReceiptLine> out, BillTotals totals) {
-        out.add(new Pair("BILL TOTAL", rupees(totals.total()), Style.LARGE));
+        out.add(new Pair(BILL_TOTAL, rupees(totals.total()), Style.LARGE));
     }
 
     private static void walkInPayment(List<ReceiptLine> out, BillDetails bill) {
@@ -151,27 +157,15 @@ public final class ReceiptBuilder {
         }
     }
 
-    /** Previous dues, total with dues, paid now and the balance left. */
+    /**
+     * Previous dues (मागील बाकी), money paid now (जमा) and the balance left (एकूण बाकी).
+     * All money paid with the bill, in any mix of modes, is one "जमा" line.
+     * An advance has no separate wording: it prints as a minus amount, for example "मागील बाकी -₹50.00".
+     */
     private static void khata(List<ReceiptLine> out, BillDetails bill) {
-        Money total = bill.totals().total();
-        Money previous = bill.previousBalance();
-        // An advance is shown as a minus amount, so "bill total - advance = total with dues" is easy to follow.
-        out.add(new Pair(previous.isNegative() ? "Previous advance" : "Previous dues", rupees(previous),
-                Style.NORMAL));
-        out.add(new Pair("Total with dues", rupees(previous.plus(total)), Style.BOLD));
-        Map<PaymentMode, Money> paid = bill.paidByMode();
-        if (paid.isEmpty()) {
-            out.add(new Pair("Paid now", rupees(Money.ZERO), Style.NORMAL));
-        }
-        for (Map.Entry<PaymentMode, Money> part : paid.entrySet()) {
-            out.add(new Pair("Paid now (" + part.getKey().label() + ")", rupees(part.getValue()), Style.NORMAL));
-        }
-        Money after = bill.balanceAfter();
-        if (after.isNegative()) {
-            out.add(new Pair("Advance left", rupees(after.negate()), Style.LARGE));
-        } else {
-            out.add(new Pair("Balance dues", rupees(after), Style.LARGE));
-        }
+        out.add(new Pair(PREVIOUS_DUES, rupees(bill.previousBalance()), Style.NORMAL));
+        out.add(new Pair(PAID_NOW, rupees(bill.paidTotal()), Style.NORMAL));
+        out.add(new Pair(BALANCE_DUES, rupees(bill.balanceAfter()), Style.LARGE));
     }
 
     /** "0.500 kg" for loose items (three decimals, as they are weighed), "2" for packets. */

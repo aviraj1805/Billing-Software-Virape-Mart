@@ -6,6 +6,9 @@ All notable changes to this project are recorded here, newest first.
 
 ### Phase 5: Printing
 
+- Printed labels in Marathi: एकूण (bill total), मागील बाकी (previous dues), जमा (paid now, one line for all
+  modes), एकूण बाकी (balance). "Total with dues" is no longer printed.
+
 - Bill content corrected after the first test print: items print only the Marathi name, quantity x rate and
   amount; subtotal, round off, MRP, "You saved" and "This bill" are no longer printed.
 
