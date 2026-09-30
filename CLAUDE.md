@@ -202,7 +202,8 @@ send a space instead. Check printing with "Microsoft Print to PDF": Windows asks
 
 - Publish the repository to GitHub as a private repo.
 - Printer brand and model, and a test print on the real store printer (Settings > Print a test bill).
-  Shop details are typed by the owner in Settings; the user should confirm the exact wording.
+  Do not tune paper size, margins, centring or spacing for a specific printer until the user gives the model
+  and the real test-print problems. The bill wording follows the user's demo bill; do not add new text.
 - Store laptop Windows version and RAM, and the product Excel sheet: needed before Phase 8.
   The user never pasted the sheet's header row; the import accepts common column names
   (see `docs/product-import-guide.md`). If their real sheet uses other names, add them to

@@ -26,9 +26,10 @@ import com.virpemart.billing.print.ReceiptLine.Text;
 /**
  * Decides what a printed bill says, line by line. It does not draw anything, so it can be tested easily.
  *
- * <p>Layout, top to bottom: shop heading, bill number and date, customer, items (English name, Marathi name,
- * quantity x rate and amount), totals with round off and savings, then payment. A khata customer's bill also shows
- * this bill, the previous dues, the total with dues, what was paid now and the balance left.
+ * <p>Layout, top to bottom: shop heading, bill number and date, customer, items (Marathi name, then
+ * quantity x rate and amount), the bill total, then payment. A khata customer's bill shows the previous dues,
+ * the total with dues, what was paid now and the balance left. Subtotal, round off, MRP and savings are
+ * not printed (the user's choice); they are still saved with the bill.
  */
 public final class ReceiptBuilder {
 
@@ -125,30 +126,23 @@ public final class ReceiptBuilder {
     private static void items(List<ReceiptLine> out, List<CartLine> lines) {
         for (int i = 0; i < lines.size(); i++) {
             CartLine line = lines.get(i);
-            out.add(left((i + 1) + ". " + line.displayName(), Style.NORMAL));
-            if (line.nameMr() != null) {
-                out.add(left(INDENT + line.nameMr(), Style.NORMAL));
-            }
+            out.add(left((i + 1) + ". " + printedName(line), Style.NORMAL));
             String detail = INDENT + quantity(line.quantity(), line.unit()) + " x " + line.rate().toGroupedString();
-            if (line.mrp() != null && line.mrp().compareTo(line.rate()) > 0) {
-                detail += "  (MRP " + line.mrp().toGroupedString() + ")";
-            }
             out.add(new Pair(detail, line.lineTotal().toGroupedString(), Style.NORMAL));
         }
     }
 
+    /**
+     * The printed item name: the Marathi name only. An item without a Marathi name (for example a one-off item)
+     * prints its English name with pack size, so no line is ever blank.
+     */
+    static String printedName(CartLine line) {
+        return line.nameMr() != null ? line.nameMr() : line.displayName();
+    }
+
+    /** Only the final total is printed; subtotal, round off and savings are not. */
     private static void totals(List<ReceiptLine> out, BillTotals totals) {
-        int count = totals.lineCount();
-        out.add(new Pair("Subtotal (" + count + (count == 1 ? " item)" : " items)"),
-                totals.subtotal().toGroupedString(), Style.NORMAL));
-        if (!totals.roundOff().isZero()) {
-            String sign = totals.roundOff().isPositive() ? "+" : "";
-            out.add(new Pair("Round off", sign + totals.roundOff().toGroupedString(), Style.NORMAL));
-        }
         out.add(new Pair("BILL TOTAL", rupees(totals.total()), Style.LARGE));
-        if (totals.savings().isPositive()) {
-            out.add(centered("You saved " + rupees(totals.savings()) + " on MRP", Style.BOLD));
-        }
     }
 
     private static void walkInPayment(List<ReceiptLine> out, BillDetails bill) {
@@ -157,12 +151,11 @@ public final class ReceiptBuilder {
         }
     }
 
-    /** This bill, previous dues, total with dues, paid now and the balance left. */
+    /** Previous dues, total with dues, paid now and the balance left. */
     private static void khata(List<ReceiptLine> out, BillDetails bill) {
         Money total = bill.totals().total();
         Money previous = bill.previousBalance();
-        out.add(new Pair("This bill", rupees(total), Style.NORMAL));
-        // An advance is shown as a minus amount, so "this bill - advance = total" is easy to follow.
+        // An advance is shown as a minus amount, so "bill total - advance = total with dues" is easy to follow.
         out.add(new Pair(previous.isNegative() ? "Previous advance" : "Previous dues", rupees(previous),
                 Style.NORMAL));
         out.add(new Pair("Total with dues", rupees(previous.plus(total)), Style.BOLD));

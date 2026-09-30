@@ -10,7 +10,7 @@ public sealed interface ReceiptLine {
     record Text(String text, boolean centered, Style style) implements ReceiptLine {
     }
 
-    /** Text on the left and an amount on the right, for example "Round off" and "-0.15". */
+    /** Text on the left and an amount on the right, for example "Paid now (Cash)" and "₹100.00". */
     record Pair(String left, String right, Style style) implements ReceiptLine {
     }
 

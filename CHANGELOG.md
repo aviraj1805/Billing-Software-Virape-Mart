@@ -6,6 +6,9 @@ All notable changes to this project are recorded here, newest first.
 
 ### Phase 5: Printing
 
+- Bill content corrected after the first test print: items print only the Marathi name, quantity x rate and
+  amount; subtotal, round off, MRP, "You saved" and "This bill" are no longer printed.
+
 - Settings screen (owner): shop details for the bill heading (name, second line such as the Marathi name,
   address, phone, closing lines) and the bill printer (any Windows printer; 58 mm roll, 80 mm roll or A4).
   A live preview shows a sample bill as it will print, and "Print a test bill" checks the printer before saving.

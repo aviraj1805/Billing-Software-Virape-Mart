@@ -34,7 +34,7 @@ class ReceiptBuilderTest {
                     Money.parse("44"), null),
             new CartLine(2L, "Toor Dal", null, Unit.KG, null, Quantity.parse("0.333"), Money.parse("45.50"),
                     Money.parse("45.50"), null),
-            new CartLine(3L, "Tata Salt", null, Unit.PCS, "1 kg", Quantity.ofWhole(2), Money.parse("28"),
+            new CartLine(3L, "Tata Salt", "टाटा मीठ", Unit.PCS, "1 kg", Quantity.ofWhole(2), Money.parse("28"),
                     Money.parse("28"), Money.parse("30")));
 
     private static BillDetails walkIn(String name, List<PaymentPart> paid, String cancelReason) {
@@ -61,7 +61,7 @@ class ReceiptBuilderTest {
     }
 
     @Test
-    void walkInBillShowsHeadingItemsTotalsAndPayment() {
+    void walkInBillShowsHeadingMarathiItemsTotalAndPayment() {
         String text = ReceiptBuilder.forBill(walkIn(null, List.of(cash("50"), upi("32")), null), SHOP, false)
                 .toPlainText();
 
@@ -75,18 +75,14 @@ class ReceiptBuilderTest {
                 Bill No. 12 | 30/09/2026 2:05 PM
                 ----
                 Item | Amount
-                1. Sugar
-                     साखर
+                1. साखर
                      0.250 kg x 44.00 | 11.00
                 2. Toor Dal
                      0.333 kg x 45.50 | 15.15
-                3. Tata Salt 1 kg
-                     2 x 28.00  (MRP 30.00) | 56.00
+                3. टाटा मीठ
+                     2 x 28.00 | 56.00
                 ----
-                Subtotal (3 items) | 82.15
-                Round off | -0.15
                 BILL TOTAL | ₹82.00
-                You saved ₹4.00 on MRP
                 ----
                 Paid by Cash | ₹50.00
                 Paid by UPI | ₹32.00
@@ -102,14 +98,15 @@ class ReceiptBuilderTest {
     }
 
     @Test
-    void khataBillShowsThisBillPreviousDuesAndTotalWithDues() {
+    void khataBillShowsPreviousDuesAndTotalWithDues() {
         String text = ReceiptBuilder.forBill(khata(Money.parse("480"), List.of(cash("50")), List.of()), SHOP, false)
                 .toPlainText();
 
         assertTrue(text.contains("Customer: Sunita Patil (C0003)"), text);
         assertTrue(text.endsWith("""
                 ----
-                This bill | ₹82.00
+                BILL TOTAL | ₹82.00
+                ----
                 Previous dues | ₹480.00
                 Total with dues | ₹562.00
                 Paid now (Cash) | ₹50.00
@@ -162,17 +159,22 @@ class ReceiptBuilderTest {
     }
 
     @Test
-    void roundOffUpShowsAPlusSignAndNoRoundOffLineWhenExact() {
-        CartLine half = new CartLine(1L, "Sugar", null, Unit.KG, null, Quantity.parse("0.125"), Money.parse("44"),
-                Money.parse("44"), null); // 5.50 -> 6
-        BillDetails up = new BillDetails(1, 1, WHEN, null, null, List.of(half), Cart.totalsOf(List.of(half)),
-                List.of(cash("6")), List.of(), Money.ZERO, null, null, null);
-        assertTrue(ReceiptBuilder.forBill(up, SHOP, false).toPlainText().contains("Round off | +0.50"));
+    void subtotalRoundOffMrpAndSavingsAreNotPrinted() {
+        String text = ReceiptBuilder.forBill(khata(Money.parse("480"), List.of(cash("50")), List.of()), SHOP, false)
+                .toPlainText();
 
-        CartLine exact = half.withQuantity(Quantity.ONE);
-        BillDetails none = new BillDetails(1, 1, WHEN, null, null, List.of(exact), Cart.totalsOf(List.of(exact)),
-                List.of(cash("44")), List.of(), Money.ZERO, null, null, null);
-        assertFalse(ReceiptBuilder.forBill(none, SHOP, false).toPlainText().contains("Round off"));
+        for (String word : List.of("Subtotal", "Round off", "MRP", "saved", "This bill", "Sugar", "Tata Salt")) {
+            assertFalse(text.contains(word), word + " should not be printed:\n" + text);
+        }
+    }
+
+    @Test
+    void itemWithoutAMarathiNamePrintsItsEnglishName() {
+        CartLine oneOff = new CartLine(null, "Candles", null, Unit.PCS, null, Quantity.ofWhole(2), Money.parse("15"),
+                null, null);
+
+        assertEquals("Candles", ReceiptBuilder.printedName(oneOff));
+        assertEquals("साखर", ReceiptBuilder.printedName(LINES.getFirst()));
     }
 
     @Test
@@ -195,7 +197,6 @@ class ReceiptBuilderTest {
 
         assertTrue(text.contains("TEST PRINT - NOT A REAL BILL"), text);
         assertTrue(text.contains("तूर डाळ"), text);
-        assertTrue(text.contains("Round off | +0.50"), text);
         assertTrue(text.contains("Total with dues | ₹596.00"), text);
         assertTrue(text.contains("Balance dues | ₹496.00"), text);
     }

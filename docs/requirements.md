@@ -24,7 +24,7 @@ It has two main areas:
 | One-off items | If an item is not in the product list, it can be typed directly on a bill with name, rate and quantity. It is saved on that bill only. No product is created. |
 | Rate change on a bill | Owner and helper can change a line's rate for that bill only. The product's saved rate does not change. Every change is recorded with who made it. |
 | Round-off | The final total is rounded to the nearest rupee. |
-| Savings | The bill shows "You saved Rs X" compared to MRP. |
+| Savings | The billing screen shows "You saved Rs X" compared to MRP. It is **not printed** on the bill (changed after Phase 5). |
 | Discount | No whole-bill discount. |
 | Payment modes | Cash, UPI and Card. One bill can be split across several modes. |
 | Credit | An account customer can pay any amount at billing, including zero. The rest is added to their account. There is no credit limit. |
@@ -100,10 +100,18 @@ The printer model and the exact bill heading were not known yet, so both are **s
 - After a bill is saved, the app **asks "Print?"** (Enter prints, Esc skips). The owner can switch this to
   "Print every bill automatically" or "Do not print".
 - Paper starts as an **80 mm roll**. 58 mm rolls and A4 sheets can be chosen.
-- Each line shows the English name with pack size, the Marathi name under it, then quantity x rate and the amount.
-  Loose quantities print with three decimals (0.500 kg). MRP is printed when it is above the rate.
-- A khata bill prints: this bill, previous dues (an advance as a minus amount), total with dues, paid now by mode,
-  and the balance dues (or advance left).
+- Corrected by the user after the first Phase 5 test print (the demo bill is the reference; do not add other wording):
+  - Each item prints **only the Marathi name**, then quantity x rate and the amount. No English name, pack size or
+    MRP. An item without a Marathi name (for example a one-off item) prints its English name so the line is not blank.
+  - Only **BILL TOTAL** is printed. Subtotal, round off and "You saved" are not printed (they are still saved with the
+    bill and shown on screen).
+  - A khata bill prints previous dues (an advance as a minus amount), total with dues, paid now by mode, and the
+    balance dues (or advance left). There is no "This bill" line; BILL TOTAL above already shows it.
+- Loose quantities print with three decimals (0.500 kg).
+- Printing happens when the owner presses **Print** (the "Print?" question after saving, or the Print button when
+  reprinting).
+- Paper fit, centring, margins and spacing are **not tuned for a specific printer yet**. They will be adjusted after the
+  printer is bought and a real test print is checked.
 - Printing a bill again is marked **"DUPLICATE COPY"** and recorded in the audit log. Anyone can reprint.
 - A printer problem never affects the saved bill: the screen says "saved but NOT printed" and the bill can be
   reprinted with "Reprint bill".

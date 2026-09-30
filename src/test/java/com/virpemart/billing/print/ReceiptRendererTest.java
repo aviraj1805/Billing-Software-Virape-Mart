@@ -42,7 +42,7 @@ class ReceiptRendererTest {
     @Test
     void amountSitsAgainstTheRightEdge() {
         ReceiptRenderer renderer = new ReceiptRenderer(PaperSize.ROLL_80);
-        Receipt receipt = new Receipt("t", List.of(new Pair("Round off", "-0.15", Style.NORMAL)));
+        Receipt receipt = new Receipt("t", List.of(new Pair("Paid now (Cash)", "₹100.00", Style.NORMAL)));
 
         Row row = renderer.layout(receipt, FRC, renderer.textWidth()).getFirst();
 
