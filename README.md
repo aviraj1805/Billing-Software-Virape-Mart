@@ -1,4 +1,4 @@
-# Virpe Mart Billing
+# Virape Mart Billing
 
 Offline billing software for the Virpe Mart grocery store. It runs on a single Windows laptop and
 prints bills on the store printer. It has two main areas:
