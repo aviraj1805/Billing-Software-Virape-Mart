@@ -19,6 +19,7 @@ final class TestFixture {
     final Database database;
     final Session session = new Session();
     final Services services;
+    final FakePrinter printer = new FakePrinter();
     final User owner;
     final User staff;
 
@@ -28,7 +29,7 @@ final class TestFixture {
         owner = database.inTransaction(c -> users.insert(c, "owner", "Owner", "x", Role.OWNER, "2026-09-30T10:00:00"));
         staff = database.inTransaction(c -> users.insert(c, "helper", "Helper", "x", Role.STAFF, "2026-09-30T10:00:00"));
         session.signIn(owner);
-        services = Services.create(database, session, TestDatabases.FIXED_CLOCK);
+        services = Services.create(database, session, TestDatabases.FIXED_CLOCK, printer);
     }
 
     void signInStaff() {

@@ -1,6 +1,7 @@
 package com.virpemart.billing.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -8,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.nio.file.Path;
 import java.sql.ResultSet;
 import java.sql.Statement;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -15,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import com.virpemart.billing.db.DatabaseException;
+import com.virpemart.billing.model.BillDetails;
 import com.virpemart.billing.model.BillSummary;
 import com.virpemart.billing.model.Cart;
 import com.virpemart.billing.model.CartLine;
@@ -298,6 +301,68 @@ class BillingServiceTest {
                 s.executeUpdate("UPDATE bills SET balance_after_paise = 0");
             }
         }));
+    }
+
+    // ------------------------------------------------------------------ reading saved bills
+
+    @Test
+    void savedKhataBillCanBeReadBackExactly() {
+        Cart cart = new Cart();
+        cart.addProduct(sugar, Quantity.parse("1.5"));
+        cart.addProduct(salt, Quantity.ofWhole(2));
+        cart.setRate(1, Money.parse("27"));
+        billing.save(new BillRequest(ramesh, null, cart.lines(), List.of(cash("100"), upi("520"))));
+
+        BillDetails bill = billing.bill(1);
+
+        assertEquals(1, bill.billNo());
+        assertEquals(LocalDateTime.of(2026, 9, 30, 10, 0), bill.createdAt());
+        assertEquals("C0001", bill.customerNo());
+        assertEquals("Ramesh Patil", bill.customerName());
+        assertTrue(bill.isKhata());
+        assertEquals(2, bill.lines().size());
+        CartLine sugarLine = bill.lines().get(0);
+        assertEquals("साखर", sugarLine.nameMr());
+        assertEquals(Quantity.parse("1.5"), sugarLine.quantity());
+        CartLine saltLine = bill.lines().get(1);
+        assertEquals(Money.parse("27"), saltLine.rate());
+        assertEquals(Money.parse("28"), saltLine.productRate(), "original rate is kept");
+        assertEquals("1 kg", saltLine.packSize());
+        assertEquals(Money.parse("120"), bill.totals().total());
+        assertEquals(Money.parse("6"), bill.totals().savings(), "2 x (30 - 27)");
+        assertEquals(List.of(cash("100"), upi("20")), bill.paidForBill());
+        assertEquals(List.of(upi("500")), bill.paidAgainstDues());
+        assertEquals(Money.parse("620"), bill.paidTotal());
+        assertEquals(Money.parse("1200"), bill.previousBalance());
+        assertEquals(Money.parse("700"), bill.balanceAfter());
+        assertEquals(Money.ZERO, bill.toAccount());
+        assertFalse(bill.isCancelled());
+    }
+
+    @Test
+    void walkInBillIsReadWithItsNameAndOneOffItems() {
+        Cart cart = new Cart();
+        cart.addOneOff("Candles", Unit.PCS, Quantity.ofWhole(2), Money.ofRupees(15));
+        billing.save(new BillRequest(null, "Sunil", cart.lines(), List.of(cash("30"))));
+
+        BillDetails bill = billing.bill(1);
+
+        assertFalse(bill.isKhata());
+        assertEquals("Sunil", bill.customerName());
+        assertNull(bill.lines().getFirst().productId());
+        assertNull(bill.previousBalance());
+        assertEquals(List.of(cash("30")), bill.paidForBill());
+        assertTrue(bill.paidAgainstDues().isEmpty());
+    }
+
+    @Test
+    void unknownBillNumberIsExplained() {
+        assertTrue(billing.lastBillNo().isEmpty());
+        BusinessRuleException error = assertThrows(BusinessRuleException.class, () -> billing.bill(5));
+        assertEquals("There is no bill number 5.", error.getMessage());
+
+        billing.save(new BillRequest(null, null, sampleLines(), List.of(cash("122"))));
+        assertEquals(1L, billing.lastBillNo().orElseThrow());
     }
 
     // ------------------------------------------------------------------ payment allocation

@@ -8,13 +8,19 @@ import java.sql.Statement;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import com.virpemart.billing.db.DbTime;
+import com.virpemart.billing.model.BillDetails;
 import com.virpemart.billing.model.BillSummary;
 import com.virpemart.billing.model.BillTotals;
+import com.virpemart.billing.model.Cart;
 import com.virpemart.billing.model.CartLine;
 import com.virpemart.billing.model.Money;
 import com.virpemart.billing.model.PaymentMode;
+import com.virpemart.billing.model.PaymentPart;
+import com.virpemart.billing.model.Quantity;
+import com.virpemart.billing.model.Unit;
 
 /**
  * All SQL for {@code bills}, {@code bill_items} and {@code bill_payments}.
@@ -129,6 +135,118 @@ public final class BillRepository {
             }
         }
         return bills;
+    }
+
+    /** The highest bill number used so far, or empty if no bill was ever saved. */
+    public Optional<Long> lastBillNo(Connection connection) throws SQLException {
+        try (Statement statement = connection.createStatement();
+             ResultSet rs = statement.executeQuery("SELECT MAX(bill_no) FROM bills")) {
+            rs.next();
+            long billNo = rs.getLong(1);
+            return rs.wasNull() ? Optional.empty() : Optional.of(billNo);
+        }
+    }
+
+    /**
+     * A saved bill with its lines and payments, exactly as saved. Money paid with the bill towards old
+     * khata dues is read from the khata entries linked to the bill.
+     */
+    public Optional<BillDetails> findByNo(Connection connection, long billNo) throws SQLException {
+        long id;
+        String createdAt;
+        String customerNo;
+        String customerName;
+        Money subtotal;
+        Money roundOff;
+        Money total;
+        Money toAccount;
+        Money previous;
+        Money after;
+        String cancelReason;
+        try (PreparedStatement statement = connection.prepareStatement(
+                "SELECT b.id, b.created_at, c.customer_no, b.customer_name, b.subtotal_paise, b.round_off_paise,"
+                        + " b.total_paise, b.to_account_paise, b.previous_balance_paise, b.balance_after_paise,"
+                        + " b.cancel_reason"
+                        + " FROM bills b LEFT JOIN customers c ON c.id = b.customer_id WHERE b.bill_no = ?")) {
+            statement.setLong(1, billNo);
+            try (ResultSet rs = statement.executeQuery()) {
+                if (!rs.next()) {
+                    return Optional.empty();
+                }
+                id = rs.getLong("id");
+                createdAt = rs.getString("created_at");
+                customerNo = rs.getString("customer_no");
+                customerName = rs.getString("customer_name");
+                subtotal = Money.ofPaise(rs.getLong("subtotal_paise"));
+                roundOff = Money.ofPaise(rs.getLong("round_off_paise"));
+                total = Money.ofPaise(rs.getLong("total_paise"));
+                toAccount = Money.ofPaise(rs.getLong("to_account_paise"));
+                previous = nullableMoney(rs, "previous_balance_paise");
+                after = nullableMoney(rs, "balance_after_paise");
+                cancelReason = rs.getString("cancel_reason");
+            }
+        }
+        List<CartLine> lines = itemsOf(connection, id);
+        Money savings = Cart.totalsOf(lines).savings();
+        BillTotals totals = new BillTotals(subtotal, roundOff, total, savings, lines.size());
+        return Optional.of(new BillDetails(id, billNo, DbTime.parse(createdAt), customerNo, customerName, lines,
+                totals, paymentsOf(connection, id), duesPaymentsOf(connection, id), toAccount, previous, after,
+                cancelReason));
+    }
+
+    private static List<CartLine> itemsOf(Connection connection, long billId) throws SQLException {
+        List<CartLine> lines = new ArrayList<>();
+        try (PreparedStatement statement = connection.prepareStatement(
+                "SELECT product_id, name, name_mr, unit, pack_size, qty_milli, rate_paise, original_rate_paise,"
+                        + " mrp_paise FROM bill_items WHERE bill_id = ? ORDER BY line_no")) {
+            statement.setLong(1, billId);
+            try (ResultSet rs = statement.executeQuery()) {
+                while (rs.next()) {
+                    long productId = rs.getLong("product_id");
+                    Long product = rs.wasNull() ? null : productId;
+                    Money rate = Money.ofPaise(rs.getLong("rate_paise"));
+                    Money original = nullableMoney(rs, "original_rate_paise");
+                    Money productRate = product == null ? null : (original == null ? rate : original);
+                    lines.add(new CartLine(product, rs.getString("name"), rs.getString("name_mr"),
+                            Unit.valueOf(rs.getString("unit")), rs.getString("pack_size"),
+                            new Quantity(rs.getLong("qty_milli")), rate, productRate,
+                            nullableMoney(rs, "mrp_paise")));
+                }
+            }
+        }
+        return lines;
+    }
+
+    private static List<PaymentPart> paymentsOf(Connection connection, long billId) throws SQLException {
+        return readPayments(connection, billId,
+                "SELECT mode, amount_paise FROM bill_payments WHERE bill_id = ? ORDER BY id");
+    }
+
+    /** Khata payments are stored as negative amounts, so the sign is turned around here. */
+    private static List<PaymentPart> duesPaymentsOf(Connection connection, long billId) throws SQLException {
+        return readPayments(connection, billId,
+                "SELECT payment_mode AS mode, -amount_paise AS amount_paise FROM customer_ledger"
+                        + " WHERE bill_id = ? AND entry_type = 'PAYMENT' ORDER BY id");
+    }
+
+    private static List<PaymentPart> readPayments(Connection connection, long billId, String sql)
+            throws SQLException {
+        List<PaymentPart> parts = new ArrayList<>();
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setLong(1, billId);
+            try (ResultSet rs = statement.executeQuery()) {
+                while (rs.next()) {
+                    parts.add(new PaymentPart(PaymentMode.valueOf(rs.getString("mode")),
+                            Money.ofPaise(rs.getLong("amount_paise"))));
+                }
+            }
+        }
+        return parts;
+    }
+
+    private static Money nullableMoney(ResultSet rs, String column) throws SQLException {
+        long paise = rs.getLong(column);
+        return rs.wasNull() ? null : Money.ofPaise(paise);
     }
 
     private static void setNullableMoney(PreparedStatement statement, int index, Money value) throws SQLException {

@@ -114,6 +114,35 @@ public record Money(long paise) implements Comparable<Money> {
         return Long.compare(paise, other.paise);
     }
 
+    /**
+     * Text with Indian digit grouping and 2 decimals, without a currency sign,
+     * for example "1,25,000.50" or "-5.00". Used on screen and on printed bills.
+     */
+    public String toGroupedString() {
+        long abs = Math.abs(paise);
+        String text = indianGrouping(abs / 100) + "." + String.format("%02d", abs % 100);
+        return paise < 0 ? "-" + text : text;
+    }
+
+    /**
+     * Indian digit grouping: the last three digits, then groups of two (lakh, crore).
+     * Java's built-in number format only groups in threes, so it is done by hand.
+     * For example 125000 becomes "1,25,000".
+     */
+    static String indianGrouping(long number) {
+        String rest = Long.toString(number);
+        if (rest.length() <= 3) {
+            return rest;
+        }
+        String result = rest.substring(rest.length() - 3);
+        rest = rest.substring(0, rest.length() - 3);
+        while (rest.length() > 2) {
+            result = rest.substring(rest.length() - 2) + "," + result;
+            rest = rest.substring(0, rest.length() - 2);
+        }
+        return rest + "," + result;
+    }
+
     /** Plain text with exactly 2 decimals, for example "45.50" or "-5.00". */
     public String toPlainString() {
         return BigDecimal.valueOf(paise, 2).toPlainString();

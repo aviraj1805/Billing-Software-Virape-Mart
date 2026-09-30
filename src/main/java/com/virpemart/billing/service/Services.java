@@ -3,12 +3,15 @@ package com.virpemart.billing.service;
 import java.time.Clock;
 
 import com.virpemart.billing.db.Database;
+import com.virpemart.billing.print.ReceiptPrinter;
+import com.virpemart.billing.print.SystemReceiptPrinter;
 import com.virpemart.billing.repository.AuditRepository;
 import com.virpemart.billing.repository.BillRepository;
 import com.virpemart.billing.repository.CategoryRepository;
 import com.virpemart.billing.repository.CustomerRepository;
 import com.virpemart.billing.repository.LedgerRepository;
 import com.virpemart.billing.repository.ProductRepository;
+import com.virpemart.billing.repository.SettingsRepository;
 
 /**
  * All services of the app, created once at startup and shared by the screens.
@@ -20,10 +23,17 @@ public record Services(
         ProductImportService productImport,
         CustomerService customers,
         LedgerService ledger,
-        BillingService billing) {
+        BillingService billing,
+        SettingsService settings,
+        PrintService printing) {
 
-    /** Wires every service to the database, session and clock. */
+    /** Wires every service to the database, session and clock, printing on real Windows printers. */
     public static Services create(Database database, Session session, Clock clock) {
+        return create(database, session, clock, new SystemReceiptPrinter());
+    }
+
+    /** Wires every service, with the given printer. Tests pass a fake printer. */
+    public static Services create(Database database, Session session, Clock clock, ReceiptPrinter printer) {
         AuditRepository audit = new AuditRepository();
         CategoryRepository categoryRepository = new CategoryRepository();
         ProductRepository productRepository = new ProductRepository();
@@ -39,6 +49,8 @@ public record Services(
         LedgerService ledger = new LedgerService(database, customerRepository, ledgerRepository, audit, session, clock);
         BillingService billing = new BillingService(database, new BillRepository(), productRepository,
                 customerRepository, ledgerRepository, audit, session, clock);
-        return new Services(categories, products, productImport, customers, ledger, billing);
+        SettingsService settings = new SettingsService(database, new SettingsRepository(), audit, session, clock);
+        PrintService printing = new PrintService(database, billing, settings, audit, printer, session, clock);
+        return new Services(categories, products, productImport, customers, ledger, billing, settings, printing);
     }
 }

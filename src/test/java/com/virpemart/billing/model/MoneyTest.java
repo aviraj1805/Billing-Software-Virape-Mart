@@ -120,4 +120,23 @@ class MoneyTest {
         assertThrows(ArithmeticException.class, () -> Money.ofPaise(Long.MAX_VALUE).plus(Money.ofPaise(1)));
         assertThrows(IllegalArgumentException.class, () -> Money.parse("999999999999999999999"));
     }
+
+    @Test
+    void groupsDigitsInLakhsAndCrores() {
+        assertEquals("0", Money.indianGrouping(0));
+        assertEquals("999", Money.indianGrouping(999));
+        assertEquals("1,000", Money.indianGrouping(1000));
+        assertEquals("12,000", Money.indianGrouping(12000));
+        assertEquals("1,00,000", Money.indianGrouping(100000));
+        assertEquals("12,34,567", Money.indianGrouping(1234567));
+        assertEquals("1,23,45,678", Money.indianGrouping(12345678));
+    }
+
+    @Test
+    void groupedTextHasTwoDecimalsAndASign() {
+        assertEquals("44.00", Money.ofRupees(44).toGroupedString());
+        assertEquals("1,25,000.50", Money.ofPaise(12500050).toGroupedString());
+        assertEquals("-5.05", Money.ofPaise(-505).toGroupedString());
+        assertEquals("0.00", Money.ZERO.toGroupedString());
+    }
 }

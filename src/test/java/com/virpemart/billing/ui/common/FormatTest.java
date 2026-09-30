@@ -33,15 +33,4 @@ class FormatTest {
         assertEquals("30/09/26 2:05 PM", Format.dateTimeShort(java.time.LocalDateTime.of(2026, 9, 30, 14, 5)));
         assertEquals("Wed, 30 Sep 2026", Format.date(java.time.LocalDate.of(2026, 9, 30)));
     }
-
-    @Test
-    void groupsDigitsInLakhsAndCrores() {
-        assertEquals("0", Format.indianGrouping(0));
-        assertEquals("999", Format.indianGrouping(999));
-        assertEquals("1,000", Format.indianGrouping(1000));
-        assertEquals("12,000", Format.indianGrouping(12000));
-        assertEquals("1,00,000", Format.indianGrouping(100000));
-        assertEquals("12,34,567", Format.indianGrouping(1234567));
-        assertEquals("1,23,45,678", Format.indianGrouping(12345678));
-    }
 }

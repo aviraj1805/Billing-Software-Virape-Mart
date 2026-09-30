@@ -5,9 +5,11 @@ import java.sql.SQLException;
 import java.time.Clock;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import com.virpemart.billing.db.Database;
 import com.virpemart.billing.db.DbTime;
+import com.virpemart.billing.model.BillDetails;
 import com.virpemart.billing.model.BillSummary;
 import com.virpemart.billing.model.BillTotals;
 import com.virpemart.billing.model.Cart;
@@ -83,6 +85,19 @@ public final class BillingService {
     public List<BillSummary> recentBills(long customerId, int limit) {
         session.requireSignedIn();
         return database.query(c -> bills.recentForCustomer(c, customerId, limit));
+    }
+
+    /** A saved bill with everything needed to print it again. Owner and staff. */
+    public BillDetails bill(long billNo) {
+        session.requireSignedIn();
+        return database.query(c -> bills.findByNo(c, billNo))
+                .orElseThrow(() -> new BusinessRuleException("There is no bill number " + billNo + "."));
+    }
+
+    /** The newest bill number, or empty if no bill was saved yet. */
+    public Optional<Long> lastBillNo() {
+        session.requireSignedIn();
+        return database.query(bills::lastBillNo);
     }
 
     /** Checks and saves a bill. Owner and staff. */
