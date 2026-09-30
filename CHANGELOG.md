@@ -4,6 +4,24 @@ All notable changes to this project are recorded here, newest first.
 
 ## [Unreleased]
 
+### Phase 4: Billing
+
+- Billing screen, now the start screen. Keyboard flow: type a product (F2), Enter, quantity, Enter.
+  Drop-down search by English name, Marathi name or code.
+- Loose items in kg/litre with decimals; packets in whole numbers; same product again adds to its line.
+- Change quantity or rate of a line (rate change for this bill only, recorded in the audit log),
+  remove lines, and add items not in the product list (F4).
+- Totals with round-off to the rupee and "You saved" against MRP.
+- Customer panel: walk-in with an optional name on the bill, or a khata customer (F3) with dues and
+  recent bills; quick "New khata customer".
+- Khata customers see this bill, previous dues and total with dues.
+- Save and pay (F12): Cash / UPI / Card in any mix, change calculator for walk-in, quick buttons and a
+  "put on khata?" check for khata customers, extra money goes against old dues.
+- Hold bills (F8) and continue them later; the app asks before closing with unsaved bills.
+- Migration V3: bills store the printed customer name, dues before and balance after; the
+  "bills can only be cancelled" guard now covers these too.
+- 252 automated tests.
+
 ### Phase 3: Customers and khata
 
 - Customers screen: search by name, phone or number; filter to customers with dues; total dues of the shop.

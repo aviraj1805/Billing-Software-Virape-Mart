@@ -117,6 +117,8 @@ find windows and buttons by their text, type with `Send-Keys` (Marathi text work
 of any window with `Capture-Window`. Look at each screenshot before calling a screen done.
 `Send-Keys` uses SendKeys syntax: `+` is Shift, `^` is Ctrl, `%` is Alt. Type a literal plus as `{+}`.
 In a TextArea, Tab types a tab; use `^{TAB}` to move to the next field.
+Call `Focus-Window` right before sending function keys (F12 etc.); if the window lost focus, keys go nowhere.
+The search drop-down is a separate popup window: capture the whole screen to see it.
 
 ## Code conventions
 
@@ -144,6 +146,10 @@ In a TextArea, Tab types a tab; use `^{TAB}` to move to the next field.
 - Typed amounts: services use `Amounts.parsePositive` (accepts ₹, Rs, commas; 0 means "none" when optional).
 - Khata: `LedgerService` (statement with running balance, payments, owner corrections) and `CustomerService`
   (customers, old dues as the OPENING entry). Never compute a balance anywhere else.
+- Billing: `model.Cart` holds bill lines and ALL bill arithmetic (`Cart.totalsOf`); `BillingService.save`
+  re-checks and recalculates everything in one transaction. `ui.common.SearchPopup` is the keyboard
+  drop-down used for product and customer search. Billing is the start screen; `BillingController.unsavedWork`
+  feeds the close-window warning.
 - The main window opens maximized. Tables use `CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS` so columns share space;
   use short date formats (`Format.dateTimeShort`) and row tooltips for long text.
 - Shared validation: a service `check(...)` method validates typed input once and is reused by forms and
@@ -176,8 +182,8 @@ In a TextArea, Tab types a tab; use `^{TAB}` to move to the next field.
 | 1. Foundation | Paths, DB connection, transactions, migrations, V1 schema, Money/Quantity, logging, error handler, single-instance lock, session | Done |
 | 2. Products | Categories, products, search, deactivate/delete rules, CSV import | Done |
 | 3. Customers and ledger | Customers, opening balance, receive payment, balance and ledger view | Done |
-| 4. Billing | Billing screen, search, loose qty, one-off items, rate change, totals, split payments, save, hold | Next |
-| 5. Printing | Shop settings, printer settings, receipt with Marathi, print and reprint | Not started |
+| 4. Billing | Billing screen, search, loose qty, one-off items, rate change, totals, split payments, save, hold | Done |
+| 5. Printing | Shop settings, printer settings, receipt with Marathi, print and reprint | Next |
 | 6. History and reports | Bill history, cancel with reversal, purchase history, reports | Not started |
 | 7. Users, security, backup | Login, first-run setup, staff users, audit view, backups, restore | Not started |
 | 8. Packaging and go-live | Install on store laptop, import products, user guide, training | Not started |

@@ -72,6 +72,23 @@ These customer rules were chosen as sensible defaults and can be changed:
 - A payment larger than the dues is allowed; the extra is kept as advance and shown in green.
 - Typing 0 in an optional amount (old dues, MRP) means "none".
 
+## Billing (confirmed in Phase 4)
+
+| Topic | Decision |
+|---|---|
+| Khata customer bills | The screen and the printed bill show this bill's amount, the previous dues, and the total with dues, so the customer and owner see both the current bill and the full amount owed. |
+| Bill numbers | Start at 1 and continue forever. |
+| Walk-in names | For a walk-in customer the owner may type a name that is printed on the bill only (no account is created), or leave it blank. |
+
+These billing rules were chosen as sensible defaults and can be changed:
+
+- For a khata customer, the payment starts empty. Quick buttons fill "Bill amount", "Full total with dues" or "Nothing now". Saving with nothing paid asks "Put the whole bill on the khata?" first.
+- A khata customer may pay more than this bill: the extra is recorded in the khata as "Paid with bill N", against old dues (or kept as advance).
+- A walk-in customer pays exactly the bill total, in any mix of Cash, UPI and Card. "Cash given by customer" shows the change to give back.
+- The bill saves each line's product name, Marathi name, unit, pack size, rate and MRP, plus the dues before and the balance after, so reprints always match.
+- Adding the same product again increases its quantity on the existing line.
+- Held bills are kept only while the app is open; closing the app with an open or held bill asks first.
+
 ## Assumptions
 
 These were not asked directly. The user can change them at any time.

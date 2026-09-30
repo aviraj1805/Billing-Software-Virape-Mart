@@ -105,10 +105,15 @@ At startup the runner:
 
 All of these happen in one database transaction. Either everything is saved or nothing is.
 
-1. Take the next bill number: the highest bill number plus one. Bills are never deleted, so numbers never repeat.
-2. Insert the bill, its lines and its payments.
-3. If part of the total goes to the customer's account, insert a SALE_CREDIT ledger entry.
-4. Insert audit rows, for example for changed rates.
+1. Recalculate every line and the totals from the product list (`Cart.totalsOf`); the screen's numbers are not trusted.
+2. Take the next bill number: the highest bill number plus one. Bills are never deleted, so numbers never repeat.
+3. Split the money received: payments fill the bill first, in the order entered; anything beyond the bill
+   total is a khata payment against old dues (`BillingService.allocate`).
+4. Insert the bill (with `customer_name`, `previous_balance_paise`, `balance_after_paise` for reprints),
+   its lines (snapshots) and the payments that paid the bill.
+5. Khata customers: a SALE_CREDIT entry for the unpaid part, and PAYMENT entries ("Paid with bill N")
+   for money paid against old dues.
+6. Insert audit rows for changed rates.
 
 Printing happens after the transaction commits, so a printer problem never loses a bill.
 
