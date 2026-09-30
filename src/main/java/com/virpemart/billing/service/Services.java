@@ -4,6 +4,7 @@ import java.time.Clock;
 
 import com.virpemart.billing.db.Database;
 import com.virpemart.billing.repository.AuditRepository;
+import com.virpemart.billing.repository.BillRepository;
 import com.virpemart.billing.repository.CategoryRepository;
 import com.virpemart.billing.repository.CustomerRepository;
 import com.virpemart.billing.repository.LedgerRepository;
@@ -18,7 +19,8 @@ public record Services(
         ProductService products,
         ProductImportService productImport,
         CustomerService customers,
-        LedgerService ledger) {
+        LedgerService ledger,
+        BillingService billing) {
 
     /** Wires every service to the database, session and clock. */
     public static Services create(Database database, Session session, Clock clock) {
@@ -35,6 +37,8 @@ public record Services(
         CustomerService customers = new CustomerService(database, customerRepository, ledgerRepository, audit,
                 session, clock);
         LedgerService ledger = new LedgerService(database, customerRepository, ledgerRepository, audit, session, clock);
-        return new Services(categories, products, productImport, customers, ledger);
+        BillingService billing = new BillingService(database, new BillRepository(), productRepository,
+                customerRepository, ledgerRepository, audit, session, clock);
+        return new Services(categories, products, productImport, customers, ledger, billing);
     }
 }
