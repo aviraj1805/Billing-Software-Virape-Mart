@@ -11,6 +11,7 @@ import com.virpemart.billing.repository.CategoryRepository;
 import com.virpemart.billing.repository.CustomerRepository;
 import com.virpemart.billing.repository.LedgerRepository;
 import com.virpemart.billing.repository.ProductRepository;
+import com.virpemart.billing.repository.ReportRepository;
 import com.virpemart.billing.repository.SettingsRepository;
 
 /**
@@ -25,7 +26,8 @@ public record Services(
         LedgerService ledger,
         BillingService billing,
         SettingsService settings,
-        PrintService printing) {
+        PrintService printing,
+        ReportService reports) {
 
     /** Wires every service to the database, session and clock, printing on real Windows printers. */
     public static Services create(Database database, Session session, Clock clock) {
@@ -51,6 +53,8 @@ public record Services(
                 customerRepository, ledgerRepository, audit, session, clock);
         SettingsService settings = new SettingsService(database, new SettingsRepository(), audit, session, clock);
         PrintService printing = new PrintService(database, billing, settings, audit, printer, session, clock);
-        return new Services(categories, products, productImport, customers, ledger, billing, settings, printing);
+        ReportService reports = new ReportService(database, new ReportRepository(), session);
+        return new Services(categories, products, productImport, customers, ledger, billing, settings, printing,
+                reports);
     }
 }

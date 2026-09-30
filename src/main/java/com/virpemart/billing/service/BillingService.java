@@ -3,6 +3,7 @@ package com.virpemart.billing.service;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.Clock;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -10,8 +11,10 @@ import java.util.Optional;
 import com.virpemart.billing.db.Database;
 import com.virpemart.billing.db.DbTime;
 import com.virpemart.billing.model.BillDetails;
+import com.virpemart.billing.model.BillSearch;
 import com.virpemart.billing.model.BillSummary;
 import com.virpemart.billing.model.BillTotals;
+import com.virpemart.billing.model.CancelledBill;
 import com.virpemart.billing.model.Cart;
 import com.virpemart.billing.model.CartLine;
 import com.virpemart.billing.model.CustomerSummary;
@@ -46,6 +49,7 @@ public final class BillingService {
 
     private static final int MAX_NAME_LENGTH = 100;
     private static final int MAX_WALK_IN_NAME_LENGTH = 60;
+    private static final int MAX_REASON_LENGTH = 200;
 
     private final Database database;
     private final BillRepository bills;
@@ -85,6 +89,63 @@ public final class BillingService {
     public List<BillSummary> recentBills(long customerId, int limit) {
         session.requireSignedIn();
         return database.query(c -> bills.recentForCustomer(c, customerId, limit));
+    }
+
+    /**
+     * Bills for the Bill History screen, newest first. Owner and staff.
+     * A short number (up to 7 digits) is treated as a bill number and found on any date.
+     *
+     * @throws ValidationException (field "from") if the first day is after the last day
+     */
+    public List<BillSummary> searchBills(BillSearch search) {
+        session.requireSignedIn();
+        String text = Texts.clean(search.text());
+        LocalDate from = search.from();
+        LocalDate to = search.to();
+        if (text != null && text.matches("\\d{1,7}")) {
+            from = null; // a bill number: look on every date
+            to = null;
+        } else if (from != null && to != null && from.isAfter(to)) {
+            throw new ValidationException("from", "The first date is after the last date. Please check the dates.");
+        }
+        BillSearch clean = new BillSearch(from, to, text, search.customerId(), search.limit());
+        return database.query(c -> bills.search(c, clean));
+    }
+
+    /**
+     * Cancels a saved bill. Owner only. The bill is kept and marked CANCELLED with the reason; its number is never
+     * used again. The part of the bill that went on the khata is taken off it (a CANCEL_REVERSAL entry).
+     * Money paid for the bill at the counter is to be given back. Money paid towards old dues with the bill stays
+     * paid, because it was not for this bill.
+     *
+     * @throws ValidationException (field "reason") if no reason is given
+     */
+    public CancelledBill cancel(long billNo, String reason) {
+        User user = session.requireOwner();
+        String cleanReason = Texts.clean(reason);
+        if (cleanReason == null) {
+            throw new ValidationException("reason", "Please type why the bill is cancelled.");
+        }
+        if (cleanReason.length() > MAX_REASON_LENGTH) {
+            throw new ValidationException("reason", "The reason is too long. Use at most " + MAX_REASON_LENGTH
+                    + " letters.");
+        }
+        return database.inTransaction(c -> {
+            BillDetails bill = bills.findByNo(c, billNo)
+                    .orElseThrow(() -> new BusinessRuleException("There is no bill number " + billNo + "."));
+            String now = DbTime.now(clock);
+            if (!bills.cancel(c, bill.id(), cleanReason, user.id(), now)) {
+                throw new BusinessRuleException("Bill " + billNo + " is already cancelled.");
+            }
+            Optional<Long> customerId = bills.customerIdOf(c, bill.id());
+            if (customerId.isPresent() && bill.toAccount().isPositive()) {
+                ledger.insert(c, customerId.get(), LedgerEntryType.CANCEL_REVERSAL, bill.toAccount().negate(),
+                        bill.id(), null, "Bill " + billNo + " cancelled: " + cleanReason, now, user.id());
+            }
+            audit.insert(c, user.id(), "BILL_CANCELLED", "bills", bill.id(), "Bill " + billNo + " ("
+                    + bill.totals().total().toPlainString() + ") cancelled: " + cleanReason, now);
+            return new CancelledBill(billNo, bill.paidForBillTotal(), bill.toAccount());
+        });
     }
 
     /** A saved bill with everything needed to print it again. Owner and staff. */

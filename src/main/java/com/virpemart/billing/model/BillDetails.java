@@ -49,6 +49,11 @@ public record BillDetails(
         return cancelReason != null;
     }
 
+    /** Money that paid this bill (not money paid towards old dues). */
+    public Money paidForBillTotal() {
+        return Money.sum(paidForBill.stream().map(PaymentPart::amount).toList());
+    }
+
     /** All money received with this bill: for the bill and towards old dues. */
     public Money paidTotal() {
         return Money.sum(paidByMode().values());
