@@ -4,27 +4,166 @@
     -fx-font-family: "Segoe UI";
     -fx-font-size: 14px;
     -fx-background-color: #f7f7f5;
+    -fx-accent: #2f6f4f;
+    -fx-focus-color: #2f6f4f;
+    -fx-faint-focus-color: #2f6f4f22;
 }
 
-.welcome {
-    -fx-padding: 40;
+/* ---------------------------------------------------------------- main window */
+
+.top-bar {
+    -fx-background-color: #1f3a2e;
+    -fx-padding: 10 18 10 18;
 }
 
-.title {
-    -fx-font-size: 32px;
+.app-title {
+    -fx-text-fill: white;
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+}
+
+.top-info {
+    -fx-text-fill: #d9e8df;
+}
+
+.dev-badge {
+    -fx-background-color: #e0a526;
+    -fx-text-fill: #1f1f1f;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-padding: 2 8 2 8;
+    -fx-background-radius: 10;
+}
+
+.nav {
+    -fx-background-color: #eef1ee;
+    -fx-padding: 14 10 14 10;
+    -fx-pref-width: 190;
+    -fx-border-color: transparent #d8ddd8 transparent transparent;
+}
+
+.nav-button {
+    -fx-alignment: CENTER_LEFT;
+    -fx-background-color: transparent;
+    -fx-background-radius: 6;
+    -fx-padding: 10 12 10 12;
+    -fx-font-size: 15px;
+    -fx-text-fill: #243328;
+}
+
+.nav-button:hover {
+    -fx-background-color: #dfe7e1;
+}
+
+.nav-button:selected {
+    -fx-background-color: #2f6f4f;
+    -fx-text-fill: white;
+}
+
+.nav-footer {
+    -fx-text-fill: #888888;
+    -fx-font-size: 12px;
+}
+
+.content {
+    -fx-background-color: #f7f7f5;
+}
+
+/* ---------------------------------------------------------------- pages and dialogs */
+
+.page {
+    -fx-padding: 18 20 14 20;
+}
+
+.page-title {
+    -fx-font-size: 22px;
     -fx-font-weight: bold;
     -fx-text-fill: #1f3a2e;
 }
 
-.subtitle {
-    -fx-font-size: 16px;
-    -fx-text-fill: #333333;
-}
-
-.status {
-    -fx-text-fill: #1f5a3a;
+.dialog {
+    -fx-padding: 18;
 }
 
 .muted {
     -fx-text-fill: #777777;
+}
+
+.help-box {
+    -fx-background-color: #eef4f0;
+    -fx-border-color: #cfe0d5;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-padding: 10 12 10 12;
+    -fx-line-spacing: 3;
+}
+
+/* Keep hint text visible in a focused, empty box (JavaFX hides it by default). */
+.text-input:focused {
+    -fx-prompt-text-fill: #9a9a9a;
+}
+
+.search-field {
+    -fx-font-size: 15px;
+    -fx-pref-height: 36;
+}
+
+.button {
+    -fx-padding: 6 14 6 14;
+    -fx-cursor: hand;
+}
+
+.button.primary {
+    -fx-background-color: #2f6f4f;
+    -fx-text-fill: white;
+    -fx-background-radius: 5;
+}
+
+.button.primary:hover {
+    -fx-background-color: #285f44;
+}
+
+.button.danger {
+    -fx-text-fill: #a12a2a;
+}
+
+/* ---------------------------------------------------------------- forms */
+
+.error-text {
+    -fx-text-fill: #a12a2a;
+    -fx-font-weight: bold;
+}
+
+.field-error,
+.field-error:focused {
+    -fx-border-color: #c0392b;
+    -fx-border-width: 2;
+    -fx-border-radius: 3;
+}
+
+/* ---------------------------------------------------------------- tables */
+
+.table-view {
+    -fx-font-size: 14px;
+}
+
+.number-column {
+    -fx-alignment: CENTER_RIGHT;
+}
+
+.table-row-cell:inactive {
+    -fx-opacity: 0.5;
+}
+
+.table-row-cell:import-error {
+    -fx-background-color: #fbe3e1;
+}
+
+.table-row-cell:import-skipped {
+    -fx-background-color: #f3f0e0;
+}
+
+.table-row-cell:import-error:selected,
+.table-row-cell:import-skipped:selected {
+    -fx-background-color: -fx-selection-bar;
 }

@@ -1,16 +1,11 @@
 package com.virpemart.billing;
 
-import java.io.IOException;
-import java.net.URL;
-import java.util.Objects;
-
 import com.virpemart.billing.config.AppInfo;
-import com.virpemart.billing.ui.common.ControllerFactory;
 import com.virpemart.billing.ui.common.ErrorHandler;
+import com.virpemart.billing.ui.common.Views;
 
 import javafx.application.Application;
 import javafx.application.Platform;
-import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert.AlertType;
@@ -25,8 +20,10 @@ import javafx.stage.Stage;
  */
 public class App extends Application {
 
-    private static final double INITIAL_WIDTH = 1024;
-    private static final double INITIAL_HEIGHT = 700;
+    private static final double INITIAL_WIDTH = 1200;
+    private static final double INITIAL_HEIGHT = 750;
+    private static final double MIN_WIDTH = 1000;
+    private static final double MIN_HEIGHT = 600;
 
     private AppContext context;
     private StartupException startupError;
@@ -41,7 +38,7 @@ public class App extends Application {
     }
 
     @Override
-    public void start(Stage stage) throws IOException {
+    public void start(Stage stage) {
         if (startupError != null) {
             ErrorHandler.show(AlertType.ERROR, "Virpe Mart Billing", startupError.getMessage());
             Platform.exit();
@@ -49,26 +46,22 @@ public class App extends Application {
         }
         ErrorHandler.install(context.paths().logsDir());
 
-        FXMLLoader loader = new FXMLLoader(resource("/fxml/main-window.fxml"));
-        loader.setControllerFactory(new ControllerFactory(context));
-        Parent root = loader.load();
-
-        Scene scene = new Scene(root, INITIAL_WIDTH, INITIAL_HEIGHT);
-        scene.getStylesheets().add(resource("/css/app.css").toExternalForm());
+        Parent root = Views.load("main-window.fxml", context).root();
+        Scene scene = Views.scene(root);
 
         stage.setTitle(AppInfo.name() + " " + AppInfo.version());
         stage.setScene(scene);
+        stage.setWidth(INITIAL_WIDTH);
+        stage.setHeight(INITIAL_HEIGHT);
+        stage.setMinWidth(MIN_WIDTH);
+        stage.setMinHeight(MIN_HEIGHT);
         stage.show();
     }
 
     @Override
-    public void stop() throws IOException {
+    public void stop() throws Exception {
         if (context != null) {
             context.close();
         }
-    }
-
-    private static URL resource(String path) {
-        return Objects.requireNonNull(App.class.getResource(path), () -> "Missing resource: " + path);
     }
 }

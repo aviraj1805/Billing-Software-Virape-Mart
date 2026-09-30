@@ -1,22 +1,47 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ToggleButton?>
+<?import javafx.scene.control.ToggleGroup?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
-<!-- Temporary window until the real screens arrive. Shows startup status. -->
-<VBox xmlns="http://javafx.com/javafx"
-      xmlns:fx="http://javafx.com/fxml"
-      fx:controller="com.virpemart.billing.ui.MainWindowController"
-      styleClass="welcome"
-      alignment="CENTER"
-      spacing="12">
+<!-- The main window: top bar, menu on the left, current screen in the middle. -->
+<BorderPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.virpemart.billing.ui.MainWindowController"
+            styleClass="main-window">
 
-    <Label text="Virpe Mart" styleClass="title"/>
-    <Label text="Billing software foundation is working." styleClass="subtitle"/>
-    <!-- Marathi test line: proves Devanagari text renders. Means "Marathi names will appear here". -->
-    <Label text="मराठी नावे येथे दिसतील" styleClass="subtitle"/>
-    <Label fx:id="databaseLabel" styleClass="status"/>
-    <Label fx:id="userLabel" styleClass="status"/>
-    <Label fx:id="dataFolderLabel" styleClass="muted"/>
-    <Label fx:id="versionLabel" styleClass="muted"/>
-</VBox>
+    <fx:define>
+        <ToggleGroup fx:id="navGroup"/>
+    </fx:define>
+
+    <top>
+        <HBox styleClass="top-bar" alignment="CENTER_LEFT" spacing="16">
+            <Label text="Virpe Mart" styleClass="app-title"/>
+            <Label fx:id="devLabel" text="DEVELOPMENT DATA" styleClass="dev-badge"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Label fx:id="userLabel" styleClass="top-info"/>
+            <Label fx:id="dateLabel" styleClass="top-info"/>
+        </HBox>
+    </top>
+
+    <left>
+        <VBox styleClass="nav" spacing="4">
+            <ToggleButton fx:id="billingNav" text="Billing" toggleGroup="$navGroup" styleClass="nav-button" maxWidth="Infinity"/>
+            <ToggleButton fx:id="productsNav" text="Products" toggleGroup="$navGroup" styleClass="nav-button" maxWidth="Infinity"/>
+            <ToggleButton fx:id="customersNav" text="Customers" toggleGroup="$navGroup" styleClass="nav-button" maxWidth="Infinity"/>
+            <ToggleButton fx:id="historyNav" text="History &amp; Reports" toggleGroup="$navGroup" styleClass="nav-button" maxWidth="Infinity"/>
+            <ToggleButton fx:id="settingsNav" text="Settings" toggleGroup="$navGroup" styleClass="nav-button" maxWidth="Infinity"/>
+            <Region VBox.vgrow="ALWAYS"/>
+            <Label fx:id="versionLabel" styleClass="nav-footer" wrapText="true"/>
+        </VBox>
+    </left>
+
+    <center>
+        <StackPane fx:id="content" styleClass="content"/>
+    </center>
+</BorderPane>

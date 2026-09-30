@@ -1,0 +1,41 @@
+package com.virpemart.billing.ui.common;
+
+import java.util.concurrent.Callable;
+import java.util.function.Consumer;
+
+import javafx.concurrent.Task;
+
+/**
+ * Runs slow work (reading files, imports, reports) on a background thread, so the screen never freezes.
+ * The result is handed back on the screen thread. Errors go to {@link ErrorHandler}.
+ */
+public final class Background {
+
+    private Background() {
+    }
+
+    /**
+     * @param work      the slow work; runs on a background thread and must not touch screen controls
+     * @param onSuccess receives the result on the screen thread
+     * @param onDone    runs on the screen thread afterwards, whether the work succeeded or failed
+     */
+    public static <T> void run(String name, Callable<T> work, Consumer<T> onSuccess, Runnable onDone) {
+        Task<T> task = new Task<>() {
+            @Override
+            protected T call() throws Exception {
+                return work.call();
+            }
+        };
+        task.setOnSucceeded(event -> {
+            onDone.run();
+            onSuccess.accept(task.getValue());
+        });
+        task.setOnFailed(event -> {
+            onDone.run();
+            ErrorHandler.handle(task.getException());
+        });
+        Thread thread = new Thread(task, name);
+        thread.setDaemon(true);
+        thread.start();
+    }
+}
