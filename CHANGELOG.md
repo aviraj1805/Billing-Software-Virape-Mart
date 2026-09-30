@@ -4,6 +4,18 @@ All notable changes to this project are recorded here, newest first.
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-09-30
+
+### Phase 8: Packaging and delivery
+
+- Version 1.0.0. `scripts\package.ps1` now also copies the guides into `VirpeMart\Guides` and writes one zip,
+  `target\dist\VirpeMart-1.0.0-Windows.zip`, ready for a pendrive or a GitHub release.
+- The package is self-contained: its own Java runtime and the Microsoft C++ runtime files; the launcher needs
+  only Windows itself. Checked by running the extracted zip with no Java, no PATH and a new, empty data folder.
+- New guides: `docs/INSTALLATION.md` (a laptop with nothing installed), `docs/USER_GUIDE.md` (everyday use) and
+  `docs/TROUBLESHOOTING.md` (every error message with its fix, plus technical facts for whoever helps).
+- Code published to <https://github.com/aviraj1805/Billing-Software-Virape-Mart>.
+
 ### Phase 7: Backups, restore and activity log
 
 - No login screen (the user's decision). The app signs in the shop owner automatically at every start, creating an

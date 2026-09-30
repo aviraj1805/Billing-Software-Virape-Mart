@@ -31,9 +31,14 @@ Run from the repo root on Windows. `JAVA_HOME` points to Temurin JDK 25
 |---|---|
 | Run all tests | `mvnw.cmd test` |
 | Run the app (development) | `mvnw.cmd javafx:run` |
-| Build the packaged app | `powershell -ExecutionPolicy Bypass -File scripts\package.ps1` |
+| Build the packaged app and zip | `powershell -ExecutionPolicy Bypass -File scripts\package.ps1` |
 
-The packaged app is written to `target\dist\VirpeMart\VirpeMart.exe` with a bundled Java runtime.
+The packaged app is written to `target\dist\VirpeMart\VirpeMart.exe` with a bundled Java runtime, and the zip to
+deliver to `target\dist\VirpeMart-<version>-Windows.zip` (includes `Guides\`). The shop-facing guides are
+`docs/INSTALLATION.md`, `docs/USER_GUIDE.md` and `docs/TROUBLESHOOTING.md`: update them whenever a screen, message or
+file location changes, because the user gives them to an AI assistant when something goes wrong.
+To test the package like a fresh laptop without touching real folders, start the extracted `VirpeMart.exe` with
+`JAVA_HOME` empty, `PATH=C:\Windows\System32;C:\Windows` and `LOCALAPPDATA` pointing at a temporary folder.
 
 ## Tech stack
 
@@ -220,11 +225,12 @@ Test anything that cannot be undone (such as cancelling a bill) on a copy of `de
 | 5. Printing | Shop settings, printer settings, receipt with Marathi, print and reprint | Done (store printer test pending) |
 | 6. History and reports | Bill history, cancel with reversal, purchase history, reports | Done |
 | 7. Backup and audit | No login (user's decision), automatic owner sign-in, backups, restore, damaged-file check, activity log | Done |
-| 8. Packaging and go-live | Install on store laptop, import products, user guide, training | Next |
+| 8. Packaging and go-live | Version 1.0.0 zip (self-contained), installation guide, user guide, troubleshooting guide, GitHub | Done (real printer and shop laptop pending) |
 
 ## Pending inputs from the user
 
-- Publish the repository to GitHub as a private repo.
+- GitHub: <https://github.com/aviraj1805/Billing-Software-Virape-Mart> (remote `origin`). It is **public**; the
+  user originally wanted private. Never commit shop data there. Future work goes through pull requests.
 - Printer brand and model, and a test print on the real store printer (Settings > Print a test bill).
   Do not tune paper size, margins, centring or spacing for a specific printer until the user gives the model
   and the real test-print problems. The bill wording follows the user's demo bill; do not add new text.
