@@ -83,7 +83,7 @@ class ProductServiceTest {
             "Sugar, kg, 0, '', rate, zero rate",
             "Sugar, kg, -5, '', rate, negative rate",
             "Sugar, kg, 44.555, '', rate, three decimals",
-            "Sugar, kg, 44, 0, mrp, zero MRP",
+            "Sugar, kg, 44, -1, mrp, negative MRP",
             "Sugar, kg, 44, x, mrp, MRP not a number"
     })
     void rejectsBadInputNamingTheField(String name, String unit, String rate, String mrp, String field, String why) {
@@ -92,6 +92,11 @@ class ProductServiceTest {
 
         assertEquals(field, error.field(), why);
         assertEquals(0, fixture.count("SELECT COUNT(*) FROM products"), "nothing saved");
+    }
+
+    @Test
+    void zeroMrpMeansNoMrp() {
+        assertNull(products.create(input("Sugar", "kg", null, "44", "0")).mrp());
     }
 
     @Test

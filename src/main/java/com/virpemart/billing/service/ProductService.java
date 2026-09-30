@@ -107,32 +107,10 @@ public final class ProductService {
                     "The pack size is too long. Use at most " + MAX_PACK_SIZE_LENGTH + " letters, like 500 g.");
         }
 
-        Money rate = parseAmount("rate", input.rate(), "rate", true);
-        Money mrp = parseAmount("mrp", input.mrp(), "MRP", false);
+        Money rate = Amounts.parsePositive("rate", input.rate(), "rate", true);
+        Money mrp = Amounts.parsePositive("mrp", input.mrp(), "MRP", false);
 
         return new ProductDetails(name, nameMr, input.categoryId(), unit, packSize, rate, mrp);
-    }
-
-    private static Money parseAmount(String field, String text, String label, boolean required) {
-        String cleaned = Texts.cleanAmount(text);
-        if (cleaned.isEmpty()) {
-            if (required) {
-                throw new ValidationException(field, "Please enter the " + label + ".");
-            }
-            return null;
-        }
-        Money amount;
-        try {
-            amount = Money.parse(cleaned);
-        } catch (IllegalArgumentException e) {
-            throw new ValidationException(field, "The " + label + " \"" + text.strip()
-                    + "\" is not a valid amount. Use numbers like 45 or 45.50.");
-        }
-        if (!amount.isPositive()) {
-            throw new ValidationException(field, "The " + label + " must be more than zero"
-                    + (required ? "." : ", or leave it empty."));
-        }
-        return amount;
     }
 
     // ------------------------------------------------------------------ changing

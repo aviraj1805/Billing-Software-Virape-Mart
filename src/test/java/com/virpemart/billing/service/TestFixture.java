@@ -48,6 +48,24 @@ final class TestFixture {
         });
     }
 
+    /**
+     * Saves a bill whose whole amount goes on the customer's account, with its SALE_CREDIT khata entry,
+     * directly in the database. Used until the billing service exists.
+     */
+    void addBillOnAccount(long customerId, long billNo, long amountPaise) {
+        database.runInTransaction(c -> {
+            try (Statement s = c.createStatement()) {
+                s.executeUpdate("INSERT INTO bills (bill_no, created_at, customer_id, subtotal_paise, round_off_paise,"
+                        + " total_paise, paid_paise, to_account_paise, created_by) VALUES (" + billNo
+                        + ", '2026-09-30T10:00:00', " + customerId + ", " + amountPaise + ", 0, " + amountPaise
+                        + ", 0, " + amountPaise + ", " + owner.id() + ")");
+                s.executeUpdate("INSERT INTO customer_ledger (customer_id, entry_type, amount_paise, bill_id,"
+                        + " created_at, created_by) VALUES (" + customerId + ", 'SALE_CREDIT', " + amountPaise
+                        + ", last_insert_rowid(), '2026-09-30T10:00:00', " + owner.id() + ")");
+            }
+        });
+    }
+
     /** Puts a product on a saved bill directly in the database, so "is it billed?" rules can be tested. */
     void putOnABill(long productId) {
         database.runInTransaction(c -> {
