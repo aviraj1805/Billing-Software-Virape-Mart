@@ -4,6 +4,24 @@ All notable changes to this project are recorded here, newest first.
 
 ## [Unreleased]
 
+### Phase 2: Products
+
+- Main window with a top bar and a menu: Billing, Products, Customers, History & Reports, Settings.
+  Products is working; the other sections show when they arrive.
+- Products screen: search as you type by English name, Marathi name, pack size or code (every word must
+  match), category filter, show switched-off products. Keyboard: Ctrl+F, Ctrl+N, Enter, Delete, Esc.
+- Add and edit products with automatic codes (P0001...), field-level error messages, and a warning when
+  the rate is above MRP.
+- Delete only products that were never billed; billed products can be switched off instead.
+- Categories: 19 default grocery categories (migration V2); add, rename, switch off.
+- Import from Excel (CSV UTF-8) with a full preview, common column names understood, duplicates skipped,
+  new categories created, a blank template, and clear help when the file is .xlsx or not UTF-8.
+- Every product and category change is written to the audit log.
+- Confirmation dialogs now default to Cancel, so Enter never deletes by accident.
+- Fixed: rupee amounts now use Indian grouping (₹1,25,000.00).
+- Guide for the owner: `docs/product-import-guide.md`. Developer tool: `scripts/dev/ui-automation.ps1`.
+- 181 automated tests.
+
 ### Phase 1: Foundation
 
 - SQLite database with safe settings: foreign keys, WAL journal, full sync, immediate transactions.

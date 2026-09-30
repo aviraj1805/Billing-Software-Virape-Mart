@@ -38,6 +38,23 @@ It has two main areas:
 | Laptops | Developed on one laptop. The packaged app is installed on a different store laptop. |
 | Printer | Model not known yet. Printing must work for both thermal receipt printers and normal A4 printers. |
 
+## Products (confirmed in Phase 2)
+
+| Topic | Decision |
+|---|---|
+| Product codes | Created automatically: P0001, P0002, and so on. Codes never change. |
+| Categories | The app starts with a list covering typical grocery items (Rice & Grains, Dal & Pulses, Sugar, Salt & Jaggery, Edible Oil & Ghee, Spices & Masala, and so on). The owner can add, rename and switch off categories. |
+| Excel import | Clear, simple column names: Name, Marathi Name, Category, Unit, Pack Size, Rate, MRP. Common alternative names are understood. See [product-import-guide.md](product-import-guide.md). |
+
+These product rules were chosen as sensible defaults and can be changed:
+
+- Two products cannot have the same name, pack size and unit. The app points to the existing product instead.
+- A rate above MRP shows a warning, because selling above MRP is not allowed. The owner can still save.
+- A product that has never been billed can be deleted. A product on any bill can only be switched off:
+  it disappears from billing, but old bills stay correct.
+- An import only adds new products. It never changes existing products; to change a rate, edit the product.
+  Rows that already exist are skipped. Unknown category names in the sheet create new categories.
+
 ## Assumptions
 
 These were not asked directly. The user can change them at any time.
@@ -64,4 +81,5 @@ These were not asked directly. The user can change them at any time.
 ## Inputs still needed
 
 - **Before Phase 5 (printing)**: printer brand and model; shop name, address, phone and footer text for the bill.
-- **Before Phase 8 (go-live)**: store laptop Windows version and RAM; the product Excel sheet.
+- **Before Phase 8 (go-live)**: store laptop Windows version and RAM; the product Excel sheet
+  (it can be imported any time, following [product-import-guide.md](product-import-guide.md)).

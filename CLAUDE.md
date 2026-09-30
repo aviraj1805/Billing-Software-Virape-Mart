@@ -104,6 +104,17 @@ SLF4J + Logback, Apache Commons CSV, JUnit Jupiter, `jpackage`. Library versions
   Do not add `static` loggers to `App`, `Launcher` or `Startup`. Tests log WARN+ to the console only
   (`src/test/resources/logback-test.xml`).
 - JavaFX runs from the classpath (non-modular), so `--enable-native-access=ALL-UNNAMED` is the right flag.
+- A wrapped `Label` inside a `VBox` gets squeezed and shows "...". Give it `minHeight="-Infinity"`.
+  Buttons next to a growing label need `minWidth="-Infinity"`.
+- JavaFX hides hint (prompt) text in a focused box; `app.css` overrides this so hints stay visible.
+- The packaged runtime has less locale data than the JDK (e.g. "Sep" instead of "Sept"). Do not depend on
+  locale formatting for anything important.
+
+## Checking screens
+
+After UI changes, run the app and drive it with `scripts\dev\ui-automation.ps1` (Windows UI Automation):
+find windows and buttons by their text, type with `Send-Keys` (Marathi text works), and take screenshots
+of any window with `Capture-Window`. Look at each screenshot before calling a screen done.
 
 ## Code conventions
 
@@ -120,7 +131,16 @@ SLF4J + Logback, Apache Commons CSV, JUnit Jupiter, `jpackage`. Library versions
   Never swallow an exception silently.
 - Permissions: services call `session.requireOwner()` or `session.requireSignedIn()` first.
 - Controllers are created by `ui.common.ControllerFactory`; give a controller a constructor taking
-  `AppContext` to receive the database, clock and session.
+  `AppContext`. Controllers use `context.services()` (the `service.Services` record, built in `Startup`).
+  Add each new service to `Services.create`.
+- UI helpers in `ui.common`: `Views.load` / `Views.dialog` (FXML + stylesheet), `Dialogs` (confirm, info,
+  warning, askText), `Background.run` (slow work off the FX thread), `Format.money` (₹ with Indian
+  lakh grouping; Java's locale formatting does not do this).
+- `Dialogs.confirm` makes **Cancel the default button**, so Enter never deletes or saves a mistake. Keep it so.
+- Forms: catch `ValidationException` and highlight the field it names (see `ProductFormController`).
+- Shared validation: a service `check(...)` method validates typed input once and is reused by forms and
+  imports (see `ProductService.check`).
+- Owner-only buttons are hidden for STAFF, but the service still enforces the rule.
 - Money: `model.Money` (paise) and `model.Quantity` (thousandths). `Money.times(Quantity)` and
   `Money.roundToRupee()` hold the only rounding logic; do not round anywhere else.
 
@@ -146,8 +166,8 @@ SLF4J + Logback, Apache Commons CSV, JUnit Jupiter, `jpackage`. Library versions
 |---|---|---|
 | 0. Setup | JDK, Maven Wrapper, skeleton, docs, packaging smoke test | Done |
 | 1. Foundation | Paths, DB connection, transactions, migrations, V1 schema, Money/Quantity, logging, error handler, single-instance lock, session | Done |
-| 2. Products | Categories, products, search, deactivate/delete rules, CSV import | Next |
-| 3. Customers and ledger | Customers, opening balance, receive payment, balance and ledger view | Not started |
+| 2. Products | Categories, products, search, deactivate/delete rules, CSV import | Done |
+| 3. Customers and ledger | Customers, opening balance, receive payment, balance and ledger view | Next |
 | 4. Billing | Billing screen, search, loose qty, one-off items, rate change, totals, split payments, save, hold | Not started |
 | 5. Printing | Shop settings, printer settings, receipt with Marathi, print and reprint | Not started |
 | 6. History and reports | Bill history, cancel with reversal, purchase history, reports | Not started |
@@ -159,6 +179,9 @@ SLF4J + Logback, Apache Commons CSV, JUnit Jupiter, `jpackage`. Library versions
 - Publish the repository to GitHub as a private repo.
 - Printer brand and model, and shop details for the bill header: needed before Phase 5.
 - Store laptop Windows version and RAM, and the product Excel sheet: needed before Phase 8.
+  The user never pasted the sheet's header row; the import accepts common column names
+  (see `docs/product-import-guide.md`). If their real sheet uses other names, add them to
+  `ProductImportService.buildHeaderNames()`.
 
 ## Glossary
 
