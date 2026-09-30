@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.ToggleButton?>
+<?import javafx.scene.control.ToggleGroup?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<!-- Record money a customer paid against their khata. -->
+<VBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.virpemart.billing.ui.customers.PaymentFormController"
+      styleClass="dialog"
+      spacing="14"
+      prefWidth="470">
+
+    <fx:define>
+        <ToggleGroup fx:id="modeGroup"/>
+    </fx:define>
+
+    <VBox spacing="2">
+        <Label fx:id="customerLabel" styleClass="detail-title" wrapText="true"/>
+        <Label fx:id="currentLabel" styleClass="muted"/>
+    </VBox>
+
+    <GridPane hgap="12" vgap="10">
+        <columnConstraints>
+            <ColumnConstraints minWidth="130"/>
+            <ColumnConstraints hgrow="ALWAYS"/>
+        </columnConstraints>
+
+        <Label text="Amount paid (₹) *" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+        <TextField fx:id="amountField" promptText="e.g. 500" styleClass="big-input"
+                   GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+
+        <Label text="Paid by *" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+        <HBox spacing="6" GridPane.rowIndex="1" GridPane.columnIndex="1">
+            <ToggleButton fx:id="cashButton" text="Cash" toggleGroup="$modeGroup" selected="true" styleClass="mode-button"/>
+            <ToggleButton fx:id="upiButton" text="UPI" toggleGroup="$modeGroup" styleClass="mode-button"/>
+            <ToggleButton fx:id="cardButton" text="Card" toggleGroup="$modeGroup" styleClass="mode-button"/>
+        </HBox>
+
+        <Label text="Note" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+        <TextField fx:id="noteField" promptText="Optional, e.g. paid by his son" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+    </GridPane>
+
+    <Label fx:id="previewLabel" styleClass="preview" wrapText="true" minHeight="-Infinity"/>
+    <Label fx:id="errorLabel" styleClass="error-text" wrapText="true" minHeight="-Infinity"/>
+
+    <HBox spacing="10" alignment="CENTER_RIGHT">
+        <Label text="Enter = Save, Esc = Cancel" styleClass="muted"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Button text="Cancel" cancelButton="true" onAction="#cancel"/>
+        <Button text="Save payment" defaultButton="true" styleClass="primary" onAction="#save"/>
+    </HBox>
+</VBox>

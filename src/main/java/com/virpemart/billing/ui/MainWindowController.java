@@ -85,7 +85,7 @@ public class MainWindowController {
             return comingSoon("Billing", "The billing screen arrives in Phase 4.");
         }
         if (toggle == customersNav) {
-            return comingSoon("Customers", "Customer accounts arrive in Phase 3.");
+            return Views.load("customers.fxml", context).root();
         }
         if (toggle == historyNav) {
             return comingSoon("History & Reports", "Bill history and reports arrive in Phase 6.");

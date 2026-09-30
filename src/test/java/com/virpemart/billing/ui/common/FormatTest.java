@@ -18,6 +18,23 @@ class FormatTest {
     }
 
     @Test
+    void balancesAreDescribedInWords() {
+        assertEquals("Dues ₹1,250.00", Format.balance(Money.ofRupees(1250)));
+        assertEquals("Advance ₹200.00", Format.balance(Money.ofRupees(-200)));
+        assertEquals("No dues", Format.balance(Money.ZERO));
+        assertEquals("Adv ₹200.00", Format.balanceShort(Money.ofRupees(-200)));
+    }
+
+    @Test
+    void phoneAndDatesAreReadable() {
+        assertEquals("98765 43210", Format.phone("9876543210"));
+        assertEquals("", Format.phone(null));
+        assertEquals("30 Sep 2026, 2:05 PM", Format.dateTime(java.time.LocalDateTime.of(2026, 9, 30, 14, 5)));
+        assertEquals("30/09/26 2:05 PM", Format.dateTimeShort(java.time.LocalDateTime.of(2026, 9, 30, 14, 5)));
+        assertEquals("Wed, 30 Sep 2026", Format.date(java.time.LocalDate.of(2026, 9, 30)));
+    }
+
+    @Test
     void groupsDigitsInLakhsAndCrores() {
         assertEquals("0", Format.indianGrouping(0));
         assertEquals("999", Format.indianGrouping(999));

@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<!-- Add or edit a customer. Old dues can be entered only when adding. -->
+<VBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.virpemart.billing.ui.customers.CustomerFormController"
+      styleClass="dialog"
+      spacing="14"
+      prefWidth="520">
+
+    <Label fx:id="numberLabel" styleClass="muted"/>
+
+    <GridPane hgap="12" vgap="10">
+        <columnConstraints>
+            <ColumnConstraints minWidth="170"/>
+            <ColumnConstraints hgrow="ALWAYS"/>
+        </columnConstraints>
+
+        <Label text="Name *" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+        <TextField fx:id="nameField" promptText="e.g. Ramesh Patil" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+
+        <Label text="Phone" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+        <TextField fx:id="phoneField" promptText="10 digits, e.g. 98765 43210" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+
+        <Label text="Address" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+        <TextField fx:id="addressField" promptText="Optional" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+
+        <Label text="Notes" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
+        <TextArea fx:id="notesArea" promptText="Optional, e.g. pays on the 1st of every month" prefRowCount="2"
+                  wrapText="true" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
+
+        <Label fx:id="oldDuesLabel" text="Old dues from paper khata (₹)" wrapText="true"
+               GridPane.rowIndex="4" GridPane.columnIndex="0"/>
+        <VBox fx:id="oldDuesBox" spacing="4" GridPane.rowIndex="4" GridPane.columnIndex="1">
+            <TextField fx:id="oldDuesField" promptText="Leave empty if nothing is due"/>
+            <Label text="Copy the amount the customer owes today from the paper khata." styleClass="hint"
+                   wrapText="true" minHeight="-Infinity"/>
+        </VBox>
+    </GridPane>
+
+    <Label fx:id="errorLabel" styleClass="error-text" wrapText="true" minHeight="-Infinity"/>
+
+    <HBox spacing="10" alignment="CENTER_RIGHT">
+        <Label text="Enter = Save, Esc = Cancel" styleClass="muted"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Button text="Cancel" cancelButton="true" onAction="#cancel"/>
+        <Button text="Save" defaultButton="true" styleClass="primary" onAction="#save"/>
+    </HBox>
+</VBox>

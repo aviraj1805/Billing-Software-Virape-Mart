@@ -127,7 +127,82 @@
     -fx-text-fill: #a12a2a;
 }
 
+.section-title {
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #1f3a2e;
+}
+
+.detail-title {
+    -fx-font-size: 19px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #1f3a2e;
+}
+
+.notes {
+    -fx-text-fill: #5a4a1f;
+    -fx-font-style: italic;
+}
+
+.hint {
+    -fx-text-fill: #888888;
+    -fx-font-size: 12px;
+}
+
+.split-side {
+    -fx-padding: 4 10 4 4;
+}
+
+.split-pane {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+}
+
+.dues-total {
+    -fx-text-fill: #8a2a1a;
+    -fx-font-weight: bold;
+    -fx-padding: 0 12 0 0;
+}
+
+.balance-box {
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+    -fx-padding: 8 14 8 14;
+    -fx-background-radius: 8;
+    -fx-background-color: #eef1ee;
+    -fx-text-fill: #1f3a2e;
+}
+
+.balance-box:dues {
+    -fx-background-color: #fbe3e1;
+    -fx-text-fill: #a12a2a;
+}
+
+.balance-box:advance {
+    -fx-background-color: #e1f3e6;
+    -fx-text-fill: #1f6a3a;
+}
+
 /* ---------------------------------------------------------------- forms */
+
+.preview {
+    -fx-text-fill: #1f5a3a;
+    -fx-font-weight: bold;
+}
+
+.big-input {
+    -fx-font-size: 18px;
+}
+
+.mode-button {
+    -fx-pref-width: 80;
+    -fx-padding: 6 10 6 10;
+}
+
+.mode-button:selected {
+    -fx-background-color: #2f6f4f;
+    -fx-text-fill: white;
+}
 
 .error-text {
     -fx-text-fill: #a12a2a;

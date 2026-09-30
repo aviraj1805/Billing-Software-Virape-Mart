@@ -55,6 +55,7 @@ public class App extends Application {
         stage.setHeight(INITIAL_HEIGHT);
         stage.setMinWidth(MIN_WIDTH);
         stage.setMinHeight(MIN_HEIGHT);
+        stage.setMaximized(true); // the shop laptop uses the app full screen
         stage.show();
     }
 

@@ -15,6 +15,7 @@ import com.virpemart.billing.service.ProductInput;
 import com.virpemart.billing.service.ProductService;
 import com.virpemart.billing.service.ValidationException;
 import com.virpemart.billing.ui.common.Dialogs;
+import com.virpemart.billing.ui.common.FormErrors;
 import com.virpemart.billing.ui.common.Format;
 import com.virpemart.billing.ui.common.Views;
 
@@ -32,7 +33,6 @@ import javafx.util.StringConverter;
 public class ProductFormController {
 
     private static final Category NO_CATEGORY = new Category(0, "(No category)", true);
-    private static final String ERROR_STYLE = "field-error";
 
     private final AppContext context;
     private final ProductService products;
@@ -58,6 +58,7 @@ public class ProductFormController {
     @FXML
     private Label errorLabel;
 
+    private FormErrors errors;
     private Stage stage;
     private Product existing;
     private Product saved;
@@ -86,6 +87,14 @@ public class ProductFormController {
 
     @FXML
     private void initialize() {
+        errors = new FormErrors(errorLabel, Map.<String, Control>of(
+                "name", nameField,
+                "nameMr", nameMrField,
+                "category", categoryBox,
+                "unit", unitBox,
+                "packSize", packSizeField,
+                "rate", rateField,
+                "mrp", mrpField));
         unitBox.getItems().setAll(Unit.values());
         unitBox.setConverter(new StringConverter<>() {
             @Override
@@ -146,7 +155,7 @@ public class ProductFormController {
 
     @FXML
     private void save() {
-        clearErrors();
+        errors.clear();
         Category category = categoryBox.getValue();
         Unit unit = unitBox.getValue();
         ProductInput input = new ProductInput(
@@ -169,45 +178,14 @@ public class ProductFormController {
             saved = (existing == null) ? products.create(input) : products.update(existing.id(), input);
             stage.close();
         } catch (ValidationException e) {
-            showError(e.getMessage(), fieldControl(e.field()));
+            errors.show(e.getMessage(), e.field());
         } catch (BusinessRuleException e) {
-            showError(e.getMessage(), null);
+            errors.show(e.getMessage(), null);
         }
     }
 
     @FXML
     private void cancel() {
         stage.close();
-    }
-
-    private Control fieldControl(String field) {
-        return Map.<String, Control>of(
-                "name", nameField,
-                "nameMr", nameMrField,
-                "category", categoryBox,
-                "unit", unitBox,
-                "packSize", packSizeField,
-                "rate", rateField,
-                "mrp", mrpField).get(field);
-    }
-
-    private void showError(String message, Control field) {
-        errorLabel.setText(message);
-        errorLabel.setVisible(true);
-        errorLabel.setManaged(true);
-        if (field != null) {
-            field.getStyleClass().add(ERROR_STYLE);
-            field.requestFocus();
-        }
-        stage.sizeToScene();
-    }
-
-    private void clearErrors() {
-        errorLabel.setVisible(false);
-        errorLabel.setManaged(false);
-        for (Control control : List.of(nameField, nameMrField, categoryBox, unitBox, packSizeField, rateField, mrpField)) {
-            control.getStyleClass().remove(ERROR_STYLE);
-        }
-        stage.sizeToScene();
     }
 }
