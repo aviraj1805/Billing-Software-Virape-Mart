@@ -21,11 +21,11 @@
       spacing="10">
 
     <HBox alignment="CENTER_LEFT" spacing="10">
-        <Label text="Billing" styleClass="page-title"/>
+        <Label text="Billing" styleClass="page-title" minWidth="-Infinity"/>
         <Label fx:id="bannerLabel" styleClass="banner" wrapText="true" HBox.hgrow="ALWAYS" maxWidth="Infinity"
                visible="false"/>
         <Region HBox.hgrow="ALWAYS"/>
-        <Button text="Reprint bill" onAction="#reprintBill" minWidth="-Infinity"/>
+        <Button text="Recent bills (F9)" onAction="#recentBills" minWidth="-Infinity"/>
         <Button fx:id="heldButton" text="Held bills (0)" onAction="#resumeHeld" minWidth="-Infinity"/>
         <Button text="Hold bill (F8)" onAction="#holdBill" minWidth="-Infinity"/>
         <Button text="Clear bill" onAction="#clearBill" minWidth="-Infinity"/>
@@ -67,7 +67,7 @@
                 <Button text="+ Item not in list (F4)" onAction="#addOneOff"/>
             </HBox>
             <Label styleClass="hint"
-                   text="F2 product   ·   F3 khata customer   ·   F4 item not in list   ·   F8 hold   ·   F12 save and pay   ·   Del remove line"/>
+                   text="F2 product   ·   F3 khata customer   ·   F4 item not in list   ·   F8 hold   ·   F9 recent bills   ·   F12 save and pay   ·   Del remove line"/>
         </VBox>
 
         <!-- ============ right: customer and totals ============ -->

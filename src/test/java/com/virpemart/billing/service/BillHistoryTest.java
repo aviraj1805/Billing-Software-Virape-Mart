@@ -2,6 +2,7 @@ package com.virpemart.billing.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -16,6 +17,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import com.virpemart.billing.model.BillCorrection;
 import com.virpemart.billing.model.BillSearch;
 import com.virpemart.billing.model.BillSummary;
 import com.virpemart.billing.model.CancelledBill;
@@ -223,6 +225,83 @@ class BillHistoryTest {
         BusinessRuleException twice = assertThrows(BusinessRuleException.class, () -> billing.cancel(1, "Again"));
         assertEquals("Bill 1 is already cancelled.", twice.getMessage());
         assertEquals("Mistake", billing.bill(1).cancelReason(), "the first reason is kept");
+    }
+
+    // ------------------------------------------------------------------ correct
+
+    @Test
+    void correctingAKhataBillCancelsItAndGivesBackItsCustomerAndItems() {
+        Cart cart = new Cart();
+        cart.addProduct(sugar, Quantity.parse("1.5"));
+        cart.addProduct(salt, Quantity.ofWhole(2));
+        cart.setRate(1, Money.parse("27"));
+        billing.save(new BillRequest(ramesh, null, cart.lines(), List.of()));
+        fixture.services.products().update(salt.id(),
+                new ProductInput("Tata Salt", "टाटा मीठ", null, "pcs", "1 kg", "29", "30"));
+
+        BillCorrection correction = billing.correct(1, "Wrong quantity");
+
+        assertTrue(billing.bill(1).isCancelled());
+        assertEquals("Wrong quantity", billing.bill(1).cancelReason());
+        assertEquals(Money.parse("1200"), fixture.services.customers().find(ramesh).orElseThrow().balance(),
+                "the old bill is taken off the khata");
+        assertEquals(Long.valueOf(ramesh), correction.customerId());
+        assertNull(correction.walkInName());
+        assertEquals(Money.parse("120"), correction.cancelled().takenOffKhata());
+        CartLine saltLine = correction.lines().get(1);
+        assertEquals(Quantity.ofWhole(2), saltLine.quantity());
+        assertEquals(Money.parse("27"), saltLine.rate(), "the rate charged on the old bill");
+        assertEquals(Money.parse("29"), saltLine.productRate(), "today's list rate");
+        assertEquals("टाटा मीठ", saltLine.nameMr(), "today's product details");
+        assertEquals(Quantity.parse("1.5"), correction.lines().get(0).quantity());
+        assertEquals(Money.parse("44"), correction.lines().get(0).rate());
+    }
+
+    @Test
+    void correctedBillIsSavedWithANewNumber() {
+        billing.save(new BillRequest(null, "Sunil", lines(), List.of(cash("122"))));
+
+        BillCorrection correction = billing.correct(1, "Bill corrected");
+        Cart cart = Cart.of(correction.lines());
+        cart.setQuantity(1, Quantity.ofWhole(1));
+        long newBill = billing.save(new BillRequest(correction.customerId(), correction.walkInName(), cart.lines(),
+                List.of(cash("94")))).billNo();
+
+        assertNull(correction.customerId());
+        assertEquals("Sunil", correction.walkInName());
+        assertEquals(Money.parse("122"), correction.cancelled().giveBack());
+        assertEquals(2, newBill);
+        assertEquals(Money.parse("94"), billing.bill(2).totals().total(), "66 + 28");
+        assertEquals("Sunil", billing.bill(2).customerName());
+    }
+
+    @Test
+    void correctRulesAreTheCancelRules() {
+        billing.save(new BillRequest(null, null, lines(), List.of(cash("122"))));
+
+        assertEquals("reason", assertThrows(ValidationException.class, () -> billing.correct(1, " ")).field());
+        assertFalse(billing.bill(1).isCancelled(), "nothing changes without a reason");
+        fixture.signInStaff();
+        assertThrows(PermissionDeniedException.class, () -> billing.correct(1, "Mistake"));
+        fixture.signInOwner();
+
+        billing.correct(1, "Mistake");
+        assertThrows(BusinessRuleException.class, () -> billing.correct(1, "Again"));
+    }
+
+    @Test
+    void recentBillsAreTheNewestTwentyIncludingCancelled() {
+        for (int i = 0; i < 22; i++) {
+            billing.save(new BillRequest(null, null, lines(), List.of(cash("122"))));
+        }
+        billing.cancel(21, "Mistake");
+
+        List<BillSummary> recent = billing.searchBills(new BillSearch(null, null, null, null, 20));
+
+        assertEquals(20, recent.size());
+        assertEquals(22, recent.getFirst().billNo(), "newest first");
+        assertEquals(3, recent.getLast().billNo());
+        assertTrue(recent.get(1).cancelled());
     }
 
     @Test

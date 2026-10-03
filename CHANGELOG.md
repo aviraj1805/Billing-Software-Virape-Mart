@@ -4,6 +4,16 @@ All notable changes to this project are recorded here, newest first.
 
 ## [Unreleased]
 
+### Recent bills and Correct bill
+
+- The Billing screen's "Reprint bill" button is now **Recent bills (F9)**: the newest 20 bills, newest first and
+  already selected (F9 then Enter shows the last bill). Arrow keys pick an earlier bill; typing finds older bills by
+  number, name or phone. Cancelled bills are listed, marked CANCELLED.
+- From the list: **See / print**, **Correct bill…** and **Cancel bill…** (owner).
+- **Correct bill** (`BillingService.correct`): cancels the bill with a reason and loads its customer and items on the
+  Billing screen, to change and save as a new bill. Items keep the rate charged; an open bill is put on hold first.
+- The Billing title no longer shrinks to "..." next to a long message.
+
 ### Printed bill: item columns and Marathi customer name
 
 - Items print as one row each in four columns: **Item, Qty, Rate, Amount**. Long item names wrap inside the Item

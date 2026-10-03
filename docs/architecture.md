@@ -141,6 +141,9 @@ Printing is split so that the content can be tested without a printer:
 - `BillingService.cancel` runs in one transaction: mark the bill CANCELLED (the only update the database
   trigger allows), add a CANCEL_REVERSAL khata entry for the amount that went on the khata, and write an audit row.
   `cancelPreview` shows the same effect before the owner confirms.
+- `BillingService.correct` = `cancel`, then returns a `BillCorrection` (customer id, walk-in name, lines at the rates
+  charged with today's product details). The Billing screen loads it into a new `Cart`; saving it is an ordinary new
+  bill. A saved bill is never changed in place. The Billing screen's Recent bills window (F9) offers it.
 - `ReportService.sales` reads `ReportRepository.daily`: bills and their payments are grouped by the bill's day
   (FINAL bills only), and khata PAYMENT entries by the day they were received.
 

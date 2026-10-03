@@ -127,7 +127,7 @@ The printer model and the exact bill heading were not known yet, so both are **s
   printer is bought and a real test print is checked.
 - Printing a bill again is marked **"DUPLICATE COPY"** and recorded in the audit log. Anyone can reprint.
 - A printer problem never affects the saved bill: the screen says "saved but NOT printed" and the bill can be
-  reprinted with "Reprint bill".
+  reprinted from "Recent bills" (F9).
 
 ## History and reports (built in Phase 6)
 
@@ -144,6 +144,21 @@ These rules were chosen as sensible defaults and can be changed:
   - If the customer still takes some items, the owner makes a new bill.
   - Every cancel is recorded in the audit log. A cancelled bill cannot be "un-cancelled".
 - **Purchase history**: the "Bills" button on a customer shows all of that customer's bills.
+- **Recent bills** (chosen by the user on 2026-10-03): the Billing screen's "Recent bills (F9)" button (it replaced
+  "Reprint bill") opens a list of the **newest 20 bills of any day**, newest first, with the newest already selected,
+  so F9 then Enter shows the last bill ready to print. Arrow keys choose an earlier bill. **Cancelled bills are
+  listed, marked CANCELLED.** The search box finds older bills by bill number, name or phone. From the list a bill
+  can be seen and printed (anyone), corrected or cancelled (owner).
+- **Correct a bill** (owner only, chosen by the user on 2026-10-03). Saved bills are never edited, so "Correct bill"
+  is: cancel the bill with a reason (exactly like "Cancel a bill"; the reason is filled in as "Bill corrected" and
+  can be changed), then its customer and items open on the Billing screen to be changed and saved as a **new bill
+  with a new number**.
+  - Items keep the rate charged on the old bill. Name, Marathi name and MRP come from today's product list, so a rate
+    that differs from today's list shows as a changed rate (and is recorded as a rate change when saved).
+  - A walk-in name comes back; a khata customer comes back unless switched off (then the owner is told).
+  - The payment is entered again when the new bill is saved: the money paid for the old bill goes with it, so the
+    customer does not pay twice.
+  - A bill already open on the Billing screen is put on hold first, so nothing is lost.
 - **Reports** (owner only): one day or a date range (up to one year), with Today, Yesterday, This month and Last
   month shortcuts. They show the number of bills, total sales, credit given on khata, and money received split
   into Cash, UPI and Card: money paid at billing plus khata payments received that day. Cancelled bills are

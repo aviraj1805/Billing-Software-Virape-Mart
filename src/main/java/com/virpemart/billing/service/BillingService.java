@@ -10,6 +10,7 @@ import java.util.Optional;
 
 import com.virpemart.billing.db.Database;
 import com.virpemart.billing.db.DbTime;
+import com.virpemart.billing.model.BillCorrection;
 import com.virpemart.billing.model.BillDetails;
 import com.virpemart.billing.model.BillSearch;
 import com.virpemart.billing.model.BillSummary;
@@ -151,6 +152,39 @@ public final class BillingService {
                     + bill.totals().total().toPlainString() + ") cancelled: " + cleanReason, now);
             return CancelledBill.of(bill);
         });
+    }
+
+    /**
+     * Corrects a saved bill. Owner only. Saved bills never change, so the bill is cancelled (exactly as
+     * {@link #cancel}) and its customer and items are returned, to be changed on the Billing screen and saved as a
+     * new bill with a new number. Items keep the rate charged on the old bill; name, Marathi name, MRP and list rate
+     * come from the product list as it is now, so a rate that differs from today's list shows as a changed rate.
+     *
+     * @throws ValidationException (field "reason") if no reason is given
+     */
+    public BillCorrection correct(long billNo, String reason) {
+        CancelledBill cancelled = cancel(billNo, reason);
+        return database.query(c -> {
+            BillDetails bill = bills.findByNo(c, billNo)
+                    .orElseThrow(() -> new BusinessRuleException("There is no bill number " + billNo + "."));
+            Long customerId = bills.customerIdOf(c, bill.id()).orElse(null);
+            List<CartLine> lines = new ArrayList<>();
+            for (CartLine line : bill.lines()) {
+                lines.add(withCurrentProduct(c, line));
+            }
+            return new BillCorrection(cancelled, customerId, customerId == null ? bill.customerName() : null, lines);
+        });
+    }
+
+    /** The line with today's product details and the rate it was charged at. One-off items stay as they are. */
+    private CartLine withCurrentProduct(Connection connection, CartLine line) throws SQLException {
+        if (line.productId() == null) {
+            return line;
+        }
+        return products.findById(connection, line.productId())
+                .map(p -> new CartLine(p.id(), p.name(), p.nameMr(), p.unit(), p.packSize(), line.quantity(),
+                        line.rate(), p.rate(), p.mrp()))
+                .orElse(line);
     }
 
     /** What cancelling the bill would do, shown before the owner confirms. Owner only. Nothing is changed. */

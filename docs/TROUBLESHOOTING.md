@@ -56,7 +56,7 @@ checklist in section 1. Section 4 gives the assistant the technical facts it nee
 | What you see | Why | What to do |
 |---|---|---|
 | **"Something went wrong, but your saved bills are safe."** | An unexpected error (a bug). | Click OK and try again. If it repeats, close and reopen the app, then send the log (section 1) and the steps that cause it. |
-| An orange line **"Bill N is saved but was NOT printed"** and **"Printing did not work…"** | Printer off, no paper, cable loose, or wrong printer chosen. The bill **is saved**. | Fix the printer, then **Billing → Reprint bill** with that number. |
+| An orange line **"Bill N is saved but was NOT printed"** and **"Printing did not work…"** | Printer off, no paper, cable loose, or wrong printer chosen. The bill **is saved**. | Fix the printer, then **Billing → Recent bills (F9)**, choose that bill, **See / print**. |
 | **"The printer "…" was not found in Windows."** | The printer chosen in Settings was removed or renamed in Windows. | Install the printer driver again, or choose the printer again in **Settings → Bill printer**, then **Save printer settings**. |
 | **"Windows has no default printer."** | No printer is installed or set as default. | Install the printer (INSTALLATION step 7) or choose a printer in Settings. |
 | Printed bill is cut off, too small, shifted, or too long | The printer or paper width is not set up yet for this printer model. | Check **Settings → Paper** matches the roll (58 mm or 80 mm). Print a test bill and send a photo of it plus the printer model (section 4, "Printing"). |
@@ -66,7 +66,7 @@ checklist in section 1. Section 4 gives the assistant the technical facts it nee
 | Wrong date or time on bills | The laptop clock or time zone is wrong. The app uses the laptop's clock. | Windows Settings → Time & language → set the time zone to **(UTC+05:30) Chennai, Kolkata, Mumbai, New Delhi** and turn on "Set time automatically". Bills already saved keep their time. |
 | Excel import shows errors | The sheet was not saved as CSV UTF-8, or column names are unusual. | Follow [product-import-guide.md](product-import-guide.md). Rows with errors are shown with the reason; fix them in Excel and import again. Existing products are never changed by an import. |
 | A khata balance looks wrong | A payment or opening due was typed wrongly. | Open **Customers**, check the khata entries. Use **Correct balance** with a reason. |
-| A bill is wrong | Saved bills cannot be edited. | **History & Reports → Bills → Cancel bill…** with a reason, then make a new bill. |
+| A bill is wrong | Saved bills cannot be edited. | **Billing → Recent bills (F9)**, choose the bill, **Correct bill…**: it is cancelled and its items come back on the Billing screen to fix and save as a new bill. (Or **Cancel bill…** if the customer returned everything.) |
 | Need an old copy of the data | For example after a big mistake. | **Settings → Backups → Restore a backup…** (see the User guide). The current data is kept, so this can be undone. |
 
 ---

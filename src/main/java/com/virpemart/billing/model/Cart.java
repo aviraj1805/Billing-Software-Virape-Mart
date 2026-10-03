@@ -83,6 +83,13 @@ public final class Cart {
         lines.addAll(other.lines);
     }
 
+    /** A cart with these lines, used when a cancelled bill is loaded to be corrected. */
+    public static Cart of(List<CartLine> lines) {
+        Cart cart = new Cart();
+        cart.lines.addAll(lines);
+        return cart;
+    }
+
     /** A copy with the same lines, used when a bill is put on hold. */
     public Cart copy() {
         Cart copy = new Cart();

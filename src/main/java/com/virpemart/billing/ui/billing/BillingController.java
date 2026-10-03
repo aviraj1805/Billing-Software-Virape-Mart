@@ -9,6 +9,7 @@ import java.util.Optional;
 import java.util.function.Function;
 
 import com.virpemart.billing.AppContext;
+import com.virpemart.billing.model.BillCorrection;
 import com.virpemart.billing.model.BillSummary;
 import com.virpemart.billing.model.BillTotals;
 import com.virpemart.billing.model.Cart;
@@ -54,6 +55,7 @@ import javafx.stage.Window;
  * The Billing screen.
  *
  * <p>Fast keyboard flow: type a product (F2), Enter, type the quantity, Enter. Repeat. F12 to save and pay.
+ * F9 opens the newest bills to see, print, correct or cancel.
  * The cart and all arithmetic live in {@link Cart}; saving happens in {@link BillingService}.
  */
 public class BillingController {
@@ -569,27 +571,57 @@ public class BillingController {
             printing.printBill(billNo, false);
             return null;
         }, done -> showBanner(summary + "  ·  Printed", true), error -> {
-            showBanner("Bill " + billNo + " is saved but was NOT printed. Use \"Reprint bill\" to print it.", false);
+            showBanner("Bill " + billNo + " is saved but was NOT printed. Use \"Recent bills\" (F9) to print it.",
+                    false);
             ErrorHandler.handle(error);
         });
     }
 
-    /** Asks for a bill number (the newest bill is filled in) and shows that bill with a Print button. */
+    /**
+     * Opens the Recent bills window (F9): see and print, correct or cancel one of the newest bills. A bill chosen for
+     * correction is already cancelled; its customer and items are loaded here to be changed and saved again.
+     */
     @FXML
-    private void reprintBill() {
-        Optional<Long> last = billing.lastBillNo();
-        if (last.isEmpty()) {
-            Dialogs.info(window(), "Reprint bill", "No bills have been saved yet.");
+    private void recentBills() {
+        if (billing.lastBillNo().isEmpty()) {
+            Dialogs.info(window(), "Recent bills", "No bills have been saved yet.");
             return;
         }
-        Dialogs.askText(window(), "Reprint bill", "Bill number:", String.valueOf(last.get())).ifPresent(text -> {
-            try {
-                showBill(Long.parseLong(text.strip()));
-            } catch (NumberFormatException e) {
-                Dialogs.warning(window(), "Reprint bill", "Please type a bill number, for example "
-                        + last.get() + ".");
+        RecentBillsController.open(window(), context).ifPresent(this::loadCorrection);
+        reloadCustomer();
+        productSearch.requestFocus();
+    }
+
+    /**
+     * Puts a cancelled bill's customer and items on the screen to make the corrected bill. A bill that was open is
+     * put on hold first, so nothing is lost.
+     */
+    private void loadCorrection(BillCorrection correction) {
+        long oldBillNo = correction.cancelled().billNo();
+        List<String> notes = new ArrayList<>();
+        if (!cart.isEmpty()) {
+            held.add(new HeldBill(customer, walkInNameField.getText(), cart.copy(), LocalTime.now(context.clock())));
+            notes.add("The bill that was open is on hold.");
+        }
+        cart.replaceWith(Cart.of(correction.lines()));
+        walkInNameField.setText(correction.walkInName() == null ? "" : correction.walkInName());
+        showWalkIn();
+        if (correction.customerId() != null) {
+            Optional<CustomerSummary> khataCustomer = customers.find(correction.customerId());
+            if (khataCustomer.isPresent() && khataCustomer.get().customer().active()) {
+                setCustomer(khataCustomer.get());
+            } else {
+                notes.add("The khata customer of bill " + oldBillNo
+                        + " is switched off: switch them on in Customers, or save this as a walk-in bill.");
             }
-        });
+        }
+        refreshCart();
+        updateHeldButton();
+        entryLabel.getStyleClass().remove("error-text");
+        entryLabel.setText("Correcting bill " + oldBillNo + ". Change the items, then save (F12).");
+        notes.addFirst("Bill " + oldBillNo + " is cancelled. Its items are on the screen: change what is wrong, then"
+                + " Save and pay (F12). Enter the payment again; the customer does not pay twice.");
+        showBanner(String.join("  ", notes), false);
         productSearch.requestFocus();
     }
 
@@ -662,6 +694,7 @@ public class BillingController {
             }
             case F4 -> addOneOff();
             case F8 -> holdBill();
+            case F9 -> recentBills();
             case F12 -> saveAndPay();
             case DELETE -> {
                 if (cartTable.isFocused()) {
