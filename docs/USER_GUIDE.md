@@ -50,6 +50,9 @@ bill only; it is **not** added to the product list.
 
 - **Walk-in customer** (pays now): nothing to do. If you want a name printed on the bill, type it in
   **Name on bill (optional)**.
+- The printed bill shows the customer's name **in Marathi letters** (the app writes it automatically from the English
+  name, for example "Umesh Virape" prints as "उमेश विरपे") and, for a khata customer, their phone number. If a name
+  prints with a wrong spelling, tell whoever looks after the software (see TROUBLESHOOTING).
 - **Khata customer**: press **F3**, type the name, phone or customer number (like C0005), pick them and press
   **Enter**. Their dues and last bills appear. **Walk-in instead** goes back to a walk-in bill.
 - **New khata customer**: click **+ New khata customer**.

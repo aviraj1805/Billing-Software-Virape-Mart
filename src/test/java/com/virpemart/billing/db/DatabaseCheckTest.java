@@ -25,7 +25,7 @@ class DatabaseCheckTest {
         DatabaseCheck.Result result = DatabaseCheck.inspect(database.file());
 
         assertTrue(result.ok());
-        assertEquals(3, result.schemaVersion());
+        assertEquals(4, result.schemaVersion());
         assertEquals(0, result.billCount());
         assertEquals(null, result.lastBillAt());
     }

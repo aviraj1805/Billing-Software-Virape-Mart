@@ -33,15 +33,17 @@ public final class BillRepository {
      * A bill ready to be inserted.
      *
      * @param customerId      khata customer, or null for walk-in
-     * @param customerName    name printed on the bill, or null
+     * @param customerName    customer's name as typed, or null
+     * @param customerNameMr  customer's name in Marathi letters as printed, or null
+     * @param customerPhone   khata customer's phone number as printed, or null
      * @param paidForBill     part of the bill paid now
      * @param toAccount       unpaid part added to the khata
      * @param previousBalance khata balance before, or null for walk-in
      * @param balanceAfter    khata balance after, or null for walk-in
      */
-    public record NewBill(long billNo, String createdAt, Long customerId, String customerName, BillTotals totals,
-                          Money paidForBill, Money toAccount, Money previousBalance, Money balanceAfter,
-                          long createdBy) {
+    public record NewBill(long billNo, String createdAt, Long customerId, String customerName,
+                          String customerNameMr, String customerPhone, BillTotals totals, Money paidForBill,
+                          Money toAccount, Money previousBalance, Money balanceAfter, long createdBy) {
     }
 
     /** The next bill number: one more than the highest ever used. Bills are never deleted, so numbers never repeat. */
@@ -58,7 +60,8 @@ public final class BillRepository {
         try (PreparedStatement statement = connection.prepareStatement(
                 "INSERT INTO bills (bill_no, created_at, customer_id, customer_name, subtotal_paise, round_off_paise,"
                         + " total_paise, paid_paise, to_account_paise, previous_balance_paise, balance_after_paise,"
-                        + " status, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'FINAL', ?)",
+                        + " status, created_by, customer_name_mr, customer_phone)"
+                        + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'FINAL', ?, ?, ?)",
                 Statement.RETURN_GENERATED_KEYS)) {
             statement.setLong(1, bill.billNo());
             statement.setString(2, bill.createdAt());
@@ -72,6 +75,8 @@ public final class BillRepository {
             setNullableMoney(statement, 10, bill.previousBalance());
             setNullableMoney(statement, 11, bill.balanceAfter());
             statement.setLong(12, bill.createdBy());
+            statement.setString(13, bill.customerNameMr());
+            statement.setString(14, bill.customerPhone());
             statement.executeUpdate();
             try (ResultSet keys = statement.getGeneratedKeys()) {
                 keys.next();
@@ -223,6 +228,8 @@ public final class BillRepository {
         String createdAt;
         String customerNo;
         String customerName;
+        String customerNameMr;
+        String customerPhone;
         Money subtotal;
         Money roundOff;
         Money total;
@@ -233,7 +240,7 @@ public final class BillRepository {
         try (PreparedStatement statement = connection.prepareStatement(
                 "SELECT b.id, b.created_at, c.customer_no, b.customer_name, b.subtotal_paise, b.round_off_paise,"
                         + " b.total_paise, b.to_account_paise, b.previous_balance_paise, b.balance_after_paise,"
-                        + " b.cancel_reason"
+                        + " b.cancel_reason, b.customer_name_mr, b.customer_phone"
                         + " FROM bills b LEFT JOIN customers c ON c.id = b.customer_id WHERE b.bill_no = ?")) {
             statement.setLong(1, billNo);
             try (ResultSet rs = statement.executeQuery()) {
@@ -244,6 +251,8 @@ public final class BillRepository {
                 createdAt = rs.getString("created_at");
                 customerNo = rs.getString("customer_no");
                 customerName = rs.getString("customer_name");
+                customerNameMr = rs.getString("customer_name_mr");
+                customerPhone = rs.getString("customer_phone");
                 subtotal = Money.ofPaise(rs.getLong("subtotal_paise"));
                 roundOff = Money.ofPaise(rs.getLong("round_off_paise"));
                 total = Money.ofPaise(rs.getLong("total_paise"));
@@ -256,8 +265,8 @@ public final class BillRepository {
         List<CartLine> lines = itemsOf(connection, id);
         Money savings = Cart.totalsOf(lines).savings();
         BillTotals totals = new BillTotals(subtotal, roundOff, total, savings, lines.size());
-        return Optional.of(new BillDetails(id, billNo, DbTime.parse(createdAt), customerNo, customerName, lines,
-                totals, paymentsOf(connection, id), duesPaymentsOf(connection, id), toAccount, previous, after,
+        return Optional.of(new BillDetails(id, billNo, DbTime.parse(createdAt), customerNo, customerName,
+                customerNameMr, customerPhone, lines, totals, paymentsOf(connection, id), duesPaymentsOf(connection, id), toAccount, previous, after,
                 cancelReason));
     }
 

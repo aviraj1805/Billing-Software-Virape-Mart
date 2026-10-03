@@ -81,6 +81,8 @@ class BillingServiceTest {
         assertEquals(Money.ZERO, bill.toAccount());
         assertNull(bill.previousBalance());
         assertEquals("Sharma ji", text("SELECT customer_name FROM bills"));
+        assertEquals("शर्मा जी", text("SELECT customer_name_mr FROM bills"), "printed name in Marathi letters");
+        assertNull(text("SELECT customer_phone FROM bills"), "walk-in customers have no phone");
         assertEquals(2, count("SELECT COUNT(*) FROM bill_items"));
         assertEquals(1, count("SELECT COUNT(*) FROM bill_payments WHERE mode = 'CASH' AND amount_paise = 12200"));
         assertEquals(0, count("SELECT COUNT(*) FROM customer_ledger WHERE entry_type <> 'OPENING'"));
@@ -91,6 +93,7 @@ class BillingServiceTest {
         billing.save(new BillRequest(null, "  ", sampleLines(), List.of(cash("122"))));
 
         assertNull(text("SELECT customer_name FROM bills"));
+        assertNull(text("SELECT customer_name_mr FROM bills"));
     }
 
     @Test
@@ -161,6 +164,28 @@ class BillingServiceTest {
         assertEquals(Money.parse("1322"), bill.balanceAfter());
         assertEquals("Ramesh Patil", text("SELECT customer_name FROM bills"), "khata customer's name is printed");
         assertEquals(Money.parse("1322"), fixture.services.customers().find(ramesh).orElseThrow().balance());
+    }
+
+    @Test
+    void khataBillKeepsTheMarathiNameAndPhoneAsPrinted() {
+        long umesh = fixture.services.customers()
+                .create(new CustomerInput("Umesh Virape", "98765 01234", null, null, null)).customer().id();
+        billing.save(new BillRequest(umesh, null, sampleLines(), List.of()));
+        fixture.services.customers().update(umesh, new CustomerInput("Umesh V", "9000000001", null, null, null));
+
+        BillDetails bill = billing.bill(1);
+
+        assertEquals("उमेश विरपे", bill.customerNameMr());
+        assertEquals("9876501234", bill.customerPhone(), "the phone at the time of the bill, not the new one");
+        assertEquals("Umesh Virape", bill.customerName());
+    }
+
+    @Test
+    void khataCustomerWithoutAPhoneHasNoPhoneOnTheBill() {
+        billing.save(new BillRequest(ramesh, null, sampleLines(), List.of()));
+
+        assertEquals("रमेश पाटील", billing.bill(1).customerNameMr());
+        assertNull(billing.bill(1).customerPhone());
     }
 
     @Test
@@ -301,6 +326,13 @@ class BillingServiceTest {
                 s.executeUpdate("UPDATE bills SET balance_after_paise = 0");
             }
         }));
+        for (String column : List.of("customer_name_mr", "customer_phone")) {
+            assertThrows(DatabaseException.class, () -> fixture.database.runInTransaction(c -> {
+                try (Statement s = c.createStatement()) {
+                    s.executeUpdate("UPDATE bills SET " + column + " = 'changed'");
+                }
+            }), column);
+        }
     }
 
     // ------------------------------------------------------------------ reading saved bills

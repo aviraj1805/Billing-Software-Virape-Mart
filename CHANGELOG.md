@@ -4,6 +4,17 @@ All notable changes to this project are recorded here, newest first.
 
 ## [Unreleased]
 
+### Printed bill: item columns and Marathi customer name
+
+- Items print as one row each in four columns: **Item, Qty, Rate, Amount**. Long item names wrap inside the Item
+  column.
+- The customer line is the name in Marathi letters with the phone number on the right
+  (`उमेश विरपे   No. 9876501234`). The customer number (C0003) and the "Customer:" label are no longer printed.
+- The Marathi name is made automatically from the English name (`print.MarathiTransliterator`), with a word list of
+  common Maharashtrian names and name endings in `src/main/resources/print/marathi-names.txt`.
+- Migration V4 saves the printed Marathi name and the phone with each new bill, so reprints always match. Bills
+  saved before this change reprint with the name they were saved with.
+
 ## [1.0.0] - 2026-09-30
 
 ### Phase 8: Packaging and delivery

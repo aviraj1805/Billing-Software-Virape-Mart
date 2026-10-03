@@ -3,3 +3,4 @@
 V1__initial_schema.sql
 V2__default_categories.sql
 V3__bill_customer_name_and_balances.sql
+V4__bill_customer_marathi_name_and_phone.sql

@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Locale;
 
 import com.virpemart.billing.model.PaperSize;
+import com.virpemart.billing.print.ReceiptLine.ItemRow;
 import com.virpemart.billing.print.ReceiptLine.Pair;
 import com.virpemart.billing.print.ReceiptLine.Rule;
 import com.virpemart.billing.print.ReceiptLine.Style;
@@ -27,6 +28,8 @@ import com.virpemart.billing.print.ReceiptLine.Text;
  *
  * <p>Text uses the Windows font "Nirmala UI", which has both English and Marathi (Devanagari) letters and the
  * rupee sign. Java's text layout joins Marathi letters correctly. Long text wraps to the paper width.
+ * The items table puts Qty, Rate and Amount in right-aligned columns as wide as their widest value; the item
+ * name gets the rest of the width and wraps inside it.
  * Sizes are in points: 72 points = 1 inch = 25.4 mm.
  */
 public final class ReceiptRenderer {
@@ -46,6 +49,10 @@ public final class ReceiptRenderer {
 
     /** A piece of text and how far from the left edge it starts. */
     record Placed(TextLayout layout, double x) {
+    }
+
+    /** Where the items table columns are: the width of the item column and the right edge of each number. */
+    record Columns(double itemWidth, double qtyRight, double rateRight, double amountRight) {
     }
 
     public ReceiptRenderer(PaperSize paper) {
@@ -102,11 +109,13 @@ public final class ReceiptRenderer {
 
     /** Fits every line to {@code width}, wrapping long text. */
     List<Row> layout(Receipt receipt, FontRenderContext frc, double width) {
+        Columns columns = columns(receipt, frc, width);
         List<Row> rows = new ArrayList<>();
         for (ReceiptLine line : receipt.lines()) {
             switch (line) {
                 case Text text -> wrap(rows, text.text(), font(text.style()), frc, width, text.centered(), null);
                 case Pair pair -> wrap(rows, pair.left(), font(pair.style()), frc, width, false, pair.right());
+                case ItemRow row -> itemRow(rows, row, font(row.style()), frc, columns);
                 case Rule rule -> {
                     double height = small.getSize2D() * 0.9;
                     rows.add(new Row(0, height, List.of(), true));
@@ -122,14 +131,79 @@ public final class ReceiptRenderer {
     }
 
     /**
+     * Works out the items table columns. Qty, Rate and Amount are each as wide as their widest value on this
+     * receipt (heading included), with a small gap between columns. The item name gets what is left, but never less
+     * than a quarter of the width.
+     */
+    Columns columns(Receipt receipt, FontRenderContext frc, double width) {
+        double qty = 0;
+        double rate = 0;
+        double amount = 0;
+        for (ReceiptLine line : receipt.lines()) {
+            if (line instanceof ItemRow row) {
+                Font font = font(row.style());
+                qty = Math.max(qty, advance(row.qty(), font, frc));
+                rate = Math.max(rate, advance(row.rate(), font, frc));
+                amount = Math.max(amount, advance(row.amount(), font, frc));
+            }
+        }
+        double gap = normal.getSize2D() * 0.8;
+        double amountRight = width;
+        double rateRight = amountRight - amount - gap;
+        double qtyRight = rateRight - rate - gap;
+        double itemWidth = Math.max(width * 0.25, qtyRight - qty - gap);
+        return new Columns(itemWidth, qtyRight, rateRight, amountRight);
+    }
+
+    private static double advance(String text, Font font, FontRenderContext frc) {
+        TextLayout layout = layoutOf(text, font, frc);
+        return layout == null ? 0 : layout.getAdvance();
+    }
+
+    /** A drawable piece of text, or null for empty text (Java cannot lay out empty text). */
+    private static TextLayout layoutOf(String text, Font font, FontRenderContext frc) {
+        return text == null || text.isEmpty() ? null : new TextLayout(printable(text, font), font, frc);
+    }
+
+    /**
      * Breaks text into rows no wider than {@code width}. If {@code right} is given, it is placed on the first row
      * against the right edge, and the text on the left wraps before reaching it.
      */
     private static void wrap(List<Row> rows, String text, Font font, FontRenderContext frc, double width,
                              boolean centered, String right) {
-        TextLayout rightLayout = right == null || right.isEmpty() ? null : new TextLayout(printable(right, font), font, frc);
-        double gap = font.getSize2D();
-        double leftWidth = rightLayout == null ? width : Math.max(width * 0.3, width - rightLayout.getAdvance() - gap);
+        List<Placed> onFirstRow = new ArrayList<>();
+        double firstWidth = width;
+        TextLayout rightLayout = layoutOf(right, font, frc);
+        if (rightLayout != null) {
+            onFirstRow.add(new Placed(rightLayout, width - rightLayout.getAdvance()));
+            firstWidth = Math.max(width * 0.3, width - rightLayout.getAdvance() - font.getSize2D());
+        }
+        breakIntoRows(rows, text, font, frc, firstWidth, width, centered, onFirstRow);
+    }
+
+    /** An items table row: the item name wraps in its column; Qty, Rate and Amount sit on the first row. */
+    private static void itemRow(List<Row> rows, ItemRow row, Font font, FontRenderContext frc, Columns columns) {
+        List<Placed> onFirstRow = new ArrayList<>();
+        addRightAligned(onFirstRow, row.qty(), columns.qtyRight(), font, frc);
+        addRightAligned(onFirstRow, row.rate(), columns.rateRight(), font, frc);
+        addRightAligned(onFirstRow, row.amount(), columns.amountRight(), font, frc);
+        breakIntoRows(rows, row.item(), font, frc, columns.itemWidth(), columns.itemWidth(), false, onFirstRow);
+    }
+
+    private static void addRightAligned(List<Placed> pieces, String text, double right, Font font,
+                                        FontRenderContext frc) {
+        TextLayout layout = layoutOf(text, font, frc);
+        if (layout != null) {
+            pieces.add(new Placed(layout, right - layout.getAdvance()));
+        }
+    }
+
+    /**
+     * Breaks text into rows: the first row at most {@code firstWidth} wide, later rows at most {@code width}.
+     * The {@code onFirstRow} pieces (such as amounts) are added to the first row.
+     */
+    private static void breakIntoRows(List<Row> rows, String text, Font font, FontRenderContext frc,
+                                      double firstWidth, double width, boolean centered, List<Placed> onFirstRow) {
         String safe = printable(text, font);
         if (safe.isBlank()) {
             safe = " ";
@@ -139,16 +213,18 @@ public final class ReceiptRenderer {
         LineBreakMeasurer measurer = new LineBreakMeasurer(attributed.getIterator(), frc);
         boolean first = true;
         while (measurer.getPosition() < safe.length()) {
-            TextLayout layout = measurer.nextLayout((float) (first ? leftWidth : width));
+            TextLayout layout = measurer.nextLayout((float) (first ? firstWidth : width));
             List<Placed> pieces = new ArrayList<>();
             double x = centered ? Math.max(0, (width - layout.getVisibleAdvance()) / 2) : 0;
             pieces.add(new Placed(layout, x));
             double ascent = layout.getAscent();
             double descent = layout.getDescent() + layout.getLeading();
-            if (first && rightLayout != null) {
-                pieces.add(new Placed(rightLayout, width - rightLayout.getAdvance()));
-                ascent = Math.max(ascent, rightLayout.getAscent());
-                descent = Math.max(descent, rightLayout.getDescent() + rightLayout.getLeading());
+            if (first) {
+                for (Placed piece : onFirstRow) {
+                    pieces.add(piece);
+                    ascent = Math.max(ascent, piece.layout().getAscent());
+                    descent = Math.max(descent, piece.layout().getDescent() + piece.layout().getLeading());
+                }
             }
             rows.add(new Row(ascent, ascent + descent, pieces, false));
             first = false;

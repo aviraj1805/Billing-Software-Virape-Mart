@@ -3,6 +3,7 @@ package com.virpemart.billing.print;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.virpemart.billing.print.ReceiptLine.ItemRow;
 import com.virpemart.billing.print.ReceiptLine.Pair;
 import com.virpemart.billing.print.ReceiptLine.Rule;
 import com.virpemart.billing.print.ReceiptLine.Text;
@@ -23,6 +24,7 @@ public record Receipt(String title, List<ReceiptLine> lines) {
         return lines.stream().map(line -> switch (line) {
             case Text text -> text.text();
             case Pair pair -> pair.left() + " | " + pair.right();
+            case ItemRow row -> row.item() + " | " + row.qty() + " | " + row.rate() + " | " + row.amount();
             case Rule rule -> "----";
         }).collect(Collectors.joining("\n"));
     }

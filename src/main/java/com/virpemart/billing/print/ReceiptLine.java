@@ -14,6 +14,13 @@ public sealed interface ReceiptLine {
     record Pair(String left, String right, Style style) implements ReceiptLine {
     }
 
+    /**
+     * One row of the items table: item name, quantity, rate and amount in four columns. Every item row on a
+     * receipt shares the same column widths; a long item name wraps inside its own column.
+     */
+    record ItemRow(String item, String qty, String rate, String amount, Style style) implements ReceiptLine {
+    }
+
     /** A thin dashed line across the paper. */
     record Rule() implements ReceiptLine {
     }
