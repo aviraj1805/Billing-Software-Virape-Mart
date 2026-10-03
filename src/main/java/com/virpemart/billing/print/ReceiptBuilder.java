@@ -18,6 +18,7 @@ import com.virpemart.billing.model.PaymentPart;
 import com.virpemart.billing.model.Quantity;
 import com.virpemart.billing.model.ShopDetails;
 import com.virpemart.billing.model.Unit;
+import com.virpemart.billing.print.ReceiptLine.ItemRow;
 import com.virpemart.billing.print.ReceiptLine.Pair;
 import com.virpemart.billing.print.ReceiptLine.Rule;
 import com.virpemart.billing.print.ReceiptLine.Style;
@@ -26,8 +27,8 @@ import com.virpemart.billing.print.ReceiptLine.Text;
 /**
  * Decides what a printed bill says, line by line. It does not draw anything, so it can be tested easily.
  *
- * <p>Layout, top to bottom: shop heading, bill number and date, customer, items (Marathi name, then
- * quantity x rate and amount), the bill total, then payment. A khata customer's bill shows the previous dues,
+ * <p>Layout, top to bottom: shop heading, bill number and date, customer (name in Marathi letters and phone
+ * number), the items table (Item, Qty, Rate, Amount), the bill total, then payment. A khata customer's bill shows the previous dues,
  * what was paid now and the balance left, in the user's Marathi wording. Subtotal, round off, MRP and savings are
  * not printed (the user's choice); they are still saved with the bill.
  */
@@ -42,7 +43,6 @@ public final class ReceiptBuilder {
     static final String PREVIOUS_DUES = "मागील बाकी";
     static final String PAID_NOW = "जमा";
     static final String BALANCE_DUES = "एकूण बाकी";
-    private static final String INDENT = "     ";
 
     private ReceiptBuilder() {
     }
@@ -75,7 +75,8 @@ public final class ReceiptBuilder {
         Money previous = Money.ofRupees(480);
         Money paid = Money.ofRupees(100);
         Money toAccount = totals.total().minus(paid);
-        BillDetails bill = new BillDetails(0, 123, now, "C0001", "Sample Customer", lines, totals,
+        BillDetails bill = new BillDetails(0, 123, now, "C0001", "Sample Customer", "नमुना ग्राहक", "9876543210",
+                lines, totals,
                 List.of(new PaymentPart(PaymentMode.CASH, paid)), List.of(), toAccount, previous,
                 previous.plus(toAccount), null);
         return new Receipt("Test print", build(bill, shop, "TEST PRINT - NOT A REAL BILL"));
@@ -91,12 +92,9 @@ public final class ReceiptBuilder {
             out.add(centered("Reason: " + bill.cancelReason(), Style.SMALL));
         }
         out.add(new Pair("Bill No. " + bill.billNo(), DATE_TIME.format(bill.createdAt()), Style.BOLD));
-        if (bill.customerName() != null) {
-            String who = bill.isKhata() ? bill.customerName() + " (" + bill.customerNo() + ")" : bill.customerName();
-            out.add(left("Customer: " + who, Style.NORMAL));
-        }
+        customer(out, bill);
         out.add(RULE);
-        out.add(new Pair("Item", "Amount", Style.SMALL));
+        out.add(new ItemRow("Item", "Qty", "Rate", "Amount", Style.SMALL));
         items(out, bill.lines());
         out.add(RULE);
         totals(out, bill.totals());
@@ -129,12 +127,28 @@ public final class ReceiptBuilder {
         out.add(RULE);
     }
 
+    /**
+     * The customer's name in Marathi letters, with the phone number on the right: "उमेश विरपे   No. 9876501234".
+     * No customer number and no "Customer:" label. Bills saved before the Marathi name was kept print the
+     * name as it was saved.
+     */
+    private static void customer(List<ReceiptLine> out, BillDetails bill) {
+        String name = bill.customerNameMr() != null ? bill.customerNameMr() : bill.customerName();
+        if (name == null) {
+            return;
+        }
+        if (bill.customerPhone() != null) {
+            out.add(new Pair(name, "No. " + bill.customerPhone(), Style.NORMAL));
+        } else {
+            out.add(left(name, Style.NORMAL));
+        }
+    }
+
     private static void items(List<ReceiptLine> out, List<CartLine> lines) {
         for (int i = 0; i < lines.size(); i++) {
             CartLine line = lines.get(i);
-            out.add(left((i + 1) + ". " + printedName(line), Style.NORMAL));
-            String detail = INDENT + quantity(line.quantity(), line.unit()) + " x " + line.rate().toGroupedString();
-            out.add(new Pair(detail, line.lineTotal().toGroupedString(), Style.NORMAL));
+            out.add(new ItemRow((i + 1) + ". " + printedName(line), quantity(line.quantity(), line.unit()),
+                    line.rate().toGroupedString(), line.lineTotal().toGroupedString(), Style.NORMAL));
         }
     }
 

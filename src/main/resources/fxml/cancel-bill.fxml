@@ -7,7 +7,7 @@
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
 
-<!-- Cancel a saved bill (owner): shows what will happen and asks for the reason. -->
+<!-- Cancel or correct a saved bill (owner): shows what will happen and asks for the reason. -->
 <VBox xmlns="http://javafx.com/javafx"
       xmlns:fx="http://javafx.com/fxml"
       fx:controller="com.virpemart.billing.ui.history.CancelBillController"
@@ -30,6 +30,6 @@
         <Label text="Esc = keep the bill" styleClass="muted"/>
         <Region HBox.hgrow="ALWAYS"/>
         <Button text="Keep the bill" cancelButton="true" onAction="#keep" minWidth="-Infinity"/>
-        <Button text="Cancel this bill" styleClass="danger" onAction="#cancelBill" minWidth="-Infinity"/>
+        <Button fx:id="confirmButton" text="Cancel this bill" styleClass="danger" onAction="#cancelBill" minWidth="-Infinity"/>
     </HBox>
 </VBox>

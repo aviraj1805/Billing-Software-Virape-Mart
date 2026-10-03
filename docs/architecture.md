@@ -108,7 +108,8 @@ All of these happen in one database transaction. Either everything is saved or n
 2. Take the next bill number: the highest bill number plus one. Bills are never deleted, so numbers never repeat.
 3. Split the money received: payments fill the bill first, in the order entered; anything beyond the bill
    total is a khata payment against old dues (`BillingService.allocate`).
-4. Insert the bill (with `customer_name`, `previous_balance_paise`, `balance_after_paise` for reprints),
+4. Insert the bill (with `customer_name`, `customer_name_mr` (the name in Marathi letters, made by
+   `print.MarathiTransliterator`), `customer_phone`, `previous_balance_paise`, `balance_after_paise` for reprints),
    its lines (snapshots) and the payments that paid the bill.
 5. Khata customers: a SALE_CREDIT entry for the unpaid part, and PAYMENT entries ("Paid with bill N")
    for money paid against old dues.
@@ -121,10 +122,13 @@ Printing happens after the transaction commits, so a printer problem never loses
 Printing is split so that the content can be tested without a printer:
 
 1. `print.ReceiptBuilder` turns a saved bill (`BillingService.bill(billNo)`, read back exactly as saved) and the
-   shop details into a list of lines: text, "left text + amount" pairs and dashed rules.
+   shop details into a list of lines: text, "left text + amount" pairs, item table rows (Item, Qty, Rate, Amount)
+   and dashed rules.
 2. `print.ReceiptRenderer` draws those lines with Java 2D. It uses the Windows font "Nirmala UI", which has
    English and Marathi letters and the rupee sign; Java's text layout joins Marathi letters correctly. Long text
-   wraps to the paper width (48 mm on a 58 mm roll, 72 mm on an 80 mm roll, a 150 mm column on A4).
+   wraps to the paper width (48 mm on a 58 mm roll, 72 mm on an 80 mm roll, a 150 mm column on A4). In the item
+   table, Qty, Rate and Amount are right-aligned columns as wide as their widest value; the item name wraps in the
+   space left.
    The same drawing makes the on-screen preview picture, so the preview matches the paper.
 3. `print.SystemReceiptPrinter` sends it to the Windows printer chosen in Settings, through the printer's own
    driver. For a roll it asks for paper exactly as long as the bill; if the driver cannot do that, a long bill
@@ -137,6 +141,9 @@ Printing is split so that the content can be tested without a printer:
 - `BillingService.cancel` runs in one transaction: mark the bill CANCELLED (the only update the database
   trigger allows), add a CANCEL_REVERSAL khata entry for the amount that went on the khata, and write an audit row.
   `cancelPreview` shows the same effect before the owner confirms.
+- `BillingService.correct` = `cancel`, then returns a `BillCorrection` (customer id, walk-in name, lines at the rates
+  charged with today's product details). The Billing screen loads it into a new `Cart`; saving it is an ordinary new
+  bill. A saved bill is never changed in place. The Billing screen's Recent bills window (F9) offers it.
 - `ReportService.sales` reads `ReportRepository.daily`: bills and their payments are grouped by the bill's day
   (FINAL bills only), and khata PAYMENT entries by the day they were received.
 

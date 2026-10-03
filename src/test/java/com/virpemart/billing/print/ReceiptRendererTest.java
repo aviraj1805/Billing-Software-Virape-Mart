@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 
 import com.virpemart.billing.model.PaperSize;
 import com.virpemart.billing.model.ShopDetails;
+import com.virpemart.billing.print.ReceiptLine.ItemRow;
 import com.virpemart.billing.print.ReceiptLine.Pair;
 import com.virpemart.billing.print.ReceiptLine.Style;
 import com.virpemart.billing.print.ReceiptLine.Text;
@@ -49,6 +50,40 @@ class ReceiptRendererTest {
         assertEquals(2, row.pieces().size());
         ReceiptRenderer.Placed amount = row.pieces().get(1);
         assertEquals(renderer.textWidth(), amount.x() + amount.layout().getAdvance(), 0.01);
+    }
+
+    @Test
+    void itemTableColumnsLineUpAndLongNamesWrapInTheirColumn() {
+        ReceiptRenderer renderer = new ReceiptRenderer(PaperSize.ROLL_58);
+        double width = renderer.textWidth();
+        Receipt receipt = new Receipt("t", List.of(
+                new ItemRow("Item", "Qty", "Rate", "Amount", Style.SMALL),
+                new ItemRow("1. फॉर्च्यून कच्ची घाणी शुद्ध मोहरी तेल", "0.500 kg", "1,250.00", "625.00", Style.NORMAL),
+                new ItemRow("2. मीठ", "2", "28.00", "56.00", Style.NORMAL)));
+
+        List<Row> rows = renderer.layout(receipt, FRC, width);
+        ReceiptRenderer.Columns columns = renderer.columns(receipt, FRC, width);
+
+        Row heading = rows.get(0);
+        Row oil = rows.get(1);
+        assertEquals(4, heading.pieces().size());
+        assertEquals(4, oil.pieces().size(), "qty, rate and amount are on the first line of the item");
+        for (int column = 1; column <= 3; column++) {
+            assertEquals(rightEdge(heading, column), rightEdge(oil, column), 0.01, "column " + column + " lines up");
+        }
+        assertEquals(width, rightEdge(oil, 3), 0.01, "amount against the right edge");
+        assertTrue(rows.size() > 4, "the long name wraps");
+        assertEquals(1, rows.get(2).pieces().size(), "the wrapped part has only the name");
+        for (Row row : rows) {
+            assertTrue(row.pieces().getFirst().layout().getVisibleAdvance() <= columns.itemWidth() + 0.5);
+        }
+        double qtyLeft = oil.pieces().get(1).x();
+        assertTrue(columns.itemWidth() <= qtyLeft, "the name never runs into the Qty column");
+    }
+
+    private static double rightEdge(Row row, int piece) {
+        ReceiptRenderer.Placed placed = row.pieces().get(piece);
+        return placed.x() + placed.layout().getAdvance();
     }
 
     @Test

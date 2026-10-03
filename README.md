@@ -6,7 +6,7 @@ prints bills on the store printer. It has two main areas:
 - **Products**: the list of items the store sells, with English and Marathi names, rates and MRP.
 - **Billing**: bills for walk-in and account (credit) customers, with purchase history and printing.
 
-Status: **Version 1.0.0.** Products, customer khatas, billing, printing, bill history, reports, backups,
+Status: **Version 1.1.0.** Products, customer khatas, billing, printing, bill history, reports, backups,
 restore and the activity log work. The Windows package runs on a laptop with nothing installed.
 Still to do at the shop: tune printing for the real printer model once it is bought.
 

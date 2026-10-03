@@ -3,6 +3,7 @@ package com.virpemart.billing.ui.common;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.URL;
+import java.util.List;
 import java.util.Objects;
 
 import com.virpemart.billing.AppContext;
@@ -10,6 +11,7 @@ import com.virpemart.billing.AppContext;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.image.Image;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.Window;
@@ -18,6 +20,8 @@ import javafx.stage.Window;
 public final class Views {
 
     private static final String STYLESHEET = "/css/app.css";
+    private static final List<String> ICON_SIZES = List.of("16", "32", "48", "256");
+    private static List<Image> icons;
 
     /** A loaded screen and its controller. */
     public record Loaded<C>(Parent root, C controller) {
@@ -44,8 +48,18 @@ public final class Views {
         stage.initOwner(owner);
         stage.initModality(Modality.WINDOW_MODAL);
         stage.setTitle(title);
+        stage.getIcons().setAll(appIcons());
         stage.setScene(scene(root));
         return stage;
+    }
+
+    /** The app's logo in several sizes, for window title bars and the taskbar. Loaded once. */
+    public static List<Image> appIcons() {
+        if (icons == null) {
+            icons = ICON_SIZES.stream().map(size -> new Image(resource("/icons/app-" + size + ".png").toExternalForm()))
+                    .toList();
+        }
+        return icons;
     }
 
     /** A scene with the app's stylesheet. */

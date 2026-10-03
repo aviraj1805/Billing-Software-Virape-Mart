@@ -175,10 +175,18 @@ Test anything that cannot be undone (such as cancelling a bill) on a copy of `de
 - Shared validation: a service `check(...)` method validates typed input once and is reused by forms and
   imports (see `ProductService.check`).
 - Owner-only buttons are hidden for STAFF, but the service still enforces the rule.
+- Printed bill: items are `ReceiptLine.ItemRow` (Item, Qty, Rate, Amount columns). The customer line is the name in
+  Marathi letters (`print.MarathiTransliterator`, automatic, the user's choice) plus "No. phone"; never print the
+  customer number. A name that prints wrong gets a line in `src/main/resources/print/marathi-names.txt`.
+  `BillingService.save` stores `customer_name_mr` and `customer_phone` on the bill (V4); old bills have them NULL.
 - Printing: `print.ReceiptBuilder` decides the bill's lines (test it with `Receipt.toPlainText()`),
   `print.ReceiptRenderer` draws them (Nirmala UI font) for paper and for preview pictures, and
   `service.PrintService` prints, reprints (audited, "DUPLICATE COPY") and test-prints. Printing always runs
   after the bill is saved and off the FX thread. Tests use `FakePrinter`; never print in tests.
+- Recent bills: `ui.billing.RecentBillsController` (F9 on Billing, newest 20 via `searchBills`, see/print, correct,
+  cancel). Correct = `BillingService.correct` (cancel + `BillCorrection` with customer and lines at the charged rates),
+  opened through `CancelBillController.openCorrection`; `BillingController.loadCorrection` puts it on screen and holds
+  any open bill. Never edit a saved bill in place.
 - History: `BillingService.searchBills` (a short number is a bill number on any date), `cancel` / `cancelPreview`
   (owner; CANCEL_REVERSAL for the khata part; counter money is given back). `ui.history.BillHistoryController` is
   the Bills tab and, via `openForCustomer`, a customer's purchase history. `MainWindowController` refreshes the

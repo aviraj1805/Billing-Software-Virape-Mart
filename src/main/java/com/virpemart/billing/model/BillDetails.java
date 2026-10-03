@@ -9,7 +9,9 @@ import java.util.Map;
  * Everything about one saved bill, as it was when it was saved. Used to print and reprint bills.
  *
  * @param customerNo      khata customer number such as C0001, or null for a walk-in customer
- * @param customerName    name printed on the bill, or null
+ * @param customerName    customer's name as typed (English), or null
+ * @param customerNameMr  customer's name in Marathi letters as printed, or null on bills saved before it was kept
+ * @param customerPhone   khata customer's phone number printed on the bill, or null
  * @param lines           the bill lines in order; {@code productRate} holds the original rate if it was changed
  * @param totals          subtotal, round off and total as saved; savings worked out from the lines
  * @param paidForBill     money that paid this bill, by mode
@@ -25,6 +27,8 @@ public record BillDetails(
         LocalDateTime createdAt,
         String customerNo,
         String customerName,
+        String customerNameMr,
+        String customerPhone,
         List<CartLine> lines,
         BillTotals totals,
         List<PaymentPart> paidForBill,

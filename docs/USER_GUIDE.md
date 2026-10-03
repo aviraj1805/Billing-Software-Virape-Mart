@@ -50,6 +50,9 @@ bill only; it is **not** added to the product list.
 
 - **Walk-in customer** (pays now): nothing to do. If you want a name printed on the bill, type it in
   **Name on bill (optional)**.
+- The printed bill shows the customer's name **in Marathi letters** (the app writes it automatically from the English
+  name, for example "Umesh Virape" prints as "उमेश विरपे") and, for a khata customer, their phone number. If a name
+  prints with a wrong spelling, tell whoever looks after the software (see TROUBLESHOOTING).
 - **Khata customer**: press **F3**, type the name, phone or customer number (like C0005), pick them and press
   **Enter**. Their dues and last bills appear. **Walk-in instead** goes back to a walk-in bill.
 - **New khata customer**: click **+ New khata customer**.
@@ -75,7 +78,7 @@ After saving, the app asks **"Print?"**: **Enter** prints, **Esc** does not prin
 green line such as "Bill 25 saved · Total ₹120.00 · Paid Cash ₹120.00 · Printed".
 
 If printing fails, the bill is **still saved**. The line turns orange: "saved but NOT printed". Fix the printer
-and use **Reprint bill**.
+and print it from **Recent bills (F9)**.
 
 ### Hold a bill (serve another customer first)
 
@@ -87,9 +90,25 @@ and use **Reprint bill**.
 ### Other buttons
 
 - **Clear bill** empties the current bill (it asks first).
-- **Reprint bill** asks for a bill number (the newest is filled in) and shows the bill with a **Print** button.
-  A reprinted bill says **DUPLICATE COPY**.
 - For a khata customer, **double-click** one of their **Recent bills** to see or reprint it.
+
+### Recent bills (F9): see, print or correct an earlier bill
+
+Press **F9** (or click **Recent bills (F9)** at the top). A list of the newest 20 bills opens, newest at the top and
+already chosen.
+
+- **See / print (Enter)**: shows the bill exactly as printed, with a **Print** button. So **F9 then Enter** brings
+  up the last bill. Use the **arrow keys** to choose the 2nd, 3rd or any earlier bill. A reprinted bill says
+  **DUPLICATE COPY**.
+- **Older bill**: just type its bill number (or the customer's name or phone); the list shows the matching bills.
+- **Correct bill…**: for a bill with a mistake (wrong item, wrong quantity, wrong customer). The old bill is
+  cancelled (it stays in the list marked **CANCELLED**; its number is never used again) and all its items and its
+  customer come back on the Billing screen. Change what is wrong and press **Save and pay (F12)**: it is saved as a
+  new bill with a new number. Enter the payment again; the customer does not pay twice. If another bill was open on
+  the screen, it is put on hold first (**Held bills**).
+- **Cancel bill…**: when the customer returns everything. The app says how much money to give back and takes the
+  bill off the khata.
+- **Esc** closes the list.
 
 ### Billing keys
 

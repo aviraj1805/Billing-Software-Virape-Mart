@@ -56,16 +56,17 @@ checklist in section 1. Section 4 gives the assistant the technical facts it nee
 | What you see | Why | What to do |
 |---|---|---|
 | **"Something went wrong, but your saved bills are safe."** | An unexpected error (a bug). | Click OK and try again. If it repeats, close and reopen the app, then send the log (section 1) and the steps that cause it. |
-| An orange line **"Bill N is saved but was NOT printed"** and **"Printing did not work…"** | Printer off, no paper, cable loose, or wrong printer chosen. The bill **is saved**. | Fix the printer, then **Billing → Reprint bill** with that number. |
+| An orange line **"Bill N is saved but was NOT printed"** and **"Printing did not work…"** | Printer off, no paper, cable loose, or wrong printer chosen. The bill **is saved**. | Fix the printer, then **Billing → Recent bills (F9)**, choose that bill, **See / print**. |
 | **"The printer "…" was not found in Windows."** | The printer chosen in Settings was removed or renamed in Windows. | Install the printer driver again, or choose the printer again in **Settings → Bill printer**, then **Save printer settings**. |
 | **"Windows has no default printer."** | No printer is installed or set as default. | Install the printer (INSTALLATION step 7) or choose a printer in Settings. |
 | Printed bill is cut off, too small, shifted, or too long | The printer or paper width is not set up yet for this printer model. | Check **Settings → Paper** matches the roll (58 mm or 80 mm). Print a test bill and send a photo of it plus the printer model (section 4, "Printing"). |
+| A customer's name is spelled wrong in Marathi on the bill | The app makes the Marathi name automatically from the English name; English spelling cannot show every Marathi sound. | A developer adds a line such as `patil=पाटील` (one word, small English letters) to `src/main/resources/print/marathi-names.txt`, then builds a new version. Bills already saved keep the spelling they were printed with. |
 | Marathi letters show as empty boxes | The Windows font "Nirmala UI" is missing (very old Windows). | Use Windows 10 or 11. |
 | Screen text is cut off or windows are too big | Windows display scaling is very high on a small screen. | Windows Settings → Display → Scale: try 100% or 125%. |
 | Wrong date or time on bills | The laptop clock or time zone is wrong. The app uses the laptop's clock. | Windows Settings → Time & language → set the time zone to **(UTC+05:30) Chennai, Kolkata, Mumbai, New Delhi** and turn on "Set time automatically". Bills already saved keep their time. |
 | Excel import shows errors | The sheet was not saved as CSV UTF-8, or column names are unusual. | Follow [product-import-guide.md](product-import-guide.md). Rows with errors are shown with the reason; fix them in Excel and import again. Existing products are never changed by an import. |
 | A khata balance looks wrong | A payment or opening due was typed wrongly. | Open **Customers**, check the khata entries. Use **Correct balance** with a reason. |
-| A bill is wrong | Saved bills cannot be edited. | **History & Reports → Bills → Cancel bill…** with a reason, then make a new bill. |
+| A bill is wrong | Saved bills cannot be edited. | **Billing → Recent bills (F9)**, choose the bill, **Correct bill…**: it is cancelled and its items come back on the Billing screen to fix and save as a new bill. (Or **Cancel bill…** if the customer returned everything.) |
 | Need an old copy of the data | For example after a big mistake. | **Settings → Backups → Restore a backup…** (see the User guide). The current data is kept, so this can be undone. |
 
 ---
@@ -125,6 +126,11 @@ top bar then shows "DEVELOPMENT DATA". It must **not** be set on the shop laptop
 
 - Bills are drawn with Java 2D using the Windows font "Nirmala UI" and sent through the printer's Windows driver.
 - Paper setting: 58 mm roll (48 mm printed width), 80 mm roll (72 mm printed width) or A4 (150 mm column).
+- Items print in four columns (Item, Qty, Rate, Amount). Qty, Rate and Amount are as wide as their widest value on
+  that bill; the item name gets the rest and wraps inside its column. On a 58 mm roll long names take two lines.
+- The customer's Marathi name comes from `print/MarathiTransliterator.java` and the word list
+  `src/main/resources/print/marathi-names.txt`. It is saved with each bill (`bills.customer_name_mr`, plus
+  `bills.customer_phone`), so changing the word list never changes old bills.
   For rolls the app asks the driver for a page exactly as long as the bill.
 - **Not yet tuned for a specific printer model.** When a real printer is available, report: printer brand and
   model, paper width, a photo of the test bill, and what is wrong (horizontal position, top margin, width,

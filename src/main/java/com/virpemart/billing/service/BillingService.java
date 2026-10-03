@@ -10,6 +10,7 @@ import java.util.Optional;
 
 import com.virpemart.billing.db.Database;
 import com.virpemart.billing.db.DbTime;
+import com.virpemart.billing.model.BillCorrection;
 import com.virpemart.billing.model.BillDetails;
 import com.virpemart.billing.model.BillSearch;
 import com.virpemart.billing.model.BillSummary;
@@ -24,6 +25,7 @@ import com.virpemart.billing.model.PaymentPart;
 import com.virpemart.billing.model.Product;
 import com.virpemart.billing.model.SavedBill;
 import com.virpemart.billing.model.User;
+import com.virpemart.billing.print.MarathiTransliterator;
 import com.virpemart.billing.repository.AuditRepository;
 import com.virpemart.billing.repository.BillRepository;
 import com.virpemart.billing.repository.BillRepository.NewBill;
@@ -152,6 +154,39 @@ public final class BillingService {
         });
     }
 
+    /**
+     * Corrects a saved bill. Owner only. Saved bills never change, so the bill is cancelled (exactly as
+     * {@link #cancel}) and its customer and items are returned, to be changed on the Billing screen and saved as a
+     * new bill with a new number. Items keep the rate charged on the old bill; name, Marathi name, MRP and list rate
+     * come from the product list as it is now, so a rate that differs from today's list shows as a changed rate.
+     *
+     * @throws ValidationException (field "reason") if no reason is given
+     */
+    public BillCorrection correct(long billNo, String reason) {
+        CancelledBill cancelled = cancel(billNo, reason);
+        return database.query(c -> {
+            BillDetails bill = bills.findByNo(c, billNo)
+                    .orElseThrow(() -> new BusinessRuleException("There is no bill number " + billNo + "."));
+            Long customerId = bills.customerIdOf(c, bill.id()).orElse(null);
+            List<CartLine> lines = new ArrayList<>();
+            for (CartLine line : bill.lines()) {
+                lines.add(withCurrentProduct(c, line));
+            }
+            return new BillCorrection(cancelled, customerId, customerId == null ? bill.customerName() : null, lines);
+        });
+    }
+
+    /** The line with today's product details and the rate it was charged at. One-off items stay as they are. */
+    private CartLine withCurrentProduct(Connection connection, CartLine line) throws SQLException {
+        if (line.productId() == null) {
+            return line;
+        }
+        return products.findById(connection, line.productId())
+                .map(p -> new CartLine(p.id(), p.name(), p.nameMr(), p.unit(), p.packSize(), line.quantity(),
+                        line.rate(), p.rate(), p.mrp()))
+                .orElse(line);
+    }
+
     /** What cancelling the bill would do, shown before the owner confirms. Owner only. Nothing is changed. */
     public CancelledBill cancelPreview(long billNo) {
         session.requireOwner();
@@ -208,18 +243,23 @@ public final class BillingService {
             Money previous = null;
             Money after = null;
             String customerName;
+            String customerPhone = null;
             if (customer != null) {
                 previous = ledger.balance(c, customer.customer().id());
                 after = previous.plus(toAccount).minus(againstDues);
                 customerName = customer.customer().name();
+                customerPhone = customer.customer().phone();
             } else {
                 customerName = checkWalkInName(request.walkInName());
             }
+            // The bill prints the name in Marathi letters; it is saved so a reprint always matches.
+            String customerNameMr = MarathiTransliterator.toMarathi(customerName);
 
             String now = DbTime.now(clock);
             long billNo = bills.nextBillNo(c);
             Long customerId = customer == null ? null : customer.customer().id();
-            long billId = bills.insertBill(c, new NewBill(billNo, now, customerId, customerName, totals,
+            long billId = bills.insertBill(c, new NewBill(billNo, now, customerId, customerName,
+                    customerNameMr, customerPhone, totals,
                     paidForBill, toAccount, previous, after, user.id()));
 
             for (int i = 0; i < lines.size(); i++) {
