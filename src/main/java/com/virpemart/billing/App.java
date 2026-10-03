@@ -73,6 +73,7 @@ public class App extends Application {
         });
 
         stage.setTitle(AppInfo.name() + " " + AppInfo.version());
+        stage.getIcons().setAll(Views.appIcons());
         stage.setScene(scene);
         stage.setWidth(INITIAL_WIDTH);
         stage.setHeight(INITIAL_HEIGHT);

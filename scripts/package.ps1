@@ -64,6 +64,7 @@ try {
         --main-jar virpe-mart.jar `
         --main-class com.virpemart.billing.Launcher `
         --java-options '--enable-native-access=ALL-UNNAMED' `
+        --icon (Join-Path $root 'src\main\packaging\VirpeMart.ico') `
         --dest $distDir
     if ($LASTEXITCODE -ne 0) { throw "jpackage failed (exit code $LASTEXITCODE)." }
 

@@ -4,6 +4,14 @@ All notable changes to this project are recorded here, newest first.
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-10-03
+
+### App logo
+
+- The app has its own logo (white "वि" on dark green with a gold bar): on `VirpeMart.exe`, the Desktop shortcut,
+  the taskbar and every window. Icon file: `src/main/packaging/VirpeMart.ico`; window icons in
+  `src/main/resources/icons/`.
+
 ### Recent bills and Correct bill
 
 - The Billing screen's "Reprint bill" button is now **Recent bills (F9)**: the newest 20 bills, newest first and

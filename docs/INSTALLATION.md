@@ -24,7 +24,7 @@ To check the Windows version: press the **Windows key + R**, type `winver`, pres
 
 ## 2. Get the zip file
 
-The app comes as one file named like **`VirpeMart-1.0.0-Windows.zip`** (about 70 MB).
+The app comes as one file named like **`VirpeMart-1.1.0-Windows.zip`** (about 70 MB).
 
 Get it in one of these ways:
 
@@ -86,7 +86,8 @@ If something else happens, see [TROUBLESHOOTING.md](TROUBLESHOOTING.md).
    - On Windows 10: click **Send to**, then **Desktop (create shortcut)**.
 3. On the Desktop, right-click the new shortcut, choose **Rename**, and type `Virpe Mart`.
 
-From now on, open the app by double-clicking **Virpe Mart** on the Desktop.
+The shortcut shows the app's logo: a white **वि** on a dark green square. From now on, open the app by
+double-clicking **Virpe Mart** on the Desktop. Tip: right-click the shortcut and choose **Pin to taskbar** too.
 
 ---
 
@@ -197,5 +198,5 @@ It runs all tests, builds the app with its own Java inside, copies these guides 
 writes `target\dist\VirpeMart-<version>-Windows.zip`.
 
 To publish it on GitHub: open the repository page, **Releases → Draft a new release**, create a tag such as
-`v1.0.0`, drag the zip into "Attach binaries", and click **Publish release**. Do not commit the zip into the code
+`v1.1.0`, drag the zip into "Attach binaries", and click **Publish release**. Do not commit the zip into the code
 (it is too large and is rebuilt every time).
