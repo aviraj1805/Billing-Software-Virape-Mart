@@ -47,8 +47,8 @@ class BillingServiceTest {
         fixture = new TestFixture(temp);
         billing = fixture.services.billing();
         ProductService products = fixture.services.products();
-        sugar = products.create(new ProductInput("Sugar", "साखर", null, "kg", null, "44"));
-        salt = products.create(new ProductInput("Tata Salt", null, null, "pcs", "1 kg", "28"));
+        sugar = products.create(new ProductInput("Sugar", "साखर", "kg", null, "44"));
+        salt = products.create(new ProductInput("Tata Salt", null, "pcs", "1 kg", "28"));
         // Like a product saved before version 1.2.0 with an MRP: bills still keep it in their snapshot.
         fixture.setStoredMrp(salt.id(), 3000);
         salt = products.find(salt.id()).orElseThrow();
@@ -102,7 +102,7 @@ class BillingServiceTest {
     @Test
     void billLinesKeepASnapshotOfTheProduct() {
         billing.save(new BillRequest(null, null, sampleLines(), List.of(cash("122"))));
-        fixture.services.products().update(salt.id(), new ProductInput("Tata Salt New", null, null, "pcs", "1 kg", "35"));
+        fixture.services.products().update(salt.id(), new ProductInput("Tata Salt New", null, "pcs", "1 kg", "35"));
 
         assertEquals("Tata Salt", text("SELECT name FROM bill_items WHERE line_no = 2"));
         assertEquals(2800, count("SELECT rate_paise FROM bill_items WHERE line_no = 2"));

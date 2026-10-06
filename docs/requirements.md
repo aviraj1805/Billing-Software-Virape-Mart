@@ -43,8 +43,8 @@ It has two main areas:
 | Topic | Decision |
 |---|---|
 | Product codes | Created automatically: P0001, P0002, and so on. Codes never change. |
-| Categories | The app starts with a list covering typical grocery items (Rice & Grains, Dal & Pulses, Sugar, Salt & Jaggery, Edible Oil & Ghee, Spices & Masala, and so on). The owner can add, rename and switch off categories. |
-| Excel import | Clear, simple column names: Name, Marathi Name, Category, Unit, Pack Size, Rate. Common alternative names are understood. See [product-import-guide.md](product-import-guide.md). |
+| Categories | **Removed** (the user's choice, 2026-10-06, version 1.2.0): no Categories button, filter, column or form box, and the import ignores a Category column. The `categories` table and each product's stored category are **kept untouched** in the database (editing a product keeps its category); they are simply not used. |
+| Excel import | Clear, simple column names: Name, Marathi Name, Unit, Pack Size, Rate. Common alternative names are understood. See [product-import-guide.md](product-import-guide.md). |
 
 These product rules were chosen as sensible defaults and can be changed:
 
@@ -52,7 +52,7 @@ These product rules were chosen as sensible defaults and can be changed:
 - A product that has never been billed can be deleted. A product on any bill can only be switched off:
   it disappears from billing, but old bills stay correct.
 - An import only adds new products. It never changes existing products; to change a rate, edit the product.
-  Rows that already exist are skipped. Unknown category names in the sheet create new categories.
+  Rows that already exist are skipped. Category and MRP columns in the sheet are ignored.
 
 ## Customers and khata (confirmed in Phase 3)
 

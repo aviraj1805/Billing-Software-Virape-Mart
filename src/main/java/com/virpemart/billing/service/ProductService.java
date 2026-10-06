@@ -10,14 +10,12 @@ import java.util.Optional;
 
 import com.virpemart.billing.db.Database;
 import com.virpemart.billing.db.DbTime;
-import com.virpemart.billing.model.Category;
 import com.virpemart.billing.model.Money;
 import com.virpemart.billing.model.Product;
 import com.virpemart.billing.model.ProductDetails;
 import com.virpemart.billing.model.Unit;
 import com.virpemart.billing.model.User;
 import com.virpemart.billing.repository.AuditRepository;
-import com.virpemart.billing.repository.CategoryRepository;
 import com.virpemart.billing.repository.ProductRepository;
 import com.virpemart.billing.repository.ProductSearch;
 
@@ -40,16 +38,14 @@ public final class ProductService {
 
     private final Database database;
     private final ProductRepository products;
-    private final CategoryRepository categories;
     private final AuditRepository audit;
     private final Session session;
     private final Clock clock;
 
-    public ProductService(Database database, ProductRepository products, CategoryRepository categories,
+    public ProductService(Database database, ProductRepository products,
                           AuditRepository audit, Session session, Clock clock) {
         this.database = database;
         this.products = products;
-        this.categories = categories;
         this.audit = audit;
         this.session = session;
         this.clock = clock;
@@ -58,9 +54,9 @@ public final class ProductService {
     // ------------------------------------------------------------------ reading
 
     /** Searches products; see {@link ProductSearch} for how matching works. */
-    public List<Product> search(String text, Long categoryId, boolean includeInactive, int limit) {
+    public List<Product> search(String text, boolean includeInactive, int limit) {
         session.requireSignedIn();
-        return database.query(c -> products.search(c, new ProductSearch(text, categoryId, includeInactive, limit)));
+        return database.query(c -> products.search(c, new ProductSearch(text, includeInactive, limit)));
     }
 
     public Optional<Product> find(long id) {
@@ -77,8 +73,8 @@ public final class ProductService {
     // ------------------------------------------------------------------ checking input
 
     /**
-     * Checks and cleans typed product details without saving anything. The MRP is always empty here: it is no
-     * longer typed. {@link #update} keeps the MRP a product already has.
+     * Checks and cleans typed product details without saving anything. The category and MRP are always empty
+     * here: they are no longer typed. {@link #update} keeps the category and MRP a product already has.
      *
      * @throws ValidationException naming the first field that has a problem
      */
@@ -108,7 +104,7 @@ public final class ProductService {
         }
 
         Money rate = Amounts.parsePositive("rate", input.rate(), "rate", true);
-        return new ProductDetails(name, nameMr, input.categoryId(), unit, packSize, rate, null);
+        return new ProductDetails(name, nameMr, null, unit, packSize, rate, null);
     }
 
     // ------------------------------------------------------------------ changing
@@ -118,7 +114,6 @@ public final class ProductService {
         User user = session.requireOwner();
         ProductDetails details = check(input);
         return database.inTransaction(c -> {
-            checkCategory(c, details.categoryId());
             checkNotDuplicate(c, details, 0);
             String now = DbTime.now(clock);
             Product created = insertNew(c, details, now);
@@ -131,7 +126,8 @@ public final class ProductService {
 
     /**
      * Saves changes to a product. Owner only. Old bills are not affected.
-     * The product's stored MRP is kept as it is: the form no longer shows it, so it must never be wiped.
+     * The product's stored category and MRP are kept as they are: the form no longer shows them, so they must
+     * never be wiped.
      */
     public Product update(long id, ProductInput input) {
         User user = session.requireOwner();
@@ -139,8 +135,7 @@ public final class ProductService {
         return database.inTransaction(c -> {
             Product before = products.findById(c, id)
                     .orElseThrow(() -> new BusinessRuleException("This product no longer exists."));
-            ProductDetails details = typed.withMrp(before.mrp());
-            checkCategory(c, details.categoryId());
+            ProductDetails details = typed.keepingHiddenValuesOf(before);
             checkNotDuplicate(c, details, id);
 
             String changes = describeChanges(before, details);
@@ -217,22 +212,11 @@ public final class ProductService {
         }
     }
 
-    private void checkCategory(Connection connection, Long categoryId) throws SQLException {
-        if (categoryId == null) {
-            return;
-        }
-        Optional<Category> category = categories.findById(connection, categoryId);
-        if (category.isEmpty()) {
-            throw new ValidationException("category", "Please choose a category from the list.");
-        }
-    }
-
     /** Lists what changed, for example "rate 44.00 -> 46.00; pack size 1 kg -> 2 kg". */
     private static String describeChanges(Product before, ProductDetails after) {
         List<String> changes = new ArrayList<>();
         addChange(changes, "name", before.name(), after.name());
         addChange(changes, "Marathi name", before.nameMr(), after.nameMr());
-        addChange(changes, "category id", before.categoryId(), after.categoryId());
         addChange(changes, "unit", before.unit(), after.unit());
         addChange(changes, "pack size", before.packSize(), after.packSize());
         addChange(changes, "rate", before.rate().toPlainString(), after.rate().toPlainString());

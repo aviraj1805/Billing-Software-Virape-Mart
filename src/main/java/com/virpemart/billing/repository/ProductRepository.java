@@ -19,8 +19,7 @@ import com.virpemart.billing.model.Unit;
 public final class ProductRepository {
 
     private static final String SELECT = "SELECT p.id, p.code, p.name, p.name_mr, p.category_id,"
-            + " c.name AS category_name, p.unit, p.pack_size, p.rate_paise, p.mrp_paise, p.active"
-            + " FROM products p LEFT JOIN categories c ON c.id = p.category_id";
+            + " p.unit, p.pack_size, p.rate_paise, p.mrp_paise, p.active FROM products p";
 
     /** At most this many words are used from the search text. */
     private static final int MAX_SEARCH_WORDS = 5;
@@ -44,10 +43,6 @@ public final class ProductRepository {
 
         if (!search.includeInactive()) {
             sql.append(" AND p.active = 1");
-        }
-        if (search.categoryId() != null) {
-            sql.append(" AND p.category_id = ?");
-            params.add(search.categoryId());
         }
 
         String text = search.text() == null ? "" : search.text().strip();
@@ -207,7 +202,6 @@ public final class ProductRepository {
                 rs.getString("name"),
                 rs.getString("name_mr"),
                 category,
-                rs.getString("category_name"),
                 Unit.valueOf(rs.getString("unit")),
                 rs.getString("pack_size"),
                 Money.ofPaise(rs.getLong("rate_paise")),

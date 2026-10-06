@@ -173,7 +173,7 @@ public class BillingController {
         setUpCartTable();
 
         productPopup = new SearchPopup<>(productSearch,
-                text -> products.search(text, null, false, PRODUCT_RESULTS),
+                text -> products.search(text, false, PRODUCT_RESULTS),
                 BillingController::describeProduct,
                 this::chooseProduct);
         customerPopup = new SearchPopup<>(customerSearch,

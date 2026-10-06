@@ -50,7 +50,7 @@ class BackupServiceTest {
         fixture = new TestFixture(temp);
         backups = fixture.services.backups();
         backupsDir = backups.backupsFolder();
-        sugar = fixture.services.products().create(new ProductInput("Sugar", null, null, "kg", null, "44"));
+        sugar = fixture.services.products().create(new ProductInput("Sugar", null, "kg", null, "44"));
     }
 
     private void saveABill() {

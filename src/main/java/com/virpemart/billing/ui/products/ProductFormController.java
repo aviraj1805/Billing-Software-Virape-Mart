@@ -1,12 +1,9 @@
 package com.virpemart.billing.ui.products;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 import com.virpemart.billing.AppContext;
-import com.virpemart.billing.model.Category;
 import com.virpemart.billing.model.Product;
 import com.virpemart.billing.model.Unit;
 import com.virpemart.billing.service.BusinessRuleException;
@@ -29,8 +26,6 @@ import javafx.util.StringConverter;
 /** The "Add product" / "Edit product" window. All checks happen in {@link ProductService}. */
 public class ProductFormController {
 
-    private static final Category NO_CATEGORY = new Category(0, "(No category)", true);
-
     private final AppContext context;
     private final ProductService products;
 
@@ -40,8 +35,6 @@ public class ProductFormController {
     private TextField nameField;
     @FXML
     private TextField nameMrField;
-    @FXML
-    private ComboBox<Category> categoryBox;
     @FXML
     private ComboBox<Unit> unitBox;
     @FXML
@@ -85,7 +78,6 @@ public class ProductFormController {
         errors = new FormErrors(errorLabel, Map.<String, Control>of(
                 "name", nameField,
                 "nameMr", nameMrField,
-                "category", categoryBox,
                 "unit", unitBox,
                 "packSize", packSizeField,
                 "rate", rateField));
@@ -106,28 +98,14 @@ public class ProductFormController {
             }
         });
         unitBox.valueProperty().addListener((obs, oldUnit, newUnit) -> updateRateLabel(newUnit));
-        categoryBox.setConverter(new ProductsController.NameConverter());
     }
 
     private void fill(Product product) {
         this.existing = product;
-        List<Category> choices = new ArrayList<>();
-        choices.add(NO_CATEGORY);
-        choices.addAll(context.services().categories().list(false));
-
         if (product == null) {
             codeLabel.setText("New product. The code is given automatically.");
-            categoryBox.getItems().setAll(choices);
-            categoryBox.setValue(NO_CATEGORY);
         } else {
             codeLabel.setText("Code " + product.code() + (product.active() ? "" : "  (switched off)"));
-            if (product.categoryId() != null && choices.stream().noneMatch(c -> c.id() == product.categoryId())) {
-                // Keep a switched-off category visible for a product that still uses it.
-                choices.add(new Category(product.categoryId(), product.categoryName(), false));
-            }
-            categoryBox.getItems().setAll(choices);
-            categoryBox.setValue(product.categoryId() == null ? NO_CATEGORY
-                    : choices.stream().filter(c -> c.id() == product.categoryId()).findFirst().orElse(NO_CATEGORY));
             nameField.setText(product.name());
             nameMrField.setText(product.nameMr());
             unitBox.setValue(product.unit());
@@ -149,12 +127,10 @@ public class ProductFormController {
     @FXML
     private void save() {
         errors.clear();
-        Category category = categoryBox.getValue();
         Unit unit = unitBox.getValue();
         ProductInput input = new ProductInput(
                 nameField.getText(),
                 nameMrField.getText(),
-                (category == null || category == NO_CATEGORY) ? null : category.id(),
                 unit == null ? null : unit.name(),
                 packSizeField.getText(),
                 rateField.getText());

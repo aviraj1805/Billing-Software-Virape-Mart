@@ -15,7 +15,6 @@ import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
-import com.virpemart.billing.model.Category;
 import com.virpemart.billing.model.Money;
 import com.virpemart.billing.model.Product;
 import com.virpemart.billing.model.ProductDetails;
@@ -28,25 +27,22 @@ class ProductServiceTest {
 
     private TestFixture fixture;
     private ProductService products;
-    private long dalCategory;
 
     @BeforeEach
     void setUp() {
         fixture = new TestFixture(temp);
         products = fixture.services.products();
-        dalCategory = fixture.services.categories().list(false).stream()
-                .filter(c -> c.name().equals("Dal & Pulses")).map(Category::id).findFirst().orElseThrow();
     }
 
     private static ProductInput input(String name, String unit, String packSize, String rate) {
-        return new ProductInput(name, null, null, unit, packSize, rate);
+        return new ProductInput(name, null, unit, packSize, rate);
     }
 
     // ------------------------------------------------------------------ adding
 
     @Test
     void createsProductsWithAutomaticCodes() {
-        Product sugar = products.create(new ProductInput("Sugar", "साखर", null, "kg", "", "44"));
+        Product sugar = products.create(new ProductInput("Sugar", "साखर", "kg", "", "44"));
         Product salt = products.create(input("Tata Salt", "pcs", "1 kg", "28"));
 
         assertEquals("P0001", sugar.code());
@@ -63,13 +59,12 @@ class ProductServiceTest {
 
     @Test
     void cleansUpTypedText() {
-        Product p = products.create(new ProductInput("  Toor   Dal ", " तूर डाळ ", dalCategory, " KGS ", " ", "Rs. 1,20.50"));
+        Product p = products.create(new ProductInput("  Toor   Dal ", " तूर डाळ ", " KGS ", " ", "Rs. 1,20.50"));
 
         assertEquals("Toor Dal", p.name());
         assertEquals("तूर डाळ", p.nameMr());
         assertEquals(Unit.KG, p.unit());
         assertEquals(Money.ofPaise(12050), p.rate());
-        assertEquals("Dal & Pulses", p.categoryName());
     }
 
     @ParameterizedTest(name = "{4}")
@@ -104,6 +99,21 @@ class ProductServiceTest {
     }
 
     @Test
+    void editingAProductKeepsItsStoredCategoryExactly() {
+        Product dal = products.create(input("Toor Dal", "kg", null, "120"));
+        assertNull(dal.categoryId(), "categories are no longer chosen, so new products have none");
+        long dalCategory = fixture.count("SELECT id FROM categories WHERE name = 'Dal & Pulses'");
+        fixture.setStoredCategory(dal.id(), dalCategory);
+
+        Product updated = products.update(dal.id(), input("Toor Dal", "kg", null, "125"));
+
+        assertEquals(Money.ofRupees(125), updated.rate());
+        assertEquals(dalCategory, updated.categoryId(), "the category is not shown in the form, so it must be kept");
+        assertEquals(dalCategory, fixture.count("SELECT category_id FROM products WHERE id = " + dal.id()));
+        assertEquals(0, fixture.count("SELECT COUNT(*) FROM audit_log WHERE details LIKE '%category%'"));
+    }
+
+    @Test
     void checkLeavesTheMrpEmptyWithoutSaving() {
         ProductDetails details = products.check(input("Biscuit", "pcs", "100 g", "12"));
 
@@ -133,14 +143,6 @@ class ProductServiceTest {
                 () -> products.create(input("Sugar", "kg", null, "44")));
 
         assertTrue(error.getMessage().contains("Switch it back on"), error.getMessage());
-    }
-
-    @Test
-    void unknownCategoryIsRejected() {
-        ValidationException error = assertThrows(ValidationException.class,
-                () -> products.create(new ProductInput("Sugar", null, 9999L, "kg", null, "44")));
-
-        assertEquals("category", error.field());
     }
 
     // ------------------------------------------------------------------ editing
@@ -188,11 +190,11 @@ class ProductServiceTest {
 
         products.setActive(sugar.id(), false);
 
-        assertTrue(products.search("sugar", null, false, 50).isEmpty());
-        assertEquals(1, products.search("sugar", null, true, 50).size());
+        assertTrue(products.search("sugar", false, 50).isEmpty());
+        assertEquals(1, products.search("sugar", true, 50).size());
 
         products.setActive(sugar.id(), true);
-        assertEquals(1, products.search("sugar", null, false, 50).size());
+        assertEquals(1, products.search("sugar", false, 50).size());
     }
 
     @Test
@@ -221,19 +223,19 @@ class ProductServiceTest {
 
     @Test
     void searchFindsAllTypesOfAProduct() {
-        products.create(new ProductInput("Sugar", "साखर", null, "kg", null, "44"));
+        products.create(new ProductInput("Sugar", "साखर", "kg", null, "44"));
         products.create(input("Sugar", "pcs", "1 kg", "46"));
         products.create(input("Sugar", "pcs", "5 kg", "220"));
         products.create(input("Salt", "pcs", "1 kg", "28"));
         products.create(input("Brown Sugar Cubes", "pcs", "250 g", "90"));
 
-        assertEquals(4, products.search("sugar", null, false, 50).size(), "every kind of sugar");
-        assertEquals(4, products.search("SUG", null, false, 50).size(), "part of a word, any case");
-        assertEquals(1, products.search("साखर", null, false, 50).size(), "Marathi name");
-        assertEquals(1, products.search("sugar 5 kg", null, false, 50).size(), "every word must match");
-        assertEquals(2, products.search("1 kg", null, false, 50).size(), "pack size");
-        assertEquals("P0004", products.search("p0004", null, false, 50).getFirst().code(), "code");
-        assertEquals(5, products.search("  ", null, false, 50).size(), "blank shows everything");
+        assertEquals(4, products.search("sugar", false, 50).size(), "every kind of sugar");
+        assertEquals(4, products.search("SUG", false, 50).size(), "part of a word, any case");
+        assertEquals(1, products.search("साखर", false, 50).size(), "Marathi name");
+        assertEquals(1, products.search("sugar 5 kg", false, 50).size(), "every word must match");
+        assertEquals(2, products.search("1 kg", false, 50).size(), "pack size");
+        assertEquals("P0004", products.search("p0004", false, 50).getFirst().code(), "code");
+        assertEquals(5, products.search("  ", false, 50).size(), "blank shows everything");
     }
 
     @Test
@@ -241,7 +243,7 @@ class ProductServiceTest {
         products.create(input("Brown Sugar", "kg", null, "90"));
         products.create(input("Sugar", "kg", null, "44"));
 
-        List<Product> found = products.search("sugar", null, false, 50);
+        List<Product> found = products.search("sugar", false, 50);
 
         assertEquals("Sugar", found.getFirst().name());
     }
@@ -250,19 +252,8 @@ class ProductServiceTest {
     void searchTreatsPercentAndUnderscoreAsNormalCharacters() {
         products.create(input("Sugar", "kg", null, "44"));
 
-        assertTrue(products.search("%", null, false, 50).isEmpty());
-        assertTrue(products.search("_", null, false, 50).isEmpty());
-    }
-
-    @Test
-    void searchCanFilterByCategory() {
-        products.create(new ProductInput("Toor Dal", null, dalCategory, "kg", null, "120"));
-        products.create(input("Sugar", "kg", null, "44"));
-
-        List<Product> found = products.search("", dalCategory, false, 50);
-
-        assertEquals(1, found.size());
-        assertEquals("Toor Dal", found.getFirst().name());
+        assertTrue(products.search("%", false, 50).isEmpty());
+        assertTrue(products.search("_", false, 50).isEmpty());
     }
 
     // ------------------------------------------------------------------ permissions
@@ -272,7 +263,7 @@ class ProductServiceTest {
         Product sugar = products.create(input("Sugar", "kg", null, "44"));
         fixture.signInStaff();
 
-        assertFalse(products.search("sugar", null, false, 50).isEmpty());
+        assertFalse(products.search("sugar", false, 50).isEmpty());
         assertThrows(PermissionDeniedException.class, () -> products.create(input("Salt", "pcs", null, "28")));
         assertThrows(PermissionDeniedException.class, () -> products.update(sugar.id(), input("Sugar", "kg", null, "1")));
         assertThrows(PermissionDeniedException.class, () -> products.setActive(sugar.id(), false));

@@ -6,8 +6,7 @@ package com.virpemart.billing.model;
  *
  * @param code         automatic code such as P0001
  * @param nameMr       Marathi name, or null
- * @param categoryId   category, or null
- * @param categoryName category name for display, or null
+ * @param categoryId   category from version 1.1.0 or earlier, or null. Categories are no longer shown; the value is kept
  * @param packSize     pack size text such as "1 kg", or null
  * @param mrp          MRP, or null
  * @param active       false when switched off (hidden from billing, kept for old bills)
@@ -18,7 +17,6 @@ public record Product(
         String name,
         String nameMr,
         Long categoryId,
-        String categoryName,
         Unit unit,
         String packSize,
         Money rate,

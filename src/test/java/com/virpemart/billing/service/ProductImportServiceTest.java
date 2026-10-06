@@ -53,9 +53,10 @@ class ProductImportServiceTest {
         Result result = importer.importFile(file);
 
         assertEquals(3, result.imported());
-        Product sugar = fixture.services.products().search("sugar", null, false, 10).getFirst();
+        Product sugar = fixture.services.products().search("sugar", false, 10).getFirst();
         assertEquals("साखर", sugar.nameMr());
-        assertEquals("Sugar, Salt & Jaggery", sugar.categoryName());
+        assertEquals(List.of("Name", "Marathi Name", "Unit", "Pack Size", "Rate"),
+                ProductImportService.TEMPLATE_HEADERS, "no Category or MRP column any more");
         assertEquals(Unit.KG, sugar.unit());
     }
 
@@ -82,15 +83,14 @@ class ProductImportServiceTest {
         assertEquals(RowStatus.SKIPPED, rows.get(3).status());
         assertEquals("Same product as row 2.", rows.get(3).message());
         assertEquals(RowStatus.READY, rows.get(4).status());
-        assertEquals("New category: Lentils", rows.get(4).message());
-        assertEquals(List.of("Lentils"), preview.newCategories());
+        assertEquals("", rows.get(4).message(), "a Category column is ignored");
         assertEquals(2, preview.count(RowStatus.READY));
 
         assertEquals(0, fixture.count("SELECT COUNT(*) FROM products"), "preview never saves");
     }
 
     @Test
-    void importSavesGoodRowsCreatesCategoriesAndAudits() throws IOException {
+    void importSavesGoodRowsIgnoresCategoriesAndAudits() throws IOException {
         Path file = excelCsv(
                 "Name,Marathi Name,Category,Unit,Pack Size,Rate,MRP",
                 "Toor Dal,तूर डाळ,Dal & Pulses,kg,,120,",
@@ -102,25 +102,25 @@ class ProductImportServiceTest {
 
         assertEquals(3, result.imported());
         assertEquals(1, result.errors());
-        assertEquals(List.of("lentils"), result.newCategories(), "created once, with the first spelling");
         assertEquals(3, fixture.count("SELECT COUNT(*) FROM products"));
-        assertEquals(2, fixture.count("SELECT COUNT(*) FROM products p JOIN categories c ON c.id = p.category_id"
-                + " WHERE c.name = 'lentils'"));
+        assertEquals(0, fixture.count("SELECT COUNT(*) FROM products WHERE category_id IS NOT NULL"));
+        assertEquals(0, fixture.count("SELECT COUNT(*) FROM categories WHERE name = 'lentils'"),
+                "no categories are created");
         assertEquals(1, fixture.count("SELECT COUNT(*) FROM audit_log WHERE action = 'PRODUCTS_IMPORTED'"));
-        List<String> codes = fixture.services.products().search("", null, false, 10).stream().map(Product::code).sorted().toList();
+        List<String> codes = fixture.services.products().search("", false, 10).stream().map(Product::code).sorted().toList();
         assertEquals(List.of("P0001", "P0002", "P0003"), codes);
     }
 
     @Test
     void existingProductsAreSkippedNotChanged() throws IOException {
-        fixture.services.products().create(new ProductInput("Sugar", null, null, "kg", null, "44"));
+        fixture.services.products().create(new ProductInput("Sugar", null, "kg", null, "44"));
         Path file = excelCsv("Name,Unit,Rate", "Sugar,kg,50", "Jaggery,kg,60");
 
         Result result = importer.importFile(file);
 
         assertEquals(1, result.imported());
         assertEquals(1, result.skipped());
-        Product sugar = fixture.services.products().search("sugar", null, false, 10).getFirst();
+        Product sugar = fixture.services.products().search("sugar", false, 10).getFirst();
         assertEquals(Money.ofRupees(44), sugar.rate(), "import never changes an existing product");
     }
 
@@ -133,11 +133,11 @@ class ProductImportServiceTest {
         Result result = importer.importFile(file);
 
         assertEquals(1, result.imported());
-        Product biscuit = fixture.services.products().search("parle", null, false, 10).getFirst();
+        Product biscuit = fixture.services.products().search("parle", false, 10).getFirst();
         assertEquals(Unit.PCS, biscuit.unit());
         assertEquals("80 g", biscuit.packSize());
         assertNull(biscuit.mrp(), "an MRP column is ignored: MRP is no longer used");
-        assertEquals("Biscuits & Bakery", biscuit.categoryName());
+        assertNull(biscuit.categoryId(), "a category column (\"Type\") is ignored");
     }
 
     @Test
@@ -151,7 +151,7 @@ class ProductImportServiceTest {
         Result result = importer.importFile(file);
 
         assertEquals(2, result.imported());
-        Product oil = fixture.services.products().search("sunflower", null, false, 10).getFirst();
+        Product oil = fixture.services.products().search("sunflower", false, 10).getFirst();
         assertEquals("Oil; Sunflower", oil.name());
         assertEquals(Money.ofRupees(1450), oil.rate());
         assertNull(oil.mrp(), "an MRP column is ignored");

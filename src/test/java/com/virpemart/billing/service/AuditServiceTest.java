@@ -30,7 +30,7 @@ class AuditServiceTest {
     void setUp() {
         fixture = new TestFixture(temp);
         audit = fixture.services.audit();
-        fixture.services.products().create(new ProductInput("Sugar", null, null, "kg", null, "44"));
+        fixture.services.products().create(new ProductInput("Sugar", null, "kg", null, "44"));
         fixture.services.settings().savePrinterSetup(new PrinterSetup(null, PaperSize.A4, PrintAfterSave.ASK));
     }
 

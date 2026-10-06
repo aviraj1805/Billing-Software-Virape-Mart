@@ -35,7 +35,7 @@ class PrintServiceTest {
         fixture = new TestFixture(temp);
         printing = fixture.services.printing();
         Product salt = fixture.services.products().create(
-                new ProductInput("Tata Salt", "टाटा मीठ", null, "pcs", "1 kg", "28"));
+                new ProductInput("Tata Salt", "टाटा मीठ", "pcs", "1 kg", "28"));
         Cart cart = new Cart();
         cart.addProduct(salt, Quantity.ofWhole(2));
         fixture.services.billing().save(new BillRequest(null, null, cart.lines(),

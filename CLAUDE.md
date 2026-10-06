@@ -252,6 +252,8 @@ Test anything that cannot be undone (such as cancelling a bill) on a copy of `de
 - **Khata / udhaar**: a customer's credit account at the store.
 - **Account customer**: a regular customer with a khata who may pay later.
 - **Walk-in customer**: a customer without an account; must pay in full.
+- **Category**: removed in 1.2.0 (the user's choice). The `categories` table and `products.category_id` are kept;
+  `ProductDetails.keepingHiddenValuesOf` keeps a product's category and MRP when it is edited.
 - **MRP**: Maximum Retail Price printed on a packet. Hidden everywhere since 1.2.0 (the user's choice); the stored
   value is kept, and `ProductService.update` keeps a product's MRP because the form no longer sends one.
 - **Loose item**: sold by weight at a rate per kg or per litre.

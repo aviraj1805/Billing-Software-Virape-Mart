@@ -61,8 +61,8 @@ starts `App`, the JavaFX application class. This is required when JavaFX is on t
 |---|---|
 | `settings` | Shop name, address, phone, footer, printer, paper width |
 | `users` | Username, display name, password hash and salt, role OWNER or STAFF, active flag |
-| `categories` | Category name, active flag |
-| `products` | Short code, name, Marathi name, category, unit (KG or L for loose items, PCS for packed items), pack size text, rate, optional MRP (kept but no longer typed or shown; an edit keeps it), active flag |
+| `categories` | Category name, active flag. Not used since version 1.2.0 (kept, never deleted) |
+| `products` | Short code, name, Marathi name, category (kept but no longer shown; an edit keeps it), unit (KG or L for loose items, PCS for packed items), pack size text, rate, optional MRP (kept but no longer typed or shown; an edit keeps it), active flag |
 | `customers` | Customer number, name, phone, address, notes, active flag |
 | `bills` | Bill number, date and time, customer or walk-in, subtotal, round-off, total, paid now, added to account, status, cancel details, created by |
 | `bill_items` | Bill, product or none for one-off items, snapshot fields, quantity, rate, original rate if changed, line total |

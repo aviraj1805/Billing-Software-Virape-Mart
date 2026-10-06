@@ -9,11 +9,11 @@ import org.junit.jupiter.api.Test;
 
 class CartTest {
 
-    private static final Product SUGAR_LOOSE = new Product(1, "P0001", "Sugar", "साखर", null, null, Unit.KG, null,
+    private static final Product SUGAR_LOOSE = new Product(1, "P0001", "Sugar", "साखर", null, Unit.KG, null,
             Money.parse("44"), null, true);
-    private static final Product SALT = new Product(2, "P0002", "Tata Salt", null, null, null, Unit.PCS, "1 kg",
+    private static final Product SALT = new Product(2, "P0002", "Tata Salt", null, null, Unit.PCS, "1 kg",
             Money.parse("28"), Money.parse("30"), true);
-    private static final Product DAL = new Product(3, "P0003", "Toor Dal", null, null, null, Unit.KG, null,
+    private static final Product DAL = new Product(3, "P0003", "Toor Dal", null, null, Unit.KG, null,
             Money.parse("45.50"), null, true);
 
     @Test

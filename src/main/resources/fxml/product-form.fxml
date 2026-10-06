@@ -32,19 +32,16 @@
         <Label text="Marathi name" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
         <TextField fx:id="nameMrField" promptText="e.g. तूर डाळ" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
 
-        <Label text="Category" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
-        <ComboBox fx:id="categoryBox" maxWidth="Infinity" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
-
-        <Label text="Sold by *" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
+        <Label text="Sold by *" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
         <ComboBox fx:id="unitBox" maxWidth="Infinity" promptText="Choose kg, litre or piece"
-                  GridPane.rowIndex="3" GridPane.columnIndex="1"/>
+                  GridPane.rowIndex="2" GridPane.columnIndex="1"/>
 
-        <Label text="Pack size" GridPane.rowIndex="4" GridPane.columnIndex="0"/>
+        <Label text="Pack size" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
         <TextField fx:id="packSizeField" promptText="e.g. 1 kg, 500 g, 200 ml (empty for loose)"
-                   GridPane.rowIndex="4" GridPane.columnIndex="1"/>
+                   GridPane.rowIndex="3" GridPane.columnIndex="1"/>
 
-        <Label fx:id="rateLabel" text="Rate (₹) *" GridPane.rowIndex="5" GridPane.columnIndex="0"/>
-        <TextField fx:id="rateField" promptText="e.g. 44 or 44.50" GridPane.rowIndex="5" GridPane.columnIndex="1"/>
+        <Label fx:id="rateLabel" text="Rate (₹) *" GridPane.rowIndex="4" GridPane.columnIndex="0"/>
+        <TextField fx:id="rateField" promptText="e.g. 44 or 44.50" GridPane.rowIndex="4" GridPane.columnIndex="1"/>
     </GridPane>
 
     <Label fx:id="errorLabel" styleClass="error-text" wrapText="true" managed="false" visible="false"/>

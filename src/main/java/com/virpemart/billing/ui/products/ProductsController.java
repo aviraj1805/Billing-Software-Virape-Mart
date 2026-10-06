@@ -1,14 +1,11 @@
 package com.virpemart.billing.ui.products;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
 import com.virpemart.billing.AppContext;
-import com.virpemart.billing.model.Category;
 import com.virpemart.billing.model.Product;
 import com.virpemart.billing.model.User;
-import com.virpemart.billing.service.CategoryService;
 import com.virpemart.billing.service.ProductService;
 import com.virpemart.billing.ui.common.Dialogs;
 import com.virpemart.billing.ui.common.Format;
@@ -19,7 +16,6 @@ import javafx.css.PseudoClass;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
-import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableRow;
@@ -30,7 +26,6 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.VBox;
 import javafx.stage.Window;
-import javafx.util.StringConverter;
 
 /**
  * The Products screen. Everyone can search; only the owner sees the buttons that change products.
@@ -41,19 +36,15 @@ public class ProductsController {
 
     /** Most rows shown at once. Typing in the search box narrows the list. */
     private static final int LIMIT = 500;
-    private static final Category ALL_CATEGORIES = new Category(0, "All categories", true);
     private static final PseudoClass INACTIVE = PseudoClass.getPseudoClass("inactive");
 
     private final AppContext context;
     private final ProductService products;
-    private final CategoryService categories;
 
     @FXML
     private VBox root;
     @FXML
     private TextField searchField;
-    @FXML
-    private ComboBox<Category> categoryFilter;
     @FXML
     private CheckBox showInactive;
     @FXML
@@ -64,8 +55,6 @@ public class ProductsController {
     private TableColumn<Product, String> nameColumn;
     @FXML
     private TableColumn<Product, String> nameMrColumn;
-    @FXML
-    private TableColumn<Product, String> categoryColumn;
     @FXML
     private TableColumn<Product, String> unitColumn;
     @FXML
@@ -81,8 +70,6 @@ public class ProductsController {
     @FXML
     private Button importButton;
     @FXML
-    private Button categoriesButton;
-    @FXML
     private Button editButton;
     @FXML
     private Button toggleActiveButton;
@@ -92,7 +79,6 @@ public class ProductsController {
     public ProductsController(AppContext context) {
         this.context = context;
         this.products = context.services().products();
-        this.categories = context.services().categories();
     }
 
     @FXML
@@ -100,17 +86,12 @@ public class ProductsController {
         setUpColumns();
         setUpRows();
 
-        categoryFilter.setConverter(new NameConverter());
-        loadCategoryFilter();
-
         searchField.textProperty().addListener((obs, oldText, newText) -> refresh());
-        categoryFilter.valueProperty().addListener((obs, oldValue, newValue) -> refresh());
         showInactive.selectedProperty().addListener((obs, oldValue, newValue) -> refresh());
         table.getSelectionModel().selectedItemProperty().addListener((obs, oldValue, newValue) -> updateButtons());
 
         boolean owner = isOwner();
-        for (Button ownerOnly : List.of(addButton, importButton, categoriesButton, editButton, toggleActiveButton,
-                deleteButton)) {
+        for (Button ownerOnly : List.of(addButton, importButton, editButton, toggleActiveButton, deleteButton)) {
             ownerOnly.setVisible(owner);
             ownerOnly.setManaged(owner);
         }
@@ -127,7 +108,6 @@ public class ProductsController {
         column(codeColumn, Product::code);
         column(nameColumn, Product::name);
         column(nameMrColumn, p -> p.nameMr() == null ? "" : p.nameMr());
-        column(categoryColumn, p -> p.categoryName() == null ? "" : p.categoryName());
         column(unitColumn, p -> p.unit().description());
         column(packColumn, p -> p.packSize() == null ? "" : p.packSize());
         column(rateColumn, p -> Format.money(p.rate()) + " / " + p.unit().shortLabel());
@@ -161,14 +141,11 @@ public class ProductsController {
 
     private void refresh() {
         Product selected = table.getSelectionModel().getSelectedItem();
-        Category category = categoryFilter.getValue();
-        Long categoryId = (category == null || category == ALL_CATEGORIES) ? null : category.id();
-
-        List<Product> found = products.search(searchField.getText(), categoryId, showInactive.isSelected(), LIMIT + 1);
+        List<Product> found = products.search(searchField.getText(), showInactive.isSelected(), LIMIT + 1);
         boolean more = found.size() > LIMIT;
         table.getItems().setAll(more ? found.subList(0, LIMIT) : found);
 
-        boolean filtered = !searchField.getText().isBlank() || categoryId != null;
+        boolean filtered = !searchField.getText().isBlank();
         ((Label) table.getPlaceholder()).setText(filtered ? "No products match your search."
                 : isOwner() ? "No products yet. Click \"+ Add product\" or \"Import from Excel…\"." : "No products yet.");
 
@@ -180,16 +157,6 @@ public class ProductsController {
             reselect(selected.id());
         }
         updateButtons();
-    }
-
-    private void loadCategoryFilter() {
-        Category current = categoryFilter.getValue();
-        List<Category> items = new ArrayList<>();
-        items.add(ALL_CATEGORIES);
-        items.addAll(categories.list(false));
-        categoryFilter.getItems().setAll(items);
-        categoryFilter.setValue(current == null ? ALL_CATEGORIES
-                : items.stream().filter(c -> c.id() == current.id()).findFirst().orElse(ALL_CATEGORIES));
     }
 
     private void reselect(long productId) {
@@ -277,16 +244,8 @@ public class ProductsController {
     }
 
     @FXML
-    private void openCategories() {
-        CategoriesController.open(window(), context);
-        loadCategoryFilter();
-        refresh();
-    }
-
-    @FXML
     private void openImport() {
         ProductImportController.open(window(), context);
-        loadCategoryFilter();
         refresh();
     }
 
@@ -324,18 +283,5 @@ public class ProductsController {
 
     private Window window() {
         return root.getScene().getWindow();
-    }
-
-    /** Shows a category by its name in drop-down lists. */
-    static final class NameConverter extends StringConverter<Category> {
-        @Override
-        public String toString(Category category) {
-            return category == null ? "" : category.name() + (category.active() ? "" : " (switched off)");
-        }
-
-        @Override
-        public Category fromString(String text) {
-            throw new UnsupportedOperationException("Categories are chosen from the list");
-        }
     }
 }

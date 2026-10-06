@@ -79,6 +79,18 @@ final class TestFixture {
         });
     }
 
+    /**
+     * Gives a product a stored category directly in the database, like products saved before version 1.2.0
+     * (categories are no longer chosen in the app).
+     */
+    void setStoredCategory(long productId, long categoryId) {
+        database.runInTransaction(c -> {
+            try (Statement s = c.createStatement()) {
+                s.executeUpdate("UPDATE products SET category_id = " + categoryId + " WHERE id = " + productId);
+            }
+        });
+    }
+
     /** Puts a product on a saved bill directly in the database, so "is it billed?" rules can be tested. */
     void putOnABill(long productId) {
         database.runInTransaction(c -> {

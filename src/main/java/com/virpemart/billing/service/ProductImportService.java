@@ -27,12 +27,10 @@ import org.apache.commons.csv.CSVRecord;
 
 import com.virpemart.billing.db.Database;
 import com.virpemart.billing.db.DbTime;
-import com.virpemart.billing.model.Category;
 import com.virpemart.billing.model.Product;
 import com.virpemart.billing.model.ProductDetails;
 import com.virpemart.billing.model.User;
 import com.virpemart.billing.repository.AuditRepository;
-import com.virpemart.billing.repository.CategoryRepository;
 
 /**
  * Imports a product list that was saved from Excel or Google Sheets as a CSV file.
@@ -44,7 +42,7 @@ import com.virpemart.billing.repository.CategoryRepository;
  *   <li>{@link #preview(Path)} checks every row with the same rules as the product form and
  *       shows what would happen. Nothing is saved.</li>
  *   <li>{@link #importFile(Path)} saves all good rows in one transaction. Rows with problems and
- *       products that already exist are skipped. Unknown categories are created.</li>
+ *       products that already exist are skipped. A Category or MRP column is ignored (no longer used).</li>
  * </ol>
  * Only new products are added; existing products are never changed by an import.
  */
@@ -52,14 +50,14 @@ public final class ProductImportService {
 
     /** Column names in the blank template, in order. */
     public static final List<String> TEMPLATE_HEADERS =
-            List.of("Name", "Marathi Name", "Category", "Unit", "Pack Size", "Rate");
+            List.of("Name", "Marathi Name", "Unit", "Pack Size", "Rate");
 
     private static final long MAX_FILE_BYTES = 5L * 1024 * 1024;
     private static final int MAX_ROWS = 20_000;
 
     /** The kinds of column the import understands. */
     enum Column {
-        NAME("Name"), NAME_MR("Marathi Name"), CATEGORY("Category"), UNIT("Unit"),
+        NAME("Name"), NAME_MR("Marathi Name"), UNIT("Unit"),
         PACK_SIZE("Pack Size"), RATE("Rate");
 
         private final String label;
@@ -88,12 +86,12 @@ public final class ProductImportService {
      * @param rowNumber row number as shown in Excel (the header is row 1)
      * @param message   explanation for SKIPPED and ERROR rows, or a note for READY rows
      */
-    public record Row(int rowNumber, String name, String nameMr, String category, String unit, String packSize,
+    public record Row(int rowNumber, String name, String nameMr, String unit, String packSize,
                       String rate, RowStatus status, String message) {
     }
 
     /** The result of checking a file. */
-    public record Preview(List<Row> rows, List<String> newCategories) {
+    public record Preview(List<Row> rows) {
 
         public long count(RowStatus status) {
             return rows.stream().filter(r -> r.status() == status).count();
@@ -101,7 +99,7 @@ public final class ProductImportService {
     }
 
     /** The result of an import. */
-    public record Result(int imported, int skipped, int errors, List<String> newCategories) {
+    public record Result(int imported, int skipped, int errors) {
     }
 
     /** A row as read from the file, before checking. */
@@ -113,23 +111,19 @@ public final class ProductImportService {
     }
 
     /** A checked row, with its details if it is READY. */
-    private record CheckedRow(Row row, ProductDetails details, String categoryName) {
+    private record CheckedRow(Row row, ProductDetails details) {
     }
 
     private final Database database;
     private final ProductService productService;
-    private final CategoryService categoryService;
-    private final CategoryRepository categories;
     private final AuditRepository audit;
     private final Session session;
     private final Clock clock;
 
-    public ProductImportService(Database database, ProductService productService, CategoryService categoryService,
-                                CategoryRepository categories, AuditRepository audit, Session session, Clock clock) {
+    public ProductImportService(Database database, ProductService productService, AuditRepository audit,
+                                Session session, Clock clock) {
         this.database = database;
         this.productService = productService;
-        this.categoryService = categoryService;
-        this.categories = categories;
         this.audit = audit;
         this.session = session;
         this.clock = clock;
@@ -141,7 +135,7 @@ public final class ProductImportService {
         List<RawRow> rawRows = readFile(file);
         return database.query(c -> {
             List<CheckedRow> checked = check(c, rawRows);
-            return new Preview(checked.stream().map(CheckedRow::row).toList(), newCategories(checked));
+            return new Preview(checked.stream().map(CheckedRow::row).toList());
         });
     }
 
@@ -151,16 +145,6 @@ public final class ProductImportService {
         List<RawRow> rawRows = readFile(file);
         return database.inTransaction(c -> {
             List<CheckedRow> checked = check(c, rawRows);
-            List<String> created = newCategories(checked);
-
-            Map<String, Long> categoryIds = new HashMap<>();
-            for (Category category : categories.list(c, true)) {
-                categoryIds.put(category.name().toLowerCase(Locale.ROOT), category.id());
-            }
-            for (String name : created) {
-                Category category = categoryService.createInTransaction(c, name, user);
-                categoryIds.put(name.toLowerCase(Locale.ROOT), category.id());
-            }
 
             String now = DbTime.now(clock);
             int imported = 0;
@@ -168,13 +152,7 @@ public final class ProductImportService {
                 if (row.row().status() != RowStatus.READY) {
                     continue;
                 }
-                ProductDetails details = row.details();
-                if (row.categoryName() != null) {
-                    Long categoryId = categoryIds.get(row.categoryName().toLowerCase(Locale.ROOT));
-                    details = new ProductDetails(details.name(), details.nameMr(), categoryId, details.unit(),
-                            details.packSize(), details.rate(), details.mrp());
-                }
-                productService.insertNew(c, details, now);
+                productService.insertNew(c, row.details(), now);
                 imported++;
             }
 
@@ -183,7 +161,7 @@ public final class ProductImportService {
             audit.insert(c, user.id(), "PRODUCTS_IMPORTED", "products", null,
                     imported + " imported, " + skipped + " skipped, " + errors + " with errors, from "
                             + file.getFileName(), now);
-            return new Result(imported, skipped, errors, created);
+            return new Result(imported, skipped, errors);
         });
     }
 
@@ -191,9 +169,9 @@ public final class ProductImportService {
     public static String templateText() {
         List<List<String>> lines = List.of(
                 TEMPLATE_HEADERS,
-                List.of("Sugar", "साखर", "Sugar, Salt & Jaggery", "kg", "", "44"),
-                List.of("Tata Salt", "टाटा मीठ", "Sugar, Salt & Jaggery", "pcs", "1 kg", "28"),
-                List.of("Groundnut Oil", "शेंगदाणा तेल", "Edible Oil & Ghee", "litre", "", "180"));
+                List.of("Sugar", "साखर", "kg", "", "44"),
+                List.of("Tata Salt", "टाटा मीठ", "pcs", "1 kg", "28"),
+                List.of("Groundnut Oil", "शेंगदाणा तेल", "litre", "", "180"));
         StringBuilder text = new StringBuilder("﻿"); // byte-order mark: tells Excel the file is UTF-8
         for (List<String> line : lines) {
             text.append(String.join(",", line.stream().map(ProductImportService::csvValue).toList())).append("\r\n");
@@ -204,25 +182,18 @@ public final class ProductImportService {
     // ------------------------------------------------------------------ checking rows
 
     private List<CheckedRow> check(Connection connection, List<RawRow> rawRows) throws SQLException {
-        Map<String, Category> existingCategories = new HashMap<>();
-        for (Category category : categories.list(connection, true)) {
-            existingCategories.put(category.name().toLowerCase(Locale.ROOT), category);
-        }
-
         Map<String, Integer> seen = new HashMap<>();
         List<CheckedRow> result = new ArrayList<>();
         for (RawRow raw : rawRows) {
-            String categoryName = Texts.clean(raw.get(Column.CATEGORY));
-            Category category = categoryName == null ? null : existingCategories.get(categoryName.toLowerCase(Locale.ROOT));
             ProductInput input = new ProductInput(raw.get(Column.NAME), raw.get(Column.NAME_MR),
-                    category == null ? null : category.id(), raw.get(Column.UNIT), raw.get(Column.PACK_SIZE),
+                    raw.get(Column.UNIT), raw.get(Column.PACK_SIZE),
                     raw.get(Column.RATE));
 
             ProductDetails details;
             try {
                 details = productService.check(input);
             } catch (ValidationException e) {
-                result.add(new CheckedRow(row(raw, RowStatus.ERROR, e.getMessage()), null, null));
+                result.add(new CheckedRow(row(raw, RowStatus.ERROR, e.getMessage()), null));
                 continue;
             }
 
@@ -232,7 +203,7 @@ public final class ProductImportService {
             Integer earlierRow = seen.putIfAbsent(key, raw.rowNumber());
             if (earlierRow != null) {
                 result.add(new CheckedRow(row(raw, RowStatus.SKIPPED, "Same product as row " + earlierRow + "."),
-                        null, null));
+                        null));
                 continue;
             }
 
@@ -240,32 +211,19 @@ public final class ProductImportService {
             if (existing.isPresent()) {
                 Product p = existing.get();
                 result.add(new CheckedRow(row(raw, RowStatus.SKIPPED, "Already in your product list as " + p.code()
-                        + (p.active() ? "." : " (switched off).")), null, null));
+                        + (p.active() ? "." : " (switched off).")), null));
                 continue;
             }
 
-            String note = (categoryName != null && category == null) ? "New category: " + categoryName : "";
-            String canonicalCategory = category == null ? categoryName : category.name();
-            result.add(new CheckedRow(row(raw, RowStatus.READY, note), details, canonicalCategory));
+            result.add(new CheckedRow(row(raw, RowStatus.READY, ""), details));
         }
         return result;
     }
 
     private static Row row(RawRow raw, RowStatus status, String message) {
-        return new Row(raw.rowNumber(), raw.get(Column.NAME), raw.get(Column.NAME_MR), raw.get(Column.CATEGORY),
+        return new Row(raw.rowNumber(), raw.get(Column.NAME), raw.get(Column.NAME_MR),
                 raw.get(Column.UNIT), raw.get(Column.PACK_SIZE), raw.get(Column.RATE),
                 status, message);
-    }
-
-    /** Category names used by READY rows that do not exist yet, in first-seen order. */
-    private static List<String> newCategories(List<CheckedRow> rows) {
-        Map<String, String> names = new LinkedHashMap<>();
-        for (CheckedRow row : rows) {
-            if (row.row().status() == RowStatus.READY && row.categoryName() != null && row.details().categoryId() == null) {
-                names.putIfAbsent(row.categoryName().toLowerCase(Locale.ROOT), row.categoryName());
-            }
-        }
-        return List.copyOf(names.values());
     }
 
     // ------------------------------------------------------------------ reading the file
@@ -395,7 +353,6 @@ public final class ProductImportService {
                 "name (english)", "नाव");
         addNames(names, Column.NAME_MR, "marathi name", "name (marathi)", "name marathi", "marathi", "मराठी नाव",
                 "मराठी");
-        addNames(names, Column.CATEGORY, "category", "type", "group", "item type", "product type", "प्रकार");
         addNames(names, Column.UNIT, "unit", "sold by", "uom", "unit type", "एकक");
         addNames(names, Column.PACK_SIZE, "pack size", "pack", "size", "packing", "weight", "वजन");
         addNames(names, Column.RATE, "rate", "rate (rs)", "rate (₹)", "price", "selling price", "sale price",

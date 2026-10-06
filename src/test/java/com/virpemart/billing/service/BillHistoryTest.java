@@ -50,8 +50,8 @@ class BillHistoryTest {
     void setUp() {
         fixture = new TestFixture(temp);
         billing = fixture.services.billing();
-        sugar = fixture.services.products().create(new ProductInput("Sugar", "साखर", null, "kg", null, "44"));
-        salt = fixture.services.products().create(new ProductInput("Tata Salt", null, null, "pcs", "1 kg", "28"));
+        sugar = fixture.services.products().create(new ProductInput("Sugar", "साखर", "kg", null, "44"));
+        salt = fixture.services.products().create(new ProductInput("Tata Salt", null, "pcs", "1 kg", "28"));
         ramesh = fixture.services.customers()
                 .create(new CustomerInput("Ramesh Patil", "9876543210", null, null, "1200")).customer().id();
     }
@@ -237,7 +237,7 @@ class BillHistoryTest {
         cart.setRate(1, Money.parse("27"));
         billing.save(new BillRequest(ramesh, null, cart.lines(), List.of()));
         fixture.services.products().update(salt.id(),
-                new ProductInput("Tata Salt", "टाटा मीठ", null, "pcs", "1 kg", "29"));
+                new ProductInput("Tata Salt", "टाटा मीठ", "pcs", "1 kg", "29"));
 
         BillCorrection correction = billing.correct(1, "Wrong quantity");
 

@@ -62,8 +62,6 @@ public class ProductImportController {
     @FXML
     private TableColumn<Row, String> nameMrColumn;
     @FXML
-    private TableColumn<Row, String> categoryColumn;
-    @FXML
     private TableColumn<Row, String> unitColumn;
     @FXML
     private TableColumn<Row, String> packColumn;
@@ -92,7 +90,6 @@ public class ProductImportController {
         column(rowColumn, row -> String.valueOf(row.rowNumber()));
         column(nameColumn, Row::name);
         column(nameMrColumn, Row::nameMr);
-        column(categoryColumn, Row::category);
         column(unitColumn, Row::unit);
         column(packColumn, Row::packSize);
         column(rateColumn, Row::rate);
@@ -158,9 +155,6 @@ public class ProductImportController {
                 .append(count(ready, "product", "products")).append(" will be added, ")
                 .append(skipped).append(" skipped, ")
                 .append(count(errors, "row has a problem.", "rows have problems."));
-        if (!result.newCategories().isEmpty()) {
-            summary.append("  New categories: ").append(String.join(", ", result.newCategories())).append('.');
-        }
         if (errors > 0) {
             summary.append("  Rows with problems will not be imported; fix them in Excel and import again.");
         }
@@ -188,9 +182,7 @@ public class ProductImportController {
                 + (result.skipped() > 0 ? "\n" + count(result.skipped(), "row was", "rows were")
                         + " skipped because the product already exists." : "")
                 + (result.errors() > 0 ? "\n" + count(result.errors(), "row had a problem", "rows had problems")
-                        + " and " + (result.errors() == 1 ? "was" : "were") + " not imported." : "")
-                + (result.newCategories().isEmpty() ? ""
-                        : "\nNew categories: " + String.join(", ", result.newCategories()) + ".");
+                        + " and " + (result.errors() == 1 ? "was" : "were") + " not imported." : "");
         Dialogs.info(stage, "Import finished", message);
         stage.close();
     }

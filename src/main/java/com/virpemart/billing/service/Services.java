@@ -8,7 +8,6 @@ import com.virpemart.billing.print.ReceiptPrinter;
 import com.virpemart.billing.print.SystemReceiptPrinter;
 import com.virpemart.billing.repository.AuditRepository;
 import com.virpemart.billing.repository.BillRepository;
-import com.virpemart.billing.repository.CategoryRepository;
 import com.virpemart.billing.repository.CustomerRepository;
 import com.virpemart.billing.repository.LedgerRepository;
 import com.virpemart.billing.repository.ProductRepository;
@@ -20,7 +19,6 @@ import com.virpemart.billing.repository.SettingsRepository;
  * New services are added here as later phases need them.
  */
 public record Services(
-        CategoryService categories,
         ProductService products,
         ProductImportService productImport,
         CustomerService customers,
@@ -46,15 +44,12 @@ public record Services(
     public static Services create(Database database, Session session, Clock clock, ReceiptPrinter printer,
                                   Path backupsDir) {
         AuditRepository audit = new AuditRepository();
-        CategoryRepository categoryRepository = new CategoryRepository();
         ProductRepository productRepository = new ProductRepository();
         CustomerRepository customerRepository = new CustomerRepository();
         LedgerRepository ledgerRepository = new LedgerRepository();
 
-        CategoryService categories = new CategoryService(database, categoryRepository, audit, session, clock);
-        ProductService products = new ProductService(database, productRepository, categoryRepository, audit, session, clock);
-        ProductImportService productImport = new ProductImportService(database, products, categories,
-                categoryRepository, audit, session, clock);
+        ProductService products = new ProductService(database, productRepository, audit, session, clock);
+        ProductImportService productImport = new ProductImportService(database, products, audit, session, clock);
         CustomerService customers = new CustomerService(database, customerRepository, ledgerRepository, audit,
                 session, clock);
         LedgerService ledger = new LedgerService(database, customerRepository, ledgerRepository, audit, session, clock);
@@ -65,7 +60,7 @@ public record Services(
         ReportService reports = new ReportService(database, new ReportRepository(), session);
         BackupService backups = new BackupService(database, backupsDir, audit, session, clock);
         AuditService auditLog = new AuditService(database, audit, session);
-        return new Services(categories, products, productImport, customers, ledger, billing, settings, printing,
+        return new Services(products, productImport, customers, ledger, billing, settings, printing,
                 reports, backups, auditLog);
     }
 }

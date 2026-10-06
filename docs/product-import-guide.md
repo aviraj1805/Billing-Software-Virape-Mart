@@ -11,7 +11,6 @@ The **first row** must have column names. Use these names (or similar ones, see 
 |---|---|---|---|
 | Name | Yes | Product name in English | Toor Dal |
 | Marathi Name | No | Product name in Marathi | तूर डाळ |
-| Category | No | Group of the product | Dal & Pulses |
 | Unit | Yes | How it is sold: **kg**, **litre** or **pcs** | kg |
 | Pack Size | No | Size of the packet, empty for loose items | 1 kg |
 | Rate | Yes | Your selling rate. For kg or litre items, the rate **per kg** or **per litre** | 120 |
@@ -23,10 +22,9 @@ Tips:
 - **Unit** also understands kgs, kilo, ltr, liter, pc, piece, nos, pkt and packet.
 - **Rate** can be written as 120, 120.50, ₹120 or Rs 120.
 - An **MRP** column is ignored: the app no longer uses MRP.
-- **Category**: use a name from the app's list, such as Rice & Grains or Dal & Pulses.
-  A new name creates a new category automatically.
+- A **Category** column is ignored: the app no longer uses categories.
 - Other column names that also work: "Item Name" or "Product" for Name, "Price" or "Selling Price" for Rate,
-  "Sold By" for Unit, "Packing" or "Weight" for Pack Size, "Type" for Category.
+  "Sold By" for Unit, "Packing" or "Weight" for Pack Size.
   Extra columns such as "Sr No" or "Supplier" are simply ignored.
 
 Not sure? In the app, open **Products**, click **Import from Excel…**, then **Save blank template…**.

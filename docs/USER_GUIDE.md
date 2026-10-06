@@ -148,15 +148,14 @@ Customers are never deleted.
 
 ## 3. Products (Products page)
 
-- **Search** by name, Marathi name, pack size or code (Ctrl+F). Choose a category to see only that group.
-- **+ Add product** (Ctrl+N): name, Marathi name, category, **Sold by** (kg, litre, or piece/packet), pack size,
+- **Search** by name, Marathi name, pack size or code (Ctrl+F).
+- **+ Add product** (Ctrl+N): name, Marathi name, **Sold by** (kg, litre, or piece/packet), pack size,
   and **Rate**.
   - For loose items the rate is **per kg** or **per litre**.
   - Each pack size is its own product: "Sugar" loose, "Sugar 1 kg", "Sugar 5 kg".
 - **Edit** (or Enter): change a product. Old bills are not changed; they keep the rate and name they were billed at.
 - **Switch off**: the product disappears from billing but stays on old bills. **Show switched-off** shows them.
 - **Delete**: only for products that were never billed.
-- **Categories…**: add, rename or switch off categories.
 - **Import from Excel…**: load many products at once. See [product-import-guide.md](product-import-guide.md).
 
 ---
