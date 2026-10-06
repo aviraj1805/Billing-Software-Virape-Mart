@@ -108,8 +108,8 @@ All of these happen in one database transaction. Either everything is saved or n
 2. Take the next bill number: the highest bill number plus one. Bills are never deleted, so numbers never repeat.
 3. Split the money received: payments fill the bill first, in the order entered; anything beyond the bill
    total is a khata payment against old dues (`BillingService.allocate`).
-4. Insert the bill (with `customer_name`, `customer_name_mr` (the name in Marathi letters, made by
-   `print.MarathiTransliterator`), `customer_phone`, `previous_balance_paise`, `balance_after_paise` for reprints),
+4. Insert the bill (with `customer_name` (as saved, printed as it is), `customer_phone`, `previous_balance_paise`,
+   `balance_after_paise` for reprints; `customer_name_mr` is only filled on bills from version 1.1.0 and is not read),
    its lines (snapshots) and the payments that paid the bill.
 5. Khata customers: a SALE_CREDIT entry for the unpaid part, and PAYMENT entries ("Paid with bill N")
    for money paid against old dues.

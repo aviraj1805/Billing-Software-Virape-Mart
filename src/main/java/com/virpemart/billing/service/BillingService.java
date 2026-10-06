@@ -25,7 +25,6 @@ import com.virpemart.billing.model.PaymentPart;
 import com.virpemart.billing.model.Product;
 import com.virpemart.billing.model.SavedBill;
 import com.virpemart.billing.model.User;
-import com.virpemart.billing.print.MarathiTransliterator;
 import com.virpemart.billing.repository.AuditRepository;
 import com.virpemart.billing.repository.BillRepository;
 import com.virpemart.billing.repository.BillRepository.NewBill;
@@ -252,14 +251,11 @@ public final class BillingService {
             } else {
                 customerName = checkWalkInName(request.walkInName());
             }
-            // The bill prints the name in Marathi letters; it is saved so a reprint always matches.
-            String customerNameMr = MarathiTransliterator.toMarathi(customerName);
-
             String now = DbTime.now(clock);
             long billNo = bills.nextBillNo(c);
             Long customerId = customer == null ? null : customer.customer().id();
             long billId = bills.insertBill(c, new NewBill(billNo, now, customerId, customerName,
-                    customerNameMr, customerPhone, totals,
+                    customerPhone, totals,
                     paidForBill, toAccount, previous, after, user.id()));
 
             for (int i = 0; i < lines.size(); i++) {

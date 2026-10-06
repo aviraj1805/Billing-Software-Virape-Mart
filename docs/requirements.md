@@ -106,14 +106,14 @@ The printer model and the exact bill heading were not known yet, so both are **s
     A long item name wraps inside the Item column; Qty, Rate and Amount stay on its first line.
   - Each item prints **only the Marathi name**. No English name, pack size or MRP. An item without a Marathi name
     (for example a one-off item) prints its English name so the line is not blank.
-  - The customer line (changed by the user on 2026-10-03) is the customer's name **in Marathi letters**, with the
-    phone number on the right: `उमेश विरपे        No. 9876501234`. No customer number (C0003) and no "Customer:"
-    label. The Marathi name is made **automatically** from the English name (the user's choice: customers have no
-    Marathi name box). It is a best guess; common names and endings that the rules spell wrong are listed in
-    `src/main/resources/print/marathi-names.txt`, and a name that prints wrong is fixed by adding a line there.
-  - A walk-in customer's typed name is printed the same way: in Marathi letters, no label, no phone.
-  - New bills save the printed Marathi name and the phone with the bill, so a reprint always matches. Bills saved
-    before this change reprint **exactly as saved**: the English name, no phone (and no customer number).
+  - The customer line is the customer's name **exactly as it was saved**, with the phone number on the right:
+    `उमेश विरपे        No. 9876501234`. No customer number (C0003) and no "Customer:" label.
+    (Changed by the user on 2026-10-06, version 1.2.0: the owner types customer names in Marathi, and the automatic
+    English-to-Marathi conversion of version 1.1.0 is removed. A name is never converted or changed.)
+  - A walk-in customer's typed name is printed the same way: as typed, no label, no phone.
+  - The name and phone are saved with the bill, so a reprint always matches. Bills saved by version 1.1.0 also
+    stored a converted Marathi copy (`bills.customer_name_mr`); it stays in the database untouched but is no longer
+    printed: every bill, old or new, prints the name as saved.
   - Only the bill total is printed, labelled **एकूण**. Subtotal, round off and "You saved" are not printed (they are
     still saved with the bill and shown on screen).
   - A khata bill prints **मागील बाकी** (previous dues), **जमा** (all money paid with the bill, in any mix of Cash,

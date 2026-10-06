@@ -38,28 +38,28 @@ class ReceiptBuilderTest {
             new CartLine(3L, "Tata Salt", "टाटा मीठ", Unit.PCS, "1 kg", Quantity.ofWhole(2), Money.parse("28"),
                     Money.parse("28"), Money.parse("30")));
 
-    private static BillDetails walkIn(String name, String nameMr, List<PaymentPart> paid, String cancelReason) {
+    private static BillDetails walkIn(String name, List<PaymentPart> paid, String cancelReason) {
         BillTotals totals = Cart.totalsOf(LINES);
-        return new BillDetails(7, 12, WHEN, null, name, nameMr, null, LINES, totals, paid, List.of(), Money.ZERO,
+        return new BillDetails(7, 12, WHEN, null, name, null, LINES, totals, paid, List.of(), Money.ZERO,
                 null, null, cancelReason);
     }
 
     private static BillDetails walkIn(List<PaymentPart> paid, String cancelReason) {
-        return walkIn(null, null, paid, cancelReason);
+        return walkIn(null, paid, cancelReason);
     }
 
     private static BillDetails khata(Money previous, List<PaymentPart> forBill, List<PaymentPart> againstDues) {
         return khata("सुनीता पाटील", "9876501234", previous, forBill, againstDues);
     }
 
-    /** A khata bill; {@code nameMr} and {@code phone} are null on bills saved before they were kept. */
-    private static BillDetails khata(String nameMr, String phone, Money previous, List<PaymentPart> forBill,
+    /** A khata bill with the customer's name as saved; {@code phone} is null when the customer has none. */
+    private static BillDetails khata(String name, String phone, Money previous, List<PaymentPart> forBill,
                                      List<PaymentPart> againstDues) {
         BillTotals totals = Cart.totalsOf(LINES);
         Money paidForBill = Money.sum(forBill.stream().map(PaymentPart::amount).toList());
         Money paidDues = Money.sum(againstDues.stream().map(PaymentPart::amount).toList());
         Money toAccount = totals.total().minus(paidForBill);
-        return new BillDetails(7, 12, WHEN, "C0003", "Sunita Patil", nameMr, phone, LINES, totals, forBill,
+        return new BillDetails(7, 12, WHEN, "C0003", name, phone, LINES, totals, forBill,
                 againstDues, toAccount, previous, previous.plus(toAccount).minus(paidDues), null);
     }
 
@@ -99,13 +99,13 @@ class ReceiptBuilderTest {
     }
 
     @Test
-    void walkInNameIsPrintedInMarathiWithoutALabel() {
-        String text = ReceiptBuilder.forBill(walkIn("Sunil", "सुनील", List.of(cash("82")), null), SHOP, false)
+    void walkInNameIsPrintedExactlyAsTypedWithoutALabel() {
+        String text = ReceiptBuilder.forBill(walkIn("Sunil", List.of(cash("82")), null), SHOP, false)
                 .toPlainText();
 
-        assertTrue(text.contains("2:05 PM\nसुनील\n----"), text);
+        assertTrue(text.contains("2:05 PM\nSunil\n----"), "English letters are not changed to Marathi:\n" + text);
         assertFalse(text.contains("Customer"), text);
-        assertFalse(text.contains("Sunil"), text);
+        assertFalse(text.contains("सुनील"), text);
     }
 
     @Test
@@ -128,8 +128,8 @@ class ReceiptBuilderTest {
     }
 
     @Test
-    void oldBillWithoutAMarathiNameReprintsTheSavedName() {
-        String text = ReceiptBuilder.forBill(khata(null, null, Money.ZERO, List.of(), List.of()), SHOP, true)
+    void khataCustomerWithoutAPhonePrintsOnlyTheSavedName() {
+        String text = ReceiptBuilder.forBill(khata("Sunita Patil", null, Money.ZERO, List.of(), List.of()), SHOP, true)
                 .toPlainText();
 
         assertTrue(text.contains("2:05 PM\nSunita Patil\n----"), text);

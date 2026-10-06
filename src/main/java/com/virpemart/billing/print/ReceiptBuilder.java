@@ -27,7 +27,7 @@ import com.virpemart.billing.print.ReceiptLine.Text;
 /**
  * Decides what a printed bill says, line by line. It does not draw anything, so it can be tested easily.
  *
- * <p>Layout, top to bottom: shop heading, bill number and date, customer (name in Marathi letters and phone
+ * <p>Layout, top to bottom: shop heading, bill number and date, customer (name exactly as saved, and phone
  * number), the items table (Item, Qty, Rate, Amount), the bill total, then payment. A khata customer's bill shows the previous dues,
  * what was paid now and the balance left, in the user's Marathi wording. Subtotal, round off, MRP and savings are
  * not printed (the user's choice); they are still saved with the bill.
@@ -75,7 +75,7 @@ public final class ReceiptBuilder {
         Money previous = Money.ofRupees(480);
         Money paid = Money.ofRupees(100);
         Money toAccount = totals.total().minus(paid);
-        BillDetails bill = new BillDetails(0, 123, now, "C0001", "Sample Customer", "नमुना ग्राहक", "9876543210",
+        BillDetails bill = new BillDetails(0, 123, now, "C0001", "नमुना ग्राहक", "9876543210",
                 lines, totals,
                 List.of(new PaymentPart(PaymentMode.CASH, paid)), List.of(), toAccount, previous,
                 previous.plus(toAccount), null);
@@ -128,12 +128,11 @@ public final class ReceiptBuilder {
     }
 
     /**
-     * The customer's name in Marathi letters, with the phone number on the right: "उमेश विरपे   No. 9876501234".
-     * No customer number and no "Customer:" label. Bills saved before the Marathi name was kept print the
-     * name as it was saved.
+     * The customer's name exactly as it was saved (no conversion, the user's choice), with the phone number on the
+     * right: "उमेश विरपे   No. 9876501234". No customer number and no "Customer:" label.
      */
     private static void customer(List<ReceiptLine> out, BillDetails bill) {
-        String name = bill.customerNameMr() != null ? bill.customerNameMr() : bill.customerName();
+        String name = bill.customerName();
         if (name == null) {
             return;
         }

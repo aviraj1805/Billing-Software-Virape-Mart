@@ -81,7 +81,7 @@ class BillingServiceTest {
         assertEquals(Money.ZERO, bill.toAccount());
         assertNull(bill.previousBalance());
         assertEquals("Sharma ji", text("SELECT customer_name FROM bills"));
-        assertEquals("शर्मा जी", text("SELECT customer_name_mr FROM bills"), "printed name in Marathi letters");
+        assertNull(text("SELECT customer_name_mr FROM bills"), "the name is no longer converted to Marathi");
         assertNull(text("SELECT customer_phone FROM bills"), "walk-in customers have no phone");
         assertEquals(2, count("SELECT COUNT(*) FROM bill_items"));
         assertEquals(1, count("SELECT COUNT(*) FROM bill_payments WHERE mode = 'CASH' AND amount_paise = 12200"));
@@ -167,7 +167,7 @@ class BillingServiceTest {
     }
 
     @Test
-    void khataBillKeepsTheMarathiNameAndPhoneAsPrinted() {
+    void khataBillKeepsTheNameAndPhoneAsPrinted() {
         long umesh = fixture.services.customers()
                 .create(new CustomerInput("Umesh Virape", "98765 01234", null, null, null)).customer().id();
         billing.save(new BillRequest(umesh, null, sampleLines(), List.of()));
@@ -175,16 +175,46 @@ class BillingServiceTest {
 
         BillDetails bill = billing.bill(1);
 
-        assertEquals("उमेश विरपे", bill.customerNameMr());
         assertEquals("9876501234", bill.customerPhone(), "the phone at the time of the bill, not the new one");
-        assertEquals("Umesh Virape", bill.customerName());
+        assertEquals("Umesh Virape", bill.customerName(), "the name at the time of the bill, as typed");
+    }
+
+    @Test
+    void khataCustomerSavedInMarathiKeepsTheNameExactlyAsSaved() {
+        long umesh = fixture.services.customers()
+                .create(new CustomerInput("उमेश विरपे", null, null, null, null)).customer().id();
+        billing.save(new BillRequest(umesh, null, sampleLines(), List.of()));
+
+        assertEquals("उमेश विरपे", billing.bill(1).customerName());
+        assertEquals("उमेश विरपे", text("SELECT customer_name FROM bills"));
+        assertNull(text("SELECT customer_name_mr FROM bills"), "no converted copy is made");
+    }
+
+    @Test
+    void oldBillWithAConvertedNameReprintsTheNameAsSaved() {
+        // Version 1.1.0 kept a converted Marathi copy of the name in customer_name_mr. It stays in the database
+        // untouched, but the bill now prints the name exactly as it was saved.
+        fixture.database.runInTransaction(c -> {
+            try (Statement s = c.createStatement()) {
+                s.executeUpdate("INSERT INTO bills (bill_no, created_at, customer_name, subtotal_paise,"
+                        + " round_off_paise, total_paise, paid_paise, to_account_paise, created_by, customer_name_mr)"
+                        + " VALUES (1, '2026-10-01T10:00:00', 'Ramesh Patil', 0, 0, 0, 0, 0,"
+                        + " (SELECT MIN(id) FROM users), 'रमेश पतिल')");
+            }
+        });
+
+        String printed = fixture.services.printing().billReceipt(1, true).toPlainText();
+
+        assertTrue(printed.contains("\nRamesh Patil\n"), printed);
+        assertFalse(printed.contains("रमेश पतिल"), printed);
+        assertEquals("रमेश पतिल", text("SELECT customer_name_mr FROM bills"), "the old stored value is untouched");
     }
 
     @Test
     void khataCustomerWithoutAPhoneHasNoPhoneOnTheBill() {
         billing.save(new BillRequest(ramesh, null, sampleLines(), List.of()));
 
-        assertEquals("रमेश पाटील", billing.bill(1).customerNameMr());
+        assertEquals("Ramesh Patil", billing.bill(1).customerName());
         assertNull(billing.bill(1).customerPhone());
     }
 
