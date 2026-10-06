@@ -86,14 +86,14 @@ class ReceiptBuilderTest {
                 Bill No. 12 | 30/09/2026 2:05 PM
                 ----
                 Item | Qty | Rate | Amount
-                1. साखर | 0.250 kg | 44.00 | 11.00
-                2. Toor Dal | 0.333 kg | 45.50 | 15.15
-                3. टाटा मीठ | 2 | 28.00 | 56.00
+                1. साखर | 0.25 kg | 44 | 11
+                2. Toor Dal | 0.333 kg | 45.5 | 15.15
+                3. टाटा मीठ | 2 | 28 | 56
                 ----
-                एकूण | ₹82.00
+                एकूण | ₹82
                 ----
-                Paid by Cash | ₹50.00
-                Paid by UPI | ₹32.00
+                Paid by Cash | ₹50
+                Paid by UPI | ₹32
                 ----
                 Thank you, visit again""", text);
     }
@@ -118,11 +118,11 @@ class ReceiptBuilderTest {
         assertFalse(text.contains("Customer"), text);
         assertTrue(text.endsWith("""
                 ----
-                एकूण | ₹82.00
+                एकूण | ₹82
                 ----
-                मागील बाकी | ₹480.00
-                जमा | ₹50.00
-                एकूण बाकी | ₹512.00
+                मागील बाकी | ₹480
+                जमा | ₹50
+                एकूण बाकी | ₹512
                 ----
                 Thank you, visit again"""), text);
     }
@@ -142,7 +142,7 @@ class ReceiptBuilderTest {
         Receipt receipt = ReceiptBuilder.forBill(walkIn(List.of(cash("82")), null), SHOP, false);
 
         assertTrue(receipt.lines().contains(new ItemRow("Item", "Qty", "Rate", "Amount", Style.SMALL)));
-        assertTrue(receipt.lines().contains(new ItemRow("3. टाटा मीठ", "2", "28.00", "56.00", Style.NORMAL)));
+        assertTrue(receipt.lines().contains(new ItemRow("3. टाटा मीठ", "2", "28", "56", Style.NORMAL)));
     }
 
     @Test
@@ -151,17 +151,17 @@ class ReceiptBuilderTest {
                 khata(Money.parse("480"), List.of(cash("82")), List.of(cash("18"), upi("100"))), SHOP, false)
                 .toPlainText();
 
-        assertTrue(text.contains("मागील बाकी | ₹480.00\nजमा | ₹200.00\nएकूण बाकी | ₹362.00"), text);
+        assertTrue(text.contains("मागील बाकी | ₹480\nजमा | ₹200\nएकूण बाकी | ₹362"), text);
     }
 
     @Test
     void khataWithNothingPaidAndAnAdvance() {
         String nothing = ReceiptBuilder.forBill(khata(Money.ZERO, List.of(), List.of()), SHOP, false).toPlainText();
-        assertTrue(nothing.contains("मागील बाकी | ₹0.00\nजमा | ₹0.00\nएकूण बाकी | ₹82.00"), nothing);
+        assertTrue(nothing.contains("मागील बाकी | ₹0\nजमा | ₹0\nएकूण बाकी | ₹82"), nothing);
 
         String advance = ReceiptBuilder.forBill(khata(Money.parse("-200"), List.of(), List.of()), SHOP, false)
                 .toPlainText();
-        assertTrue(advance.contains("मागील बाकी | -₹200.00\nजमा | ₹0.00\nएकूण बाकी | -₹118.00"), advance);
+        assertTrue(advance.contains("मागील बाकी | -₹200\nजमा | ₹0\nएकूण बाकी | -₹118"), advance);
     }
 
     @Test
@@ -192,7 +192,7 @@ class ReceiptBuilderTest {
         String text = ReceiptBuilder.forBill(walkIn(List.of(cash("82")), null), plain, false).toPlainText();
 
         assertTrue(text.startsWith("Virpe Mart\n----\nBill No. 12"), text);
-        assertTrue(text.endsWith("Paid by Cash | ₹82.00"), text);
+        assertTrue(text.endsWith("Paid by Cash | ₹82"), text);
     }
 
     @Test
@@ -218,13 +218,18 @@ class ReceiptBuilderTest {
     void totalIsPrintedLarge() {
         Receipt receipt = ReceiptBuilder.forBill(walkIn(List.of(cash("82")), null), SHOP, false);
 
-        assertTrue(receipt.lines().contains(new Pair("एकूण", "₹82.00", Style.LARGE)));
+        assertTrue(receipt.lines().contains(new Pair("एकूण", "₹82", Style.LARGE)));
     }
 
     @Test
-    void quantitiesAreShownAsWeighedOrCounted() {
-        assertEquals("0.500 kg", ReceiptBuilder.quantity(Quantity.parse("0.5"), Unit.KG));
-        assertEquals("1.000 litre", ReceiptBuilder.quantity(Quantity.ONE, Unit.L));
+    void quantitiesHaveNoNeedlessZeros() {
+        assertEquals("1 kg", ReceiptBuilder.quantity(Quantity.parse("1.000"), Unit.KG));
+        assertEquals("2 kg", ReceiptBuilder.quantity(Quantity.parse("2"), Unit.KG));
+        assertEquals("1.5 kg", ReceiptBuilder.quantity(Quantity.parse("1.500"), Unit.KG));
+        assertEquals("0.5 kg", ReceiptBuilder.quantity(Quantity.parse("0.5"), Unit.KG));
+        assertEquals("0.25 kg", ReceiptBuilder.quantity(Quantity.parse("0.250"), Unit.KG));
+        assertEquals("0.333 kg", ReceiptBuilder.quantity(Quantity.parse("0.333"), Unit.KG));
+        assertEquals("1 litre", ReceiptBuilder.quantity(Quantity.ONE, Unit.L));
         assertEquals("3", ReceiptBuilder.quantity(Quantity.ofWhole(3), Unit.PCS));
     }
 
@@ -233,9 +238,9 @@ class ReceiptBuilderTest {
         String text = ReceiptBuilder.sample(SHOP, WHEN).toPlainText();
 
         assertTrue(text.contains("TEST PRINT - NOT A REAL BILL"), text);
-        assertTrue(text.contains("तूर डाळ | 0.250 kg | 150.00 | 37.50"), text);
+        assertTrue(text.contains("तूर डाळ | 0.25 kg | 150 | 37.5"), text);
         assertTrue(text.contains("नमुना ग्राहक | No. 9876543210"), text);
         assertFalse(text.contains("Total with dues"), text);
-        assertTrue(text.contains("मागील बाकी | ₹480.00\nजमा | ₹100.00\nएकूण बाकी | ₹496.00"), text);
+        assertTrue(text.contains("मागील बाकी | ₹480\nजमा | ₹100\nएकूण बाकी | ₹496"), text);
     }
 }

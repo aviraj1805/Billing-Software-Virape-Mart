@@ -1,6 +1,5 @@
 package com.virpemart.billing.print;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -173,7 +172,7 @@ public final class ReceiptBuilder {
     /**
      * Previous dues (मागील बाकी), money paid now (जमा) and the balance left (एकूण बाकी).
      * All money paid with the bill, in any mix of modes, is one "जमा" line.
-     * An advance has no separate wording: it prints as a minus amount, for example "मागील बाकी -₹50.00".
+     * An advance has no separate wording: it prints as a minus amount, for example "मागील बाकी -₹50".
      */
     private static void khata(List<ReceiptLine> out, BillDetails bill) {
         out.add(new Pair(PREVIOUS_DUES, rupees(bill.previousBalance()), Style.NORMAL));
@@ -181,15 +180,15 @@ public final class ReceiptBuilder {
         out.add(new Pair(BALANCE_DUES, rupees(bill.balanceAfter()), Style.LARGE));
     }
 
-    /** "0.500 kg" for loose items (three decimals, as they are weighed), "2" for packets. */
+    /** "1 kg", "1.5 kg" or "0.25 kg" for loose items (no needless zeros, the user's choice), "2" for packets. */
     static String quantity(Quantity quantity, Unit unit) {
         if (unit.isLoose()) {
-            return BigDecimal.valueOf(quantity.milli(), 3).toPlainString() + " " + unit.shortLabel();
+            return quantity.toPlainString() + " " + unit.shortLabel();
         }
         return quantity.toPlainString();
     }
 
-    /** "₹1,250.00" or "-₹5.00". */
+    /** "₹1,250", "₹45.5" or "-₹5". */
     static String rupees(Money amount) {
         String grouped = amount.toGroupedString();
         return amount.isNegative() ? "-₹" + grouped.substring(1) : "₹" + grouped;

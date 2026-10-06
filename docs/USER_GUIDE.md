@@ -74,7 +74,7 @@ Press **F12** (or **Save and pay**). A payment window opens.
 Press **Enter** (or **Save bill**) to save. **Esc** goes back to the bill without saving.
 
 After saving, the app asks **"Print?"**: **Enter** prints, **Esc** does not print. The top of the page shows a
-green line such as "Bill 25 saved · Total ₹120.00 · Paid Cash ₹120.00 · Printed".
+green line such as "Bill 25 saved · Total ₹120 · Paid Cash ₹120 · Printed".
 
 If printing fails, the bill is **still saved**. The line turns orange: "saved but NOT printed". Fix the printer
 and print it from **Recent bills (F9)**.

@@ -102,7 +102,7 @@ The printer model and the exact bill heading were not known yet, so both are **s
 - Paper starts as an **80 mm roll**. 58 mm rolls and A4 sheets can be chosen.
 - Corrected by the user after the first Phase 5 test print (the demo bill is the reference; do not add other wording):
   - Items print as a table with four columns: **Item, Qty, Rate, Amount** (changed by the user on 2026-10-03; before,
-    each item took two lines with "quantity x rate" under the name). Example: `1. टाटा मीठ   2   28.00   56.00`.
+    each item took two lines with "quantity x rate" under the name). Example: `1. टाटा मीठ   2   28   56`.
     A long item name wraps inside the Item column; Qty, Rate and Amount stay on its first line.
   - Each item prints **only the Marathi name**. No English name, pack size or MRP. An item without a Marathi name
     (for example a one-off item) prints its English name so the line is not blank.
@@ -120,7 +120,11 @@ The printer model and the exact bill heading were not known yet, so both are **s
     UPI and Card, as one line) and **एकूण बाकी** (balance after the bill). An advance prints as a minus amount under
     the same labels. "This bill" and "Total with dues" are never printed.
   - These Marathi labels are the only wording for these lines; no English is printed next to them.
-- Loose quantities print with three decimals (0.500 kg).
+- **Numbers without needless zeros** (the user's choice, 2026-10-06, version 1.2.0), on the printed bill and on every
+  screen: whole rupees show as `₹50`, `₹155`, `₹1,250`; paise show without a trailing zero: `₹45.5`, `₹12.25`.
+  Quantities: `1 kg`, `2 kg`, `1.5 kg`, `0.25 kg`, `0.333 kg`. Only the text is shorter: amounts and quantities
+  are stored and calculated exactly as before (paise and thousandths), and nothing is rounded for display.
+  The activity log keeps its two-decimal text (`44.00 -> 46.00`), so old and new entries read the same.
 - Printing happens when the owner presses **Print** (the "Print?" question after saving, or the Print button when
   reprinting).
 - Paper fit, centring, margins and spacing are **not tuned for a specific printer yet**. They will be adjusted after the

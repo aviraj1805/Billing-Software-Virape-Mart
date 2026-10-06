@@ -115,13 +115,23 @@ public record Money(long paise) implements Comparable<Money> {
     }
 
     /**
-     * Text with Indian digit grouping and 2 decimals, without a currency sign,
-     * for example "1,25,000.50" or "-5.00". Used on screen and on printed bills.
+     * Text with Indian digit grouping and no needless zeros, without a currency sign (the user's choice),
+     * for example "1,25,000", "45.5", "12.25" or "-5". Used on screen and on printed bills.
+     * Only the text is shorter: the amount itself is not rounded.
      */
     public String toGroupedString() {
         long abs = Math.abs(paise);
-        String text = indianGrouping(abs / 100) + "." + String.format("%02d", abs % 100);
+        String text = indianGrouping(abs / 100) + decimals(abs % 100);
         return paise < 0 ? "-" + text : text;
+    }
+
+    /** The paise part as text without trailing zeros: "" for none, ".5" for 50 paise, ".05" for 5 paise. */
+    private static String decimals(long paise) {
+        if (paise == 0) {
+            return "";
+        }
+        String twoDigits = String.format("%02d", paise);
+        return "." + (twoDigits.endsWith("0") ? twoDigits.substring(0, 1) : twoDigits);
     }
 
     /**
@@ -143,9 +153,17 @@ public record Money(long paise) implements Comparable<Money> {
         return rest + "," + result;
     }
 
-    /** Plain text with exactly 2 decimals, for example "45.50" or "-5.00". */
+    /** Plain text with exactly 2 decimals, for example "45.50" or "-5.00". Used in the activity log. */
     public String toPlainString() {
         return BigDecimal.valueOf(paise, 2).toPlainString();
+    }
+
+    /**
+     * Plain text for a box the user can type over: no grouping and no needless zeros,
+     * for example "50", "45.5" or "1250". {@link #parse} reads it back to the same amount.
+     */
+    public String toInputString() {
+        return BigDecimal.valueOf(paise, 2).stripTrailingZeros().toPlainString();
     }
 
     @Override

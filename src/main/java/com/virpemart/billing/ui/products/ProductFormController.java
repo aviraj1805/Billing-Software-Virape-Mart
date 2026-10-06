@@ -138,8 +138,8 @@ public class ProductFormController {
             nameMrField.setText(product.nameMr());
             unitBox.setValue(product.unit());
             packSizeField.setText(product.packSize());
-            rateField.setText(product.rate().toPlainString());
-            mrpField.setText(product.mrp() == null ? "" : product.mrp().toPlainString());
+            rateField.setText(product.rate().toInputString());
+            mrpField.setText(product.mrp() == null ? "" : product.mrp().toInputString());
         }
         updateRateLabel(unitBox.getValue());
         Platform.runLater(nameField::requestFocus);

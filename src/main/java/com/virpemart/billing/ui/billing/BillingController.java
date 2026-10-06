@@ -408,7 +408,7 @@ public class BillingController {
         CartLine line = cart.lines().get(index);
         String prompt = line.displayName() + "\nRate for this bill only (₹ per " + line.unit().shortLabel() + ")"
                 + (line.productRate() == null ? "" : "\nNormal rate: " + Format.money(line.productRate())) + ":";
-        Dialogs.askText(window(), "Change rate", prompt, line.rate().toPlainString()).ifPresent(text -> {
+        Dialogs.askText(window(), "Change rate", prompt, line.rate().toInputString()).ifPresent(text -> {
             try {
                 cart.setRate(index, Money.parse(text.replace("₹", "").strip()));
                 refreshCart();

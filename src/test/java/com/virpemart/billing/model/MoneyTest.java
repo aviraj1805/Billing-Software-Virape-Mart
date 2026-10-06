@@ -133,10 +133,31 @@ class MoneyTest {
     }
 
     @Test
-    void groupedTextHasTwoDecimalsAndASign() {
-        assertEquals("44.00", Money.ofRupees(44).toGroupedString());
-        assertEquals("1,25,000.50", Money.ofPaise(12500050).toGroupedString());
+    void groupedTextHasNoNeedlessZeros() {
+        assertEquals("50", Money.ofRupees(50).toGroupedString());
+        assertEquals("155", Money.ofRupees(155).toGroupedString());
+        assertEquals("100", Money.ofRupees(100).toGroupedString());
+        assertEquals("1,250", Money.ofRupees(1250).toGroupedString());
+        assertEquals("45.5", Money.ofPaise(4550).toGroupedString());
+        assertEquals("12.25", Money.ofPaise(1225).toGroupedString());
+        assertEquals("0.05", Money.ofPaise(5).toGroupedString());
+        assertEquals("10.1", Money.ofPaise(1010).toGroupedString());
+        assertEquals("1,25,000.5", Money.ofPaise(12500050).toGroupedString());
         assertEquals("-5.05", Money.ofPaise(-505).toGroupedString());
-        assertEquals("0.00", Money.ZERO.toGroupedString());
+        assertEquals("-5", Money.ofPaise(-500).toGroupedString());
+        assertEquals("0", Money.ZERO.toGroupedString());
+    }
+
+    @Test
+    void inputTextHasNoGroupingAndReadsBackToTheSameAmount() {
+        assertEquals("50", Money.ofRupees(50).toInputString());
+        assertEquals("1250", Money.ofRupees(1250).toInputString());
+        assertEquals("45.5", Money.ofPaise(4550).toInputString());
+        assertEquals("0.05", Money.ofPaise(5).toInputString());
+        assertEquals("0", Money.ZERO.toInputString());
+        for (long paise : new long[] {0, 5, 50, 4550, 1225, 5000, 125000, 99999999}) {
+            Money amount = Money.ofPaise(paise);
+            assertEquals(amount, Money.parse(amount.toInputString()), "round trip for " + paise);
+        }
     }
 }

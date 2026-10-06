@@ -25,7 +25,7 @@ public final class Format {
     private Format() {
     }
 
-    /** For example "₹1,25,000.50" or "-₹5.00". Returns "" for null. */
+    /** For example "₹1,25,000", "₹45.5" or "-₹5". Returns "" for null. */
     public static String money(Money amount) {
         if (amount == null) {
             return "";
@@ -34,7 +34,7 @@ public final class Format {
         return amount.isNegative() ? "-₹" + grouped.substring(1) : "₹" + grouped;
     }
 
-    /** A customer balance in words: "Dues ₹1,250.00", "Advance ₹200.00" or "No dues". */
+    /** A customer balance in words: "Dues ₹1,250", "Advance ₹200" or "No dues". */
     public static String balance(Money balance) {
         if (balance.isPositive()) {
             return "Dues " + money(balance);
@@ -45,7 +45,7 @@ public final class Format {
         return "No dues";
     }
 
-    /** A balance for narrow table columns: "₹600.00", "Adv ₹200.00" or "₹0.00". */
+    /** A balance for narrow table columns: "₹600", "Adv ₹200" or "₹0". */
     public static String balanceShort(Money balance) {
         return balance.isNegative() ? "Adv " + money(balance.negate()) : money(balance);
     }

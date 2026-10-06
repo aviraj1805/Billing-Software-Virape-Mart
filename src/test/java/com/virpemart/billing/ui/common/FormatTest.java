@@ -10,19 +10,20 @@ class FormatTest {
 
     @Test
     void moneyUsesIndianGroupingAndRupeeSign() {
-        assertEquals("₹44.00", Format.money(Money.ofRupees(44)));
-        assertEquals("₹1,250.50", Format.money(Money.ofPaise(125050)));
-        assertEquals("₹1,25,000.00", Format.money(Money.ofRupees(125000)));
-        assertEquals("-₹5.00", Format.money(Money.ofPaise(-500)));
+        assertEquals("₹44", Format.money(Money.ofRupees(44)));
+        assertEquals("₹1,250.5", Format.money(Money.ofPaise(125050)));
+        assertEquals("₹1,250.25", Format.money(Money.ofPaise(125025)));
+        assertEquals("₹1,25,000", Format.money(Money.ofRupees(125000)));
+        assertEquals("-₹5", Format.money(Money.ofPaise(-500)));
         assertEquals("", Format.money(null));
     }
 
     @Test
     void balancesAreDescribedInWords() {
-        assertEquals("Dues ₹1,250.00", Format.balance(Money.ofRupees(1250)));
-        assertEquals("Advance ₹200.00", Format.balance(Money.ofRupees(-200)));
+        assertEquals("Dues ₹1,250", Format.balance(Money.ofRupees(1250)));
+        assertEquals("Advance ₹200", Format.balance(Money.ofRupees(-200)));
         assertEquals("No dues", Format.balance(Money.ZERO));
-        assertEquals("Adv ₹200.00", Format.balanceShort(Money.ofRupees(-200)));
+        assertEquals("Adv ₹200", Format.balanceShort(Money.ofRupees(-200)));
     }
 
     @Test

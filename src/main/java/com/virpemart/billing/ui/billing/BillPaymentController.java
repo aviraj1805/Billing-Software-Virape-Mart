@@ -156,7 +156,7 @@ public class BillPaymentController {
             payAllButton.setDisable(!withDues.isPositive() || withDues.equals(totals.total()));
             // Empty on purpose: the owner decides how much is paid now.
         } else {
-            cashField.setText(totals.total().toPlainString());
+            cashField.setText(totals.total().toInputString());
         }
         updateStatus();
         Platform.runLater(() -> {
@@ -203,9 +203,9 @@ public class BillPaymentController {
     }
 
     private void setAmounts(Money cash, Money upi, Money card) {
-        cashField.setText(cash == null ? "" : cash.toPlainString());
-        upiField.setText(upi == null ? "" : upi.toPlainString());
-        cardField.setText(card == null ? "" : card.toPlainString());
+        cashField.setText(cash == null ? "" : cash.toInputString());
+        upiField.setText(upi == null ? "" : upi.toInputString());
+        cardField.setText(card == null ? "" : card.toInputString());
         cashField.requestFocus();
     }
 
