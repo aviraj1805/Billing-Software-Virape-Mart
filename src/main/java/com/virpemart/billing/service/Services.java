@@ -28,7 +28,8 @@ public record Services(
         PrintService printing,
         ReportService reports,
         BackupService backups,
-        AuditService audit) {
+        AuditService audit,
+        ExportService exports) {
 
     /** Wires every service for the running app: real Windows printers and the app's backups folder. */
     public static Services create(Database database, Session session, Clock clock, Path backupsDir) {
@@ -60,7 +61,9 @@ public record Services(
         ReportService reports = new ReportService(database, new ReportRepository(), session);
         BackupService backups = new BackupService(database, backupsDir, audit, session, clock);
         AuditService auditLog = new AuditService(database, audit, session);
+        ExportService exports = new ExportService(database, productRepository, customerRepository, audit, session,
+                clock);
         return new Services(products, productImport, customers, ledger, billing, settings, printing,
-                reports, backups, auditLog);
+                reports, backups, auditLog, exports);
     }
 }

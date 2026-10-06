@@ -24,6 +24,7 @@
         <Label text="Customers" styleClass="page-title"/>
         <Region HBox.hgrow="ALWAYS"/>
         <Label fx:id="duesTotalLabel" styleClass="dues-total"/>
+        <Button fx:id="exportButton" text="Download to Excel…" onAction="#downloadCustomers"/>
         <Button text="+ Add customer" styleClass="primary" onAction="#addCustomer"/>
     </HBox>
 

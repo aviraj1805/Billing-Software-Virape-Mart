@@ -5,10 +5,12 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import com.virpemart.billing.db.DbTime;
 import com.virpemart.billing.model.Customer;
 import com.virpemart.billing.model.CustomerDetails;
 import com.virpemart.billing.model.CustomerSummary;
@@ -21,7 +23,7 @@ import com.virpemart.billing.model.Money;
 public final class CustomerRepository {
 
     private static final String SELECT = "SELECT c.id, c.customer_no, c.name, c.phone, c.address, c.notes, c.active,"
-            + " IFNULL(b.balance, 0) AS balance"
+            + " c.created_at, IFNULL(b.balance, 0) AS balance"
             + " FROM customers c LEFT JOIN"
             + " (SELECT customer_id, SUM(amount_paise) AS balance FROM customer_ledger GROUP BY customer_id) b"
             + " ON b.customer_id = c.id";
@@ -30,6 +32,22 @@ public final class CustomerRepository {
 
     /** Customer totals for the whole shop. */
     public record DuesTotals(int customersWithDues, Money totalDues) {
+    }
+
+    /** A customer with balance and the date they were added, for the customer list download. */
+    public record ExportRow(CustomerSummary summary, LocalDateTime addedOn) {
+    }
+
+    /** Every customer, switched-off ones too, in customer-number order, with the khata balance. */
+    public List<ExportRow> listAllForExport(Connection connection) throws SQLException {
+        List<ExportRow> result = new ArrayList<>();
+        try (PreparedStatement statement = connection.prepareStatement(SELECT + " ORDER BY c.customer_no");
+             ResultSet rs = statement.executeQuery()) {
+            while (rs.next()) {
+                result.add(new ExportRow(read(rs), DbTime.parse(rs.getString("created_at"))));
+            }
+        }
+        return result;
     }
 
     public Optional<CustomerSummary> findById(Connection connection, long id) throws SQLException {

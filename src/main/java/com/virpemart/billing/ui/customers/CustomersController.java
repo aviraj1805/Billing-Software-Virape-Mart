@@ -1,5 +1,6 @@
 package com.virpemart.billing.ui.customers;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.function.Function;
 
@@ -14,6 +15,7 @@ import com.virpemart.billing.repository.CustomerRepository.DuesTotals;
 import com.virpemart.billing.service.CustomerService;
 import com.virpemart.billing.service.LedgerService;
 import com.virpemart.billing.ui.common.Dialogs;
+import com.virpemart.billing.ui.common.ExcelDownload;
 import com.virpemart.billing.ui.common.Format;
 import com.virpemart.billing.ui.history.BillHistoryController;
 
@@ -90,6 +92,8 @@ public class CustomersController {
     @FXML
     private Button correctButton;
     @FXML
+    private Button exportButton;
+    @FXML
     private Button toggleActiveButton;
     @FXML
     private TableView<StatementLine> ledgerTable;
@@ -163,7 +167,7 @@ public class CustomersController {
         table.getSelectionModel().selectedItemProperty().addListener((obs, oldValue, newValue) -> showDetail(newValue));
 
         boolean owner = isOwner();
-        for (Button ownerOnly : List.of(correctButton, toggleActiveButton)) {
+        for (Button ownerOnly : List.of(correctButton, toggleActiveButton, exportButton)) {
             ownerOnly.setVisible(owner);
             ownerOnly.setManaged(owner);
         }
@@ -281,6 +285,14 @@ public class CustomersController {
     }
 
     // ------------------------------------------------------------------ actions
+
+    /** Saves every customer, with the khata balance, as a CSV file that opens in Excel. Owner only. */
+    @FXML
+    private void downloadCustomers() {
+        ExcelDownload.start(window(), "Download the customer list",
+                "VirpeMart-customers-" + LocalDate.now(context.clock()) + ".csv", "customers",
+                file -> context.services().exports().exportCustomers(file));
+    }
 
     @FXML
     private void addCustomer() {

@@ -33,6 +33,18 @@ public final class ProductRepository {
         }
     }
 
+    /** Every product, switched-off ones too, in code order (for the product list download). */
+    public List<Product> listAll(Connection connection) throws SQLException {
+        List<Product> result = new ArrayList<>();
+        try (PreparedStatement statement = connection.prepareStatement(SELECT + " ORDER BY p.code");
+             ResultSet rs = statement.executeQuery()) {
+            while (rs.next()) {
+                result.add(read(rs));
+            }
+        }
+        return result;
+    }
+
     /**
      * Searches products. Every typed word must appear in the name, Marathi name, pack size or code.
      * Results whose code matches exactly come first, then names starting with the text, then the rest.

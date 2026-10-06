@@ -1,5 +1,6 @@
 package com.virpemart.billing.ui.products;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.function.Function;
 
@@ -8,6 +9,7 @@ import com.virpemart.billing.model.Product;
 import com.virpemart.billing.model.User;
 import com.virpemart.billing.service.ProductService;
 import com.virpemart.billing.ui.common.Dialogs;
+import com.virpemart.billing.ui.common.ExcelDownload;
 import com.virpemart.billing.ui.common.Format;
 
 import javafx.application.Platform;
@@ -70,6 +72,8 @@ public class ProductsController {
     @FXML
     private Button importButton;
     @FXML
+    private Button exportButton;
+    @FXML
     private Button editButton;
     @FXML
     private Button toggleActiveButton;
@@ -91,7 +95,7 @@ public class ProductsController {
         table.getSelectionModel().selectedItemProperty().addListener((obs, oldValue, newValue) -> updateButtons());
 
         boolean owner = isOwner();
-        for (Button ownerOnly : List.of(addButton, importButton, editButton, toggleActiveButton, deleteButton)) {
+        for (Button ownerOnly : List.of(addButton, importButton, exportButton, editButton, toggleActiveButton, deleteButton)) {
             ownerOnly.setVisible(owner);
             ownerOnly.setManaged(owner);
         }
@@ -241,6 +245,14 @@ public class ProductsController {
             products.delete(selected.id());
             refresh();
         }
+    }
+
+    /** Saves every product as a CSV file that opens in Excel. Owner only. */
+    @FXML
+    private void downloadProducts() {
+        ExcelDownload.start(window(), "Download the product list",
+                "VirpeMart-products-" + LocalDate.now(context.clock()) + ".csv", "products",
+                file -> context.services().exports().exportProducts(file));
     }
 
     @FXML

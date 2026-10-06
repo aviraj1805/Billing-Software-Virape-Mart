@@ -204,6 +204,8 @@ Test anything that cannot be undone (such as cancelling a bill) on a copy of `de
   so add one there for every new audit action code.
 - `Services.create(database, session, clock, backupsDir)` for the app; tests use the overload with a printer.
 - Settings: `SettingsService` reads and saves shop details and printer setup in the `settings` table (owner only).
+- Downloads: `ExportService` (owner) writes the product and customer lists as CSV for Excel (BOM, `CSVFormat.EXCEL`);
+  product columns match the import. Screens use `ui.common.ExcelDownload`.
 - Money: `model.Money` (paise) and `model.Quantity` (thousandths). `Money.times(Quantity)` and
   `Money.roundToRupee()` hold the only rounding logic; do not round anywhere else.
 

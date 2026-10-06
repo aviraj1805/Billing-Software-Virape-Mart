@@ -45,6 +45,7 @@ It has two main areas:
 | Product codes | Created automatically: P0001, P0002, and so on. Codes never change. |
 | Categories | **Removed** (the user's choice, 2026-10-06, version 1.2.0): no Categories button, filter, column or form box, and the import ignores a Category column. The `categories` table and each product's stored category are **kept untouched** in the database (editing a product keeps its category); they are simply not used. |
 | Excel import | Clear, simple column names: Name, Marathi Name, Unit, Pack Size, Rate. Common alternative names are understood. See [product-import-guide.md](product-import-guide.md). |
+| Download to Excel | (The user's choice, 2026-10-06, version 1.2.0.) **Products** and **Customers** each have a **Download to Excel…** button (owner). It saves a **CSV file that opens in Excel** (UTF-8 with the byte-order mark, so Marathi shows), not an .xlsx file, so no extra library is needed. Products: Code, Name, Marathi Name, Unit (kg/litre/pcs), Pack Size, Rate, Active (Yes/No), all products including switched-off ones, **visible fields only** (no hidden MRP or category); the file can be imported back. Customers: Customer No, Name, Phone, Address, Notes, Balance (minus = advance, from the khata ledger), Active, Added on. Downloads only read data; each is recorded in the activity log. |
 
 These product rules were chosen as sensible defaults and can be changed:
 

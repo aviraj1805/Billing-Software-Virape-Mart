@@ -27,6 +27,9 @@ Tips:
   "Sold By" for Unit, "Packing" or "Weight" for Pack Size.
   Extra columns such as "Sr No" or "Supplier" are simply ignored.
 
+A file saved with **Products → Download to Excel…** uses the same column names, so it can be imported back
+(products that already exist are skipped).
+
 Not sure? In the app, open **Products**, click **Import from Excel…**, then **Save blank template…**.
 It saves a ready sheet with the right column names and three examples.
 

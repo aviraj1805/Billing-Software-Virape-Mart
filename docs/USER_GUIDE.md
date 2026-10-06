@@ -146,6 +146,7 @@ Buttons:
 
 | Button | Use |
 |---|---|
+| **Download to Excel…** | Saves every customer (switched-off ones too) as a file that opens in Excel: number, name, phone, address, notes, **balance** (dues; a minus amount is an advance), active and the date added. Only a copy: changing the file does not change the app. |
 | **+ Add customer** (Ctrl+N) | New customer: name, phone, address, notes, and **Old dues from paper khata** (what they owe today in the paper book). |
 | **Receive payment** (Ctrl+P) | Customer pays money towards their khata (Cash, UPI or Card). The window shows the balance after payment. |
 | **Edit details** | Change name, phone, address or notes. |
@@ -168,6 +169,9 @@ Customers are never deleted.
 - **Switch off**: the product disappears from billing but stays on old bills. **Show switched-off** shows them.
 - **Delete**: only for products that were never billed.
 - **Import from Excel…**: load many products at once. See [product-import-guide.md](product-import-guide.md).
+- **Download to Excel…**: saves the whole product list (switched-off products too) as a file that opens in Excel:
+  Code, Name, Marathi Name, Unit, Pack Size, Rate and Active. Choose where to save it (for example a pendrive), then
+  double-click the file to open it. It is only a copy: changing the file does not change the app.
 
 ---
 
