@@ -46,6 +46,25 @@ public final class Cart {
         return lines.size() - 1;
     }
 
+    /**
+     * Adds a product at the rate typed next to the quantity on the billing screen.
+     * At the product's own rate this is exactly {@link #addProduct(Product, Quantity)}. At another rate the line is
+     * for this bill only: it is marked as a changed rate and kept separate from lines at the normal rate.
+     * The product's saved rate is never changed.
+     *
+     * @return the index of the line that was added or changed
+     */
+    public int addProduct(Product product, Quantity quantity, Money rate) {
+        checkRate(rate);
+        if (rate.equals(product.rate())) {
+            return addProduct(product, quantity);
+        }
+        checkQuantity(product.unit(), quantity);
+        lines.add(new CartLine(product.id(), product.name(), product.nameMr(), product.unit(), product.packSize(),
+                quantity, rate, product.rate(), product.mrp()));
+        return lines.size() - 1;
+    }
+
     /** Adds an item that is not in the product list, for this bill only. */
     public int addOneOff(String name, Unit unit, Quantity quantity, Money rate) {
         if (name == null || name.isBlank()) {

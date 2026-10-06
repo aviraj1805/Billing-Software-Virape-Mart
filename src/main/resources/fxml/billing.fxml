@@ -40,10 +40,12 @@
                            promptText="Type product name, Marathi name or code  (F2)"/>
                 <TextField fx:id="qtyField" styleClass="qty-field" prefWidth="110" promptText="Qty"/>
                 <Label fx:id="qtyUnitLabel" minWidth="40"/>
+                <Label text="₹" minWidth="-Infinity"/>
+                <TextField fx:id="rateField" styleClass="qty-field" prefWidth="110" promptText="Rate"/>
                 <Button text="Add" onAction="#addSelectedProduct" minWidth="-Infinity"/>
             </HBox>
             <Label fx:id="entryLabel" styleClass="muted" wrapText="true" minHeight="-Infinity"
-                   text="Search a product, press Enter, type the quantity, press Enter again."/>
+                   text="Search a product and press Enter. Type the quantity, Enter. Change the rate if needed, Enter to add."/>
 
             <TableView fx:id="cartTable" VBox.vgrow="ALWAYS" styleClass="cart-table">
                 <columns>

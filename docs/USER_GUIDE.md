@@ -26,19 +26,23 @@ The menu on the left has five pages: **Billing**, **Products**, **Customers**, *
 1. Press **F2** (or click the big search box) and type part of the product name — English, Marathi or the
    product code. A list drops down.
 2. Use **↓ ↑** to pick the product and press **Enter**.
-3. Type the **quantity** and press **Enter**. The item is added to the bill.
+3. Type the **quantity** and press **Enter**. The cursor moves to the **Rate** box (₹), which already shows the
+   product's normal rate.
    - Loose items (sold per kg or litre): type the weight in kg with a dot. `0.250` = 250 grams, `0.5` = half kg,
      `1.25` = one and a quarter kg. The rate is per kg.
    - Packets / pieces: whole numbers only, like `1`, `2`, `10`.
-4. Repeat for every item. Adding the same product again adds to its quantity.
+4. Press **Enter** again to add the item at that rate. To charge a different rate on this bill, just type the new
+   rate (it replaces the old one) and press **Enter**. The product's normal rate does **not** change; the line shows
+   the rate with a `*`, and the change is recorded in the Activity log.
+5. Repeat for every item. Adding the same product again at its normal rate adds to its quantity.
 
 ### Change or remove an item
 
 Click the item in the list (or press ↓ from the empty search box), then:
 
 - **Change qty (Enter)** — type a new quantity.
-- **Change rate** — a different rate for this bill only. The product's normal rate does not change. The change
-  is recorded in the Activity log.
+- **Change rate** — change the rate of an item already on the bill, for this bill only. The product's normal rate
+  does not change. The change is recorded in the Activity log.
 - **Remove (Del)** — takes the item off the bill.
 
 ### Item not in the product list

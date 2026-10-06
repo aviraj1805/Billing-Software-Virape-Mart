@@ -297,6 +297,23 @@ class BillingServiceTest {
     }
 
     @Test
+    void rateTypedNextToTheQuantityIsForThisBillOnly() {
+        Cart cart = new Cart();
+        cart.addProduct(sugar, Quantity.parse("2"), Money.parse("42"));  // typed in the Rate box; normal rate 44
+        cart.addProduct(salt, Quantity.ofWhole(1), Money.parse("28"));   // Enter without changing the rate
+
+        billing.save(new BillRequest(null, null, cart.lines(), List.of(cash("112"))));
+
+        assertEquals(4200, count("SELECT rate_paise FROM bill_items WHERE line_no = 1"));
+        assertEquals(4400, count("SELECT original_rate_paise FROM bill_items WHERE line_no = 1"));
+        assertNull(text("SELECT original_rate_paise FROM bill_items WHERE line_no = 2"), "rate not changed");
+        assertEquals(4400, count("SELECT rate_paise FROM products WHERE id = " + sugar.id()),
+                "the product's saved rate is never changed by a bill");
+        assertEquals(Money.parse("44"), fixture.services.products().find(sugar.id()).orElseThrow().rate());
+        assertEquals(1, count("SELECT COUNT(*) FROM audit_log WHERE action = 'RATE_CHANGED'"));
+    }
+
+    @Test
     void oneOffItemIsSavedWithoutAProduct() {
         Cart cart = new Cart();
         cart.addOneOff("Birthday candles", Unit.PCS, Quantity.ofWhole(2), Money.ofRupees(15));

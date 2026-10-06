@@ -45,6 +45,46 @@ class CartTest {
     }
 
     @Test
+    void addingAtTheProductsOwnRateIsANormalLine() {
+        Cart cart = new Cart();
+        cart.addProduct(SALT, Quantity.ofWhole(2), Money.parse("28"));
+        int index = cart.addProduct(SALT, Quantity.ofWhole(1), Money.parse("28.00"));
+
+        assertEquals(0, index, "joins the line at the normal rate, as before");
+        assertEquals(Quantity.ofWhole(3), cart.lines().getFirst().quantity());
+        assertFalse(cart.lines().getFirst().rateChanged());
+    }
+
+    @Test
+    void addingAtAnotherRateIsForThisBillOnly() {
+        Cart cart = new Cart();
+        cart.addProduct(SUGAR_LOOSE, Quantity.parse("1.5"));
+        int index = cart.addProduct(SUGAR_LOOSE, Quantity.parse("1"), Money.parse("42.5"));
+
+        assertEquals(1, index, "a separate line, not merged with the normal-rate line");
+        CartLine line = cart.lines().get(1);
+        assertEquals(Money.parse("42.50"), line.rate());
+        assertEquals(Money.parse("44"), line.productRate(), "the normal rate is remembered");
+        assertTrue(line.rateChanged());
+        assertEquals(Money.parse("42.50"), line.lineTotal());
+        assertEquals(Money.parse("44"), SUGAR_LOOSE.rate(), "the product itself is not changed");
+    }
+
+    @Test
+    void aZeroOrBadQuantityOrRateIsRejectedWhenAdding() {
+        Cart cart = new Cart();
+
+        assertThrows(IllegalArgumentException.class, () -> cart.addProduct(SALT, Quantity.ofWhole(1), Money.ZERO));
+        assertThrows(IllegalArgumentException.class,
+                () -> cart.addProduct(SALT, Quantity.ofWhole(1), Money.parse("-5")));
+        assertThrows(IllegalArgumentException.class,
+                () -> cart.addProduct(SALT, Quantity.parse("1.5"), Money.parse("25")), "packets are whole numbers");
+        assertThrows(IllegalArgumentException.class,
+                () -> cart.addProduct(SUGAR_LOOSE, Quantity.ZERO, Money.parse("40")));
+        assertTrue(cart.isEmpty());
+    }
+
+    @Test
     void totalsRoundToTheNearestRupee() {
         Cart cart = new Cart();
         cart.addProduct(SUGAR_LOOSE, Quantity.parse("0.250")); // 11.00

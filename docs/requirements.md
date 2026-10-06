@@ -22,7 +22,7 @@ It has two main areas:
 | Barcodes and scales | Not used. Products are found by name or a short product code. |
 | Language | English screens. Each product can also have a Marathi name, which is searchable and printed on the bill. |
 | One-off items | If an item is not in the product list, it can be typed directly on a bill with name, rate and quantity. It is saved on that bill only. No product is created. |
-| Rate change on a bill | Owner and helper can change a line's rate for that bill only. The product's saved rate does not change. Every change is recorded with who made it. |
+| Rate change on a bill | Owner and helper can change a line's rate for that bill only. The product's saved rate does not change. Every change is recorded with who made it. Since version 1.2.0 (the user's choice, 2026-10-06) the Billing screen has a **Rate box next to Qty** (Product, Qty, Rate), filled in with the product's current saved rate: Enter in Qty moves to Rate, Enter in Rate adds the item. Typing another rate there is the same as a rate change for this bill only. |
 | Round-off | The final total is rounded to the nearest rupee. |
 | MRP | **Not shown anywhere** (the user's choice, 2026-10-06, version 1.2.0): no MRP column or box in Billing or Products, no "You saved" line, and MRP is not printed. The MRP already stored for a product is **kept untouched** in the database (editing a product keeps it), and bill lines still keep it in their snapshot. New products have no MRP; an MRP column in an imported sheet is ignored. |
 | Discount | No whole-bill discount. |

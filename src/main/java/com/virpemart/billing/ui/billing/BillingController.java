@@ -54,7 +54,8 @@ import javafx.stage.Window;
 /**
  * The Billing screen.
  *
- * <p>Fast keyboard flow: type a product (F2), Enter, type the quantity, Enter. Repeat. F12 to save and pay.
+ * <p>Fast keyboard flow: type a product (F2), Enter, type the quantity, Enter, then the rate (already filled in with
+ * the product's rate; type another rate for this bill only), Enter to add. Repeat. F12 to save and pay.
  * F9 opens the newest bills to see, print, correct or cancel.
  * The cart and all arithmetic live in {@link Cart}; saving happens in {@link BillingService}.
  */
@@ -104,6 +105,8 @@ public class BillingController {
     private TextField qtyField;
     @FXML
     private Label qtyUnitLabel;
+    @FXML
+    private TextField rateField;
     @FXML
     private Label entryLabel;
     @FXML
@@ -189,7 +192,8 @@ public class BillingController {
                 updateQtyUnit();
             }
         });
-        qtyField.setOnAction(event -> addSelectedProduct());
+        qtyField.setOnAction(event -> moveToRate());
+        rateField.setOnAction(event -> addSelectedProduct());
 
         recentBillsList.setCellFactory(list -> new ListCell<>() {
             @Override
@@ -313,20 +317,40 @@ public class BillingController {
         entryLabel.getStyleClass().remove("error-text");
         entryLabel.setText(describeProduct(product));
         qtyField.setText("1");
+        rateField.setText(product.rate().toInputString());
         qtyField.requestFocus();
         qtyField.selectAll();
     }
 
+    /** Shows the unit next to the quantity; with no product chosen, the quantity and rate boxes are empty. */
     private void updateQtyUnit() {
         if (chosenProduct == null) {
             qtyUnitLabel.setText("");
             qtyField.setPromptText("Qty");
+            rateField.clear();
         } else {
             qtyUnitLabel.setText(chosenProduct.unit().shortLabel());
             qtyField.setPromptText(chosenProduct.unit().isLoose() ? "e.g. 0.250" : "e.g. 2");
         }
     }
 
+    /** Enter in the quantity box: checks the quantity, then goes to the rate box (already filled in). */
+    private void moveToRate() {
+        if (chosenProduct == null) {
+            showEntryError("First choose a product from the list (type its name, then press Enter).");
+            productSearch.requestFocus();
+            return;
+        }
+        if (readQuantity() != null) {
+            rateField.requestFocus();
+            rateField.selectAll();
+        }
+    }
+
+    /**
+     * Adds the chosen product with the quantity and rate typed next to it (Enter in the rate box, or "Add").
+     * A rate different from the product's rate is for this bill only; the product's saved rate is not changed.
+     */
     @FXML
     private void addSelectedProduct() {
         if (chosenProduct == null) {
@@ -334,23 +358,46 @@ public class BillingController {
             productSearch.requestFocus();
             return;
         }
+        Quantity quantity = readQuantity();
+        if (quantity == null) {
+            return;
+        }
+        Money rate;
         try {
-            Quantity quantity = Quantity.parse(qtyField.getText());
-            int index = cart.addProduct(chosenProduct, quantity);
+            rate = Money.parse(rateField.getText().replace("₹", "").strip());
+            int index = cart.addProduct(chosenProduct, quantity, rate);
             refreshCart();
             cartTable.getSelectionModel().select(index);
             cartTable.scrollTo(index);
-            chosenProduct = null;
-            productPopup.setTextQuietly("");
-            qtyField.clear();
-            updateQtyUnit();
-            entryLabel.getStyleClass().remove("error-text");
-            entryLabel.setText("Added. Type the next product.");
-            productSearch.requestFocus();
+        } catch (IllegalArgumentException e) {
+            showEntryError(rateField.getText().isBlank() ? "Please type the rate." : e.getMessage());
+            rateField.requestFocus();
+            rateField.selectAll();
+            return;
+        }
+        Money normalRate = chosenProduct.rate();
+        chosenProduct = null;
+        productPopup.setTextQuietly("");
+        qtyField.clear();
+        updateQtyUnit();
+        entryLabel.getStyleClass().remove("error-text");
+        entryLabel.setText(rate.equals(normalRate) ? "Added. Type the next product."
+                : "Added at " + Format.money(rate) + " for this bill only (normal rate " + Format.money(normalRate)
+                        + "). Type the next product.");
+        productSearch.requestFocus();
+    }
+
+    /** The quantity typed for the chosen product, or null after showing what is wrong with it. */
+    private Quantity readQuantity() {
+        try {
+            Quantity quantity = Quantity.parse(qtyField.getText());
+            Cart.checkQuantity(chosenProduct.unit(), quantity);
+            return quantity;
         } catch (IllegalArgumentException e) {
             showEntryError(e.getMessage());
             qtyField.requestFocus();
             qtyField.selectAll();
+            return null;
         }
     }
 
@@ -636,7 +683,7 @@ public class BillingController {
         walkInNameField.clear();
         updateQtyUnit();
         entryLabel.getStyleClass().remove("error-text");
-        entryLabel.setText("Search a product, press Enter, type the quantity, press Enter again.");
+        entryLabel.setText("Search a product and press Enter. Type the quantity, Enter. Change the rate if needed, Enter to add.");
         showWalkIn();
         refreshCart();
         updateHeldButton();
