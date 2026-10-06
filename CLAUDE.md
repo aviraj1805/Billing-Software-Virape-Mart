@@ -133,6 +133,9 @@ Call `Focus-Window` right before sending function keys (F12 etc.); if the window
 The search drop-down is a separate popup window: capture the whole screen to see it.
 `Invoke-Button` waits until a dialog opened by that button closes; to open a dialog, `SetFocus()` the button and
 send a space instead.
+Do not send `%{F4}` to close the app: it arrives as F4 and opens "Item not in list"; close with
+`(Get-Process ...).CloseMainWindow()` instead. The packaged `VirpeMart.exe` starts a second `VirpeMart.exe`: the window
+belongs to that child process, so look up the child (`Win32_Process` with `ParentProcessId`) for `Find-ProcessWindow`.
 If the user has the app open too, both windows have the same title: start your test app with `Start-Process -PassThru`
 and use `Find-ProcessWindow <pid>` so you never click in the user's app.
 Test anything that cannot be undone (such as cancelling a bill) on a copy of `dev-data`: `javafx:run` always uses
