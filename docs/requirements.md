@@ -131,6 +131,14 @@ The printer model and the exact bill heading were not known yet, so both are **s
 - Printing a bill again is marked **"DUPLICATE COPY"** and recorded in the audit log. Anyone can reprint.
 - A printer problem never affects the saved bill: the screen says "saved but NOT printed" and the bill can be
   reprinted from "Recent bills" (F9).
+- **Send on WhatsApp** (the user's choice, 2026-10-06, version 1.2.0): a button in **Recent bills (F9)** only.
+  The shop laptop uses the **WhatsApp Desktop** app. WhatsApp offers no way for another program to attach a photo,
+  so the agreed flow is: the app draws the bill as a picture (exactly like the printed bill, same paper width, no
+  "DUPLICATE COPY" mark), copies it to the Windows clipboard, saves a copy as
+  `%LOCALAPPDATA%\VirpeMart\bill-images\bill-<number>.png`, and opens WhatsApp (link `whatsapp://send`). The owner
+  searches the customer's chat, presses Ctrl+V, then Enter. The app never chooses the chat and never sends by itself.
+  A cancelled bill cannot be sent. Each picture made is recorded in the activity log ("Bill sent on WhatsApp").
+  Printing is not affected.
 
 ## History and reports (built in Phase 6)
 

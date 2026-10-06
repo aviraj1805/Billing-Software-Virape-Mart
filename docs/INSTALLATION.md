@@ -137,6 +137,7 @@ To open it: press **Windows key + R**, paste `%LOCALAPPDATA%\VirpeMart`, press *
 | `data` | `virpemart.db` — all the shop's data. **Never delete or edit this file.** |
 | `backups` | Automatic daily backups (`auto-YYYY-MM-DD.db`) and other backups |
 | `logs` | `virpemart.log` — a diary of what the app did, useful when something goes wrong |
+| `bill-images` | Pictures of bills sent on WhatsApp (`bill-<number>.png`). Only copies; safe to delete |
 
 Because the data is separate, you can update or reinstall the program without losing anything.
 

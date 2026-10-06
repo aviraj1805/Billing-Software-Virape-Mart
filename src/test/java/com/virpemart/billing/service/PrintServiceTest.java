@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.awt.image.BufferedImage;
 import java.nio.file.Path;
 import java.util.List;
 
@@ -21,6 +22,7 @@ import com.virpemart.billing.model.PrinterSetup;
 import com.virpemart.billing.model.Product;
 import com.virpemart.billing.model.Quantity;
 import com.virpemart.billing.print.Receipt;
+import com.virpemart.billing.print.ReceiptRenderer;
 
 class PrintServiceTest {
 
@@ -43,6 +45,33 @@ class PrintServiceTest {
         fixture.services.settings().saveShopDetails("Virpe Mart", null, "Main Road", null, "Thank you");
         fixture.services.settings().savePrinterSetup(
                 new PrinterSetup("Fake Printer", PaperSize.ROLL_58, PrintAfterSave.ALWAYS));
+    }
+
+    @Test
+    void billPictureForWhatsAppLooksLikeTheBillWithoutPrintingAndIsAudited() {
+        fixture.signInStaff();
+
+        BufferedImage picture = printing.billPicture(1);
+
+        ReceiptRenderer renderer = new ReceiptRenderer(PaperSize.ROLL_58);
+        BufferedImage asPrinted = renderer.toImage(printing.billReceipt(1, false), 3);
+        BufferedImage duplicate = renderer.toImage(printing.billReceipt(1, true), 3);
+        assertEquals(asPrinted.getWidth(), picture.getWidth(), "same paper width as the printed bill");
+        assertEquals(asPrinted.getHeight(), picture.getHeight(), "same lines as the first print");
+        assertTrue(duplicate.getHeight() > picture.getHeight(), "no DUPLICATE COPY line: it is the customer's copy");
+        assertTrue(fixture.printer.printed.isEmpty(), "nothing is sent to the printer");
+        assertEquals(1, fixture.count("SELECT COUNT(*) FROM audit_log WHERE action = 'BILL_SHARED'"
+                + " AND details = 'Bill 1 picture copied to send on WhatsApp' AND user_id = " + fixture.staff.id()));
+    }
+
+    @Test
+    void cancelledBillCannotBeSentOnWhatsApp() {
+        fixture.services.billing().cancel(1, "Wrong items");
+
+        BusinessRuleException error = assertThrows(BusinessRuleException.class, () -> printing.billPicture(1));
+
+        assertTrue(error.getMessage().contains("cancelled"), error.getMessage());
+        assertEquals(0, fixture.count("SELECT COUNT(*) FROM audit_log WHERE action = 'BILL_SHARED'"));
     }
 
     @Test

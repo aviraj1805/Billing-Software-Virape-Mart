@@ -37,12 +37,16 @@
         </columnResizePolicy>
     </TableView>
 
+    <Label fx:id="shareLabel" styleClass="banner" wrapText="true" maxWidth="Infinity" minHeight="-Infinity"
+           visible="false" managed="false"/>
+
     <HBox alignment="CENTER_LEFT" spacing="10">
         <Label text="Esc = close" styleClass="muted" minWidth="-Infinity"/>
         <Region HBox.hgrow="ALWAYS"/>
         <Button fx:id="cancelBillButton" text="Cancel bill…" styleClass="danger" onAction="#cancelSelected"
                 minWidth="-Infinity"/>
         <Button fx:id="correctButton" text="Correct bill…" onAction="#correctSelected" minWidth="-Infinity"/>
+        <Button fx:id="whatsAppButton" text="Send on WhatsApp" onAction="#sendOnWhatsApp" minWidth="-Infinity"/>
         <Button fx:id="viewButton" text="See / print (Enter)" styleClass="primary" onAction="#viewSelected"
                 minWidth="-Infinity"/>
         <Button text="Close" cancelButton="true" onAction="#close" minWidth="-Infinity"/>

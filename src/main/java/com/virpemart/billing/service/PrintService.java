@@ -1,5 +1,6 @@
 package com.virpemart.billing.service;
 
+import java.awt.image.BufferedImage;
 import java.awt.print.PrinterException;
 import java.time.Clock;
 import java.time.LocalDateTime;
@@ -17,6 +18,7 @@ import com.virpemart.billing.model.User;
 import com.virpemart.billing.print.Receipt;
 import com.virpemart.billing.print.ReceiptBuilder;
 import com.virpemart.billing.print.ReceiptPrinter;
+import com.virpemart.billing.print.ReceiptRenderer;
 import com.virpemart.billing.repository.AuditRepository;
 
 /**
@@ -28,6 +30,8 @@ import com.virpemart.billing.repository.AuditRepository;
 public final class PrintService {
 
     private static final Logger LOG = LoggerFactory.getLogger(PrintService.class);
+    /** Picture pixels per printed point for a bill sent on WhatsApp: sharp on a phone, small to send. */
+    private static final double PICTURE_SCALE = 3;
 
     private final Database database;
     private final BillingService billing;
@@ -80,6 +84,26 @@ public final class PrintService {
             database.runInTransaction(c -> audit.insert(c, user.id(), "BILL_REPRINTED", "bills", bill.id(),
                     "Bill " + billNo + " printed again", DbTime.now(clock)));
         }
+    }
+
+    /**
+     * The bill as a picture, to send to the customer on WhatsApp. It is drawn exactly like the printed bill (same
+     * paper width and design), without the "DUPLICATE COPY" mark: it is the customer's own copy. Owner and staff.
+     * Making the picture is written to the audit log.
+     *
+     * @throws BusinessRuleException if the bill is cancelled
+     */
+    public BufferedImage billPicture(long billNo) {
+        User user = session.requireSignedIn();
+        BillDetails bill = billing.bill(billNo);
+        if (bill.isCancelled()) {
+            throw new BusinessRuleException("Bill " + billNo + " is cancelled, so it cannot be sent to the customer.");
+        }
+        Receipt receipt = ReceiptBuilder.forBill(bill, settings.shopDetails(), false);
+        BufferedImage picture = new ReceiptRenderer(settings.printerSetup().paper()).toImage(receipt, PICTURE_SCALE);
+        database.runInTransaction(c -> audit.insert(c, user.id(), "BILL_SHARED", "bills", bill.id(),
+                "Bill " + billNo + " picture copied to send on WhatsApp", DbTime.now(clock)));
+        return picture;
     }
 
     /** Prints the sample bill on the given printer, to check it before saving the settings. Owner only. */

@@ -11,9 +11,13 @@ import com.virpemart.billing.model.BillSummary;
 import com.virpemart.billing.model.User;
 import com.virpemart.billing.service.BillingService;
 import com.virpemart.billing.service.BusinessRuleException;
+import com.virpemart.billing.service.PrintService;
+import com.virpemart.billing.ui.common.Background;
 import com.virpemart.billing.ui.common.Dialogs;
+import com.virpemart.billing.ui.common.ErrorHandler;
 import com.virpemart.billing.ui.common.Format;
 import com.virpemart.billing.ui.common.Views;
+import com.virpemart.billing.ui.common.WhatsAppShare;
 import com.virpemart.billing.ui.history.CancelBillController;
 
 import javafx.beans.property.ReadOnlyStringWrapper;
@@ -36,7 +40,8 @@ import javafx.stage.Window;
 /**
  * The "Recent bills" window on the Billing screen (F9): the newest bills, newest first, with the last bill already
  * selected, so F9 then Enter shows the last bill ready to print. From here a bill can be seen and printed, corrected
- * or cancelled (owner). The search box finds older bills by number, name or phone.
+ * or cancelled (owner), or sent to the customer on WhatsApp as a picture. The search box finds older bills by number,
+ * name or phone.
  */
 public class RecentBillsController {
 
@@ -46,6 +51,7 @@ public class RecentBillsController {
 
     private final AppContext context;
     private final BillingService billing;
+    private final PrintService printing;
     private final boolean owner;
 
     @FXML
@@ -54,6 +60,8 @@ public class RecentBillsController {
     private TextField searchField;
     @FXML
     private Label messageLabel;
+    @FXML
+    private Label shareLabel;
     @FXML
     private TableView<BillSummary> table;
     @FXML
@@ -74,6 +82,8 @@ public class RecentBillsController {
     private Button correctButton;
     @FXML
     private Button cancelBillButton;
+    @FXML
+    private Button whatsAppButton;
 
     private Stage stage;
     private BillCorrection correction;
@@ -81,6 +91,7 @@ public class RecentBillsController {
     public RecentBillsController(AppContext context) {
         this.context = context;
         this.billing = context.services().billing();
+        this.printing = context.services().printing();
         this.owner = context.session().currentUser().map(User::isOwner).orElse(false);
     }
 
@@ -173,6 +184,7 @@ public class RecentBillsController {
         viewButton.setDisable(bill == null);
         correctButton.setDisable(bill == null || bill.cancelled());
         cancelBillButton.setDisable(bill == null || bill.cancelled());
+        whatsAppButton.setDisable(bill == null || bill.cancelled());
     }
 
     // ------------------------------------------------------------------ actions
@@ -226,6 +238,48 @@ public class RecentBillsController {
             reload();
         }
         table.requestFocus();
+    }
+
+    /**
+     * Makes a picture of the bill, copies it and opens WhatsApp Desktop. WhatsApp cannot be given a photo directly,
+     * so the user opens the customer's chat and presses Ctrl+V, then Enter. Printing is not involved.
+     */
+    @FXML
+    private void sendOnWhatsApp() {
+        BillSummary bill = table.getSelectionModel().getSelectedItem();
+        if (bill == null || bill.cancelled()) {
+            return;
+        }
+        long billNo = bill.billNo();
+        whatsAppButton.setDisable(true);
+        showShareNote("Making the picture of bill " + billNo + "…", true);
+        Background.run("whatsapp-bill-" + billNo,
+                () -> WhatsAppShare.share(printing.billPicture(billNo), context.paths().billImagesDir(),
+                        "bill-" + billNo + ".png"),
+                shared -> {
+                    showShareNote(shared.whatsAppOpened()
+                            ? "Bill " + billNo + " is copied as a picture. In WhatsApp: open the customer's chat,"
+                                    + " press Ctrl+V, then Enter to send."
+                            : "Bill " + billNo + " is copied as a picture, but WhatsApp could not be opened. Open"
+                                    + " WhatsApp yourself, open the customer's chat, press Ctrl+V, then Enter.",
+                            shared.whatsAppOpened());
+                    updateButtons();
+                },
+                error -> {
+                    shareLabel.setVisible(false);
+                    shareLabel.setManaged(false);
+                    updateButtons();
+                    ErrorHandler.handle(error);
+                });
+    }
+
+    /** The note above the buttons: green when all went well, amber when the user must do something more. */
+    private void showShareNote(String text, boolean success) {
+        shareLabel.setText(text);
+        shareLabel.setVisible(true);
+        shareLabel.setManaged(true);
+        shareLabel.pseudoClassStateChanged(PseudoClass.getPseudoClass("success"), success);
+        shareLabel.pseudoClassStateChanged(PseudoClass.getPseudoClass("warning"), !success);
     }
 
     @FXML

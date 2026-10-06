@@ -91,7 +91,7 @@ SLF4J + Logback, Apache Commons CSV, JUnit Jupiter, `jpackage`. Library versions
 
 ## Data locations
 
-- Store laptop: `%LOCALAPPDATA%\VirpeMart\{data,backups,logs}`.
+- Store laptop: `%LOCALAPPDATA%\VirpeMart\{data,backups,logs,bill-images}` (`bill-images` only holds WhatsApp copies).
 - Development: `mvnw.cmd javafx:run` passes `-Dvirpemart.dataDir=dev-data` (git-ignored). The
   `VIRPEMART_DATA_DIR` environment variable also works, e.g. to test the packaged exe against a temp folder.
   Never point a dev run at real shop data.
@@ -184,7 +184,9 @@ Test anything that cannot be undone (such as cancelling a bill) on a copy of `de
   `service.PrintService` prints, reprints (audited, "DUPLICATE COPY") and test-prints. Printing always runs
   after the bill is saved and off the FX thread. Tests use `FakePrinter`; never print in tests.
 - Recent bills: `ui.billing.RecentBillsController` (F9 on Billing, newest 20 via `searchBills`, see/print, correct,
-  cancel). Correct = `BillingService.correct` (cancel + `BillCorrection` with customer and lines at the charged rates),
+  cancel, Send on WhatsApp). WhatsApp: `PrintService.billPicture` (no DUPLICATE mark, audited `BILL_SHARED`) and
+  `ui.common.WhatsAppShare` (clipboard + PNG in `AppPaths.billImagesDir()` + opens `whatsapp://send`); the user
+  pastes with Ctrl+V. Never send anything by itself. Do not screenshot the user's WhatsApp when testing. Correct = `BillingService.correct` (cancel + `BillCorrection` with customer and lines at the charged rates),
   opened through `CancelBillController.openCorrection`; `BillingController.loadCorrection` puts it on screen and holds
   any open bill. Never edit a saved bill in place.
 - History: `BillingService.searchBills` (a short number is a bill number on any date), `cancel` / `cancelPreview`

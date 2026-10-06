@@ -99,6 +99,11 @@ public final class AppPaths {
         return baseDir.resolve("logs");
     }
 
+    /** Pictures of bills made to send on WhatsApp ({@code bill-<number>.png}). Created when first needed. */
+    public Path billImagesDir() {
+        return baseDir.resolve("bill-images");
+    }
+
     /** The file used to make sure only one copy of the app runs at a time. */
     public Path lockFile() {
         return dataDir().resolve("app.lock");

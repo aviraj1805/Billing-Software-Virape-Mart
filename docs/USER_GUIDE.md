@@ -95,7 +95,7 @@ and print it from **Recent bills (F9)**.
 - **Clear bill** empties the current bill (it asks first).
 - For a khata customer, **double-click** one of their **Recent bills** to see or reprint it.
 
-### Recent bills (F9): see, print or correct an earlier bill
+### Recent bills (F9): see, print, send on WhatsApp or correct an earlier bill
 
 Press **F9** (or click **Recent bills (F9)** at the top). A list of the newest 20 bills opens, newest at the top and
 already chosen.
@@ -104,6 +104,13 @@ already chosen.
   up the last bill. Use the **arrow keys** to choose the 2nd, 3rd or any earlier bill. A reprinted bill says
   **DUPLICATE COPY**.
 - **Older bill**: just type its bill number (or the customer's name or phone); the list shows the matching bills.
+- **Send on WhatsApp**: sends the chosen bill to the customer as a photo.
+  1. Click **Send on WhatsApp**. The app copies the bill as a picture and opens WhatsApp.
+  2. In WhatsApp, search the customer's name and open their chat.
+  3. Press **Ctrl+V**: the bill photo appears. Press **Enter** to send it.
+
+  The photo looks exactly like the printed bill (without "DUPLICATE COPY"). Nothing is printed. A cancelled bill
+  cannot be sent. A copy of the photo is also kept in `%LOCALAPPDATA%\VirpeMart\bill-images`.
 - **Correct bill…**: for a bill with a mistake (wrong item, wrong quantity, wrong customer). The old bill is
   cancelled (it stays in the list marked **CANCELLED**; its number is never used again) and all its items and its
   customer come back on the Billing screen. Change what is wrong and press **Save and pay (F12)**: it is saved as a

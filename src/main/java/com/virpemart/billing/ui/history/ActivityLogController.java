@@ -35,6 +35,7 @@ public class ActivityLogController {
             Map.entry("BILL_CANCELLED", "Bill cancelled"),
             Map.entry("BILL_REPRINTED", "Bill printed again"),
             Map.entry("RATE_CHANGED", "Rate changed on a bill"),
+            Map.entry("BILL_SHARED", "Bill sent on WhatsApp"),
             Map.entry("CATEGORY_CREATED", "Category added"),
             Map.entry("CATEGORY_RENAMED", "Category renamed"),
             Map.entry("CATEGORY_SWITCHED_OFF", "Category switched off"),
