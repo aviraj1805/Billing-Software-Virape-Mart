@@ -117,8 +117,6 @@ public class BillingController {
     @FXML
     private TableColumn<CartLine, String> rateColumn;
     @FXML
-    private TableColumn<CartLine, String> mrpColumn;
-    @FXML
     private TableColumn<CartLine, String> amountColumn;
     @FXML
     private Button qtyButton;
@@ -150,8 +148,6 @@ public class BillingController {
     private Label roundOffLabel;
     @FXML
     private Label totalLabel;
-    @FXML
-    private Label savingsLabel;
     @FXML
     private Label previousDuesTitle;
     @FXML
@@ -235,7 +231,6 @@ public class BillingController {
                 + (line.productId() == null ? "   (not in list)" : ""));
         column(qtyColumn, line -> line.quantity().toPlainString() + " " + line.unit().shortLabel());
         column(rateColumn, line -> Format.money(line.rate()) + (line.rateChanged() ? " *" : ""));
-        column(mrpColumn, line -> Format.money(line.mrp()));
         column(amountColumn, line -> Format.money(line.lineTotal()));
         cartTable.setPlaceholder(new Label("No items yet. Type a product name above (F2)."));
         cartTable.setRowFactory(table -> {
@@ -278,7 +273,6 @@ public class BillingController {
         roundOffLabel.setText(totals.roundOff().isNegative() ? "-" + Format.money(totals.roundOff().negate())
                 : "+" + Format.money(totals.roundOff()));
         totalLabel.setText(Format.money(totals.total()));
-        savingsLabel.setText(totals.savings().isPositive() ? "You saved " + Format.money(totals.savings()) + " on MRP" : "");
 
         boolean khata = customer != null;
         for (Label label : List.of(previousDuesTitle, previousDuesLabel, withDuesTitle, withDuesLabel)) {
@@ -305,8 +299,7 @@ public class BillingController {
 
     private static String describeProduct(Product p) {
         return p.displayName() + (p.nameMr() == null ? "" : "   " + p.nameMr()) + "   ·   "
-                + Format.money(p.rate()) + " / " + p.unit().shortLabel()
-                + (p.mrp() == null ? "" : "   (MRP " + Format.money(p.mrp()) + ")") + "   ·   " + p.code();
+                + Format.money(p.rate()) + " / " + p.unit().shortLabel() + "   ·   " + p.code();
     }
 
     private static String describeProductShort(Product p) {

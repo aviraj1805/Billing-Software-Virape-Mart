@@ -210,11 +210,6 @@
     -fx-text-fill: #a12a2a;
 }
 
-.savings {
-    -fx-text-fill: #1f6a3a;
-    -fx-font-weight: bold;
-}
-
 .balance-small {
     -fx-font-weight: bold;
 }

@@ -24,7 +24,7 @@ It has two main areas:
 | One-off items | If an item is not in the product list, it can be typed directly on a bill with name, rate and quantity. It is saved on that bill only. No product is created. |
 | Rate change on a bill | Owner and helper can change a line's rate for that bill only. The product's saved rate does not change. Every change is recorded with who made it. |
 | Round-off | The final total is rounded to the nearest rupee. |
-| Savings | The billing screen shows "You saved Rs X" compared to MRP. It is **not printed** on the bill (changed after Phase 5). |
+| MRP | **Not shown anywhere** (the user's choice, 2026-10-06, version 1.2.0): no MRP column or box in Billing or Products, no "You saved" line, and MRP is not printed. The MRP already stored for a product is **kept untouched** in the database (editing a product keeps it), and bill lines still keep it in their snapshot. New products have no MRP; an MRP column in an imported sheet is ignored. |
 | Discount | No whole-bill discount. |
 | Payment modes | Cash, UPI and Card. One bill can be split across several modes. |
 | Credit | An account customer can pay any amount at billing, including zero. The rest is added to their account. There is no credit limit. |
@@ -44,12 +44,11 @@ It has two main areas:
 |---|---|
 | Product codes | Created automatically: P0001, P0002, and so on. Codes never change. |
 | Categories | The app starts with a list covering typical grocery items (Rice & Grains, Dal & Pulses, Sugar, Salt & Jaggery, Edible Oil & Ghee, Spices & Masala, and so on). The owner can add, rename and switch off categories. |
-| Excel import | Clear, simple column names: Name, Marathi Name, Category, Unit, Pack Size, Rate, MRP. Common alternative names are understood. See [product-import-guide.md](product-import-guide.md). |
+| Excel import | Clear, simple column names: Name, Marathi Name, Category, Unit, Pack Size, Rate. Common alternative names are understood. See [product-import-guide.md](product-import-guide.md). |
 
 These product rules were chosen as sensible defaults and can be changed:
 
 - Two products cannot have the same name, pack size and unit. The app points to the existing product instead.
-- A rate above MRP shows a warning, because selling above MRP is not allowed. The owner can still save.
 - A product that has never been billed can be deleted. A product on any bill can only be switched off:
   it disappears from billing, but old bills stay correct.
 - An import only adds new products. It never changes existing products; to change a rate, edit the product.
@@ -70,7 +69,7 @@ These customer rules were chosen as sensible defaults and can be changed:
 - Owner and helper can add and edit customers and receive payments. Only the owner can correct balances and switch customers off or on.
 - Customers are never deleted, only switched off, so their khata is always kept. Switching off a customer who still owes money shows a warning.
 - A payment larger than the dues is allowed; the extra is kept as advance and shown in green.
-- Typing 0 in an optional amount (old dues, MRP) means "none".
+- Typing 0 in an optional amount (old dues) means "none".
 
 ## Billing (confirmed in Phase 4)
 
@@ -114,7 +113,7 @@ The printer model and the exact bill heading were not known yet, so both are **s
   - The name and phone are saved with the bill, so a reprint always matches. Bills saved by version 1.1.0 also
     stored a converted Marathi copy (`bills.customer_name_mr`); it stays in the database untouched but is no longer
     printed: every bill, old or new, prints the name as saved.
-  - Only the bill total is printed, labelled **एकूण**. Subtotal, round off and "You saved" are not printed (they are
+  - Only the bill total is printed, labelled **एकूण**. Subtotal and round off are not printed (they are
     still saved with the bill and shown on screen).
   - A khata bill prints **मागील बाकी** (previous dues), **जमा** (all money paid with the bill, in any mix of Cash,
     UPI and Card, as one line) and **एकूण बाकी** (balance after the bill). An advance prints as a minus amount under

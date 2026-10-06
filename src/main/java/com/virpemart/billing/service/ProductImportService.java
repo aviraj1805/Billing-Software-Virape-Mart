@@ -52,7 +52,7 @@ public final class ProductImportService {
 
     /** Column names in the blank template, in order. */
     public static final List<String> TEMPLATE_HEADERS =
-            List.of("Name", "Marathi Name", "Category", "Unit", "Pack Size", "Rate", "MRP");
+            List.of("Name", "Marathi Name", "Category", "Unit", "Pack Size", "Rate");
 
     private static final long MAX_FILE_BYTES = 5L * 1024 * 1024;
     private static final int MAX_ROWS = 20_000;
@@ -60,7 +60,7 @@ public final class ProductImportService {
     /** The kinds of column the import understands. */
     enum Column {
         NAME("Name"), NAME_MR("Marathi Name"), CATEGORY("Category"), UNIT("Unit"),
-        PACK_SIZE("Pack Size"), RATE("Rate"), MRP("MRP");
+        PACK_SIZE("Pack Size"), RATE("Rate");
 
         private final String label;
 
@@ -89,7 +89,7 @@ public final class ProductImportService {
      * @param message   explanation for SKIPPED and ERROR rows, or a note for READY rows
      */
     public record Row(int rowNumber, String name, String nameMr, String category, String unit, String packSize,
-                      String rate, String mrp, RowStatus status, String message) {
+                      String rate, RowStatus status, String message) {
     }
 
     /** The result of checking a file. */
@@ -191,9 +191,9 @@ public final class ProductImportService {
     public static String templateText() {
         List<List<String>> lines = List.of(
                 TEMPLATE_HEADERS,
-                List.of("Sugar", "साखर", "Sugar, Salt & Jaggery", "kg", "", "44", ""),
-                List.of("Tata Salt", "टाटा मीठ", "Sugar, Salt & Jaggery", "pcs", "1 kg", "28", "30"),
-                List.of("Groundnut Oil", "शेंगदाणा तेल", "Edible Oil & Ghee", "litre", "", "180", ""));
+                List.of("Sugar", "साखर", "Sugar, Salt & Jaggery", "kg", "", "44"),
+                List.of("Tata Salt", "टाटा मीठ", "Sugar, Salt & Jaggery", "pcs", "1 kg", "28"),
+                List.of("Groundnut Oil", "शेंगदाणा तेल", "Edible Oil & Ghee", "litre", "", "180"));
         StringBuilder text = new StringBuilder("﻿"); // byte-order mark: tells Excel the file is UTF-8
         for (List<String> line : lines) {
             text.append(String.join(",", line.stream().map(ProductImportService::csvValue).toList())).append("\r\n");
@@ -216,7 +216,7 @@ public final class ProductImportService {
             Category category = categoryName == null ? null : existingCategories.get(categoryName.toLowerCase(Locale.ROOT));
             ProductInput input = new ProductInput(raw.get(Column.NAME), raw.get(Column.NAME_MR),
                     category == null ? null : category.id(), raw.get(Column.UNIT), raw.get(Column.PACK_SIZE),
-                    raw.get(Column.RATE), raw.get(Column.MRP));
+                    raw.get(Column.RATE));
 
             ProductDetails details;
             try {
@@ -253,7 +253,7 @@ public final class ProductImportService {
 
     private static Row row(RawRow raw, RowStatus status, String message) {
         return new Row(raw.rowNumber(), raw.get(Column.NAME), raw.get(Column.NAME_MR), raw.get(Column.CATEGORY),
-                raw.get(Column.UNIT), raw.get(Column.PACK_SIZE), raw.get(Column.RATE), raw.get(Column.MRP),
+                raw.get(Column.UNIT), raw.get(Column.PACK_SIZE), raw.get(Column.RATE),
                 status, message);
     }
 
@@ -380,7 +380,7 @@ public final class ProductImportService {
         return columns;
     }
 
-    /** Lower case, keeping only letters and digits, so "M.R.P." and "Rate (Rs)" match "mrp" and "raters". */
+    /** Lower case, keeping only letters and digits, so "Rate (Rs)" matches "raters". */
     static String headerKey(String header) {
         StringBuilder key = new StringBuilder();
         header.strip().toLowerCase(Locale.ROOT).codePoints()
@@ -400,7 +400,6 @@ public final class ProductImportService {
         addNames(names, Column.PACK_SIZE, "pack size", "pack", "size", "packing", "weight", "वजन");
         addNames(names, Column.RATE, "rate", "rate (rs)", "rate (₹)", "price", "selling price", "sale price",
                 "selling rate", "our price", "दर", "किंमत");
-        addNames(names, Column.MRP, "mrp", "m.r.p.", "mrp (rs)", "mrp (₹)", "max retail price", "एमआरपी");
         return Map.copyOf(names);
     }
 

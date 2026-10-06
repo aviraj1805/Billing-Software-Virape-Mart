@@ -56,8 +56,8 @@ bill only; it is **not** added to the product list.
   **Enter**. Their dues and last bills appear. **Walk-in instead** goes back to a walk-in bill.
 - **New khata customer**: click **+ New khata customer**.
 
-The right side always shows the **Bill total** (rounded to the rupee), the saving against MRP, and for a khata
-customer the **previous dues** and **total with dues**.
+The right side always shows the **Bill total** (rounded to the rupee), and for a khata customer the
+**previous dues** and **total with dues**.
 
 ### Save and take payment — F12
 
@@ -150,10 +150,9 @@ Customers are never deleted.
 
 - **Search** by name, Marathi name, pack size or code (Ctrl+F). Choose a category to see only that group.
 - **+ Add product** (Ctrl+N): name, Marathi name, category, **Sold by** (kg, litre, or piece/packet), pack size,
-  **Rate** and **MRP**.
+  and **Rate**.
   - For loose items the rate is **per kg** or **per litre**.
   - Each pack size is its own product: "Sugar" loose, "Sugar 1 kg", "Sugar 5 kg".
-  - A warning appears if the rate is above MRP.
 - **Edit** (or Enter): change a product. Old bills are not changed; they keep the rate and name they were billed at.
 - **Switch off**: the product disappears from billing but stays on old bills. **Show switched-off** shows them.
 - **Delete**: only for products that were never billed.

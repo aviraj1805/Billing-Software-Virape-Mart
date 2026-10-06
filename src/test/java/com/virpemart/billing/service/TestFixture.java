@@ -67,6 +67,18 @@ final class TestFixture {
         });
     }
 
+    /**
+     * Gives a product a stored MRP directly in the database, like products saved before version 1.2.0
+     * (MRP is no longer typed in the app).
+     */
+    void setStoredMrp(long productId, long mrpPaise) {
+        database.runInTransaction(c -> {
+            try (Statement s = c.createStatement()) {
+                s.executeUpdate("UPDATE products SET mrp_paise = " + mrpPaise + " WHERE id = " + productId);
+            }
+        });
+    }
+
     /** Puts a product on a saved bill directly in the database, so "is it billed?" rules can be tested. */
     void putOnABill(long productId) {
         database.runInTransaction(c -> {

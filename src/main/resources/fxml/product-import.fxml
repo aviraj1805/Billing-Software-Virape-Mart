@@ -18,7 +18,7 @@
       prefHeight="640">
 
     <Label styleClass="help-box" wrapText="true" maxWidth="Infinity" minHeight="-Infinity"
-           text="1.  Open your product list in Excel. The first row must have column names.&#10;2.  Needed columns: Name, Unit (kg, litre or pcs) and Rate. Optional: Marathi Name, Category, Pack Size, MRP.&#10;3.  In Excel choose File, then Save As, and pick &quot;CSV UTF-8 (Comma delimited)&quot;.&#10;4.  Click &quot;Choose file&quot; below and check the preview. Nothing is saved until you click Import.&#10;Products that are already in the list are skipped. An import never changes existing products."/>
+           text="1.  Open your product list in Excel. The first row must have column names.&#10;2.  Needed columns: Name, Unit (kg, litre or pcs) and Rate. Optional: Marathi Name, Category, Pack Size.&#10;3.  In Excel choose File, then Save As, and pick &quot;CSV UTF-8 (Comma delimited)&quot;.&#10;4.  Click &quot;Choose file&quot; below and check the preview. Nothing is saved until you click Import.&#10;Products that are already in the list are skipped. An import never changes existing products."/>
 
     <HBox spacing="10" alignment="CENTER_LEFT">
         <Button fx:id="chooseButton" text="Choose file…" styleClass="primary" onAction="#chooseFile"/>
@@ -35,7 +35,6 @@
             <TableColumn fx:id="unitColumn" text="Unit" prefWidth="60"/>
             <TableColumn fx:id="packColumn" text="Pack size" prefWidth="75"/>
             <TableColumn fx:id="rateColumn" text="Rate" prefWidth="70"/>
-            <TableColumn fx:id="mrpColumn" text="MRP" prefWidth="60"/>
             <TableColumn fx:id="statusColumn" text="What will happen" prefWidth="250"/>
         </columns>
         <columnResizePolicy>

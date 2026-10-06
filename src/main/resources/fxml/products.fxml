@@ -43,7 +43,6 @@
             <TableColumn fx:id="unitColumn" text="Sold by" prefWidth="120"/>
             <TableColumn fx:id="packColumn" text="Pack size" prefWidth="80"/>
             <TableColumn fx:id="rateColumn" text="Rate" prefWidth="125" styleClass="number-column"/>
-            <TableColumn fx:id="mrpColumn" text="MRP" prefWidth="85" styleClass="number-column"/>
             <TableColumn fx:id="statusColumn" text="Status" prefWidth="105"/>
         </columns>
         <columnResizePolicy>

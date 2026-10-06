@@ -73,8 +73,6 @@ public class ProductsController {
     @FXML
     private TableColumn<Product, String> rateColumn;
     @FXML
-    private TableColumn<Product, String> mrpColumn;
-    @FXML
     private TableColumn<Product, String> statusColumn;
     @FXML
     private Label countLabel;
@@ -133,7 +131,6 @@ public class ProductsController {
         column(unitColumn, p -> p.unit().description());
         column(packColumn, p -> p.packSize() == null ? "" : p.packSize());
         column(rateColumn, p -> Format.money(p.rate()) + " / " + p.unit().shortLabel());
-        column(mrpColumn, p -> Format.money(p.mrp()));
         column(statusColumn, p -> p.active() ? "Active" : "Switched off");
     }
 

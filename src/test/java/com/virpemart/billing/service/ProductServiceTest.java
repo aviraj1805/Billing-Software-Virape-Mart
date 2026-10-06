@@ -38,16 +38,16 @@ class ProductServiceTest {
                 .filter(c -> c.name().equals("Dal & Pulses")).map(Category::id).findFirst().orElseThrow();
     }
 
-    private static ProductInput input(String name, String unit, String packSize, String rate, String mrp) {
-        return new ProductInput(name, null, null, unit, packSize, rate, mrp);
+    private static ProductInput input(String name, String unit, String packSize, String rate) {
+        return new ProductInput(name, null, null, unit, packSize, rate);
     }
 
     // ------------------------------------------------------------------ adding
 
     @Test
     void createsProductsWithAutomaticCodes() {
-        Product sugar = products.create(new ProductInput("Sugar", "साखर", null, "kg", "", "44", ""));
-        Product salt = products.create(input("Tata Salt", "pcs", "1 kg", "28", "30"));
+        Product sugar = products.create(new ProductInput("Sugar", "साखर", null, "kg", "", "44"));
+        Product salt = products.create(input("Tata Salt", "pcs", "1 kg", "28"));
 
         assertEquals("P0001", sugar.code());
         assertEquals("P0002", salt.code());
@@ -56,65 +56,69 @@ class ProductServiceTest {
         assertEquals(Money.ofRupees(44), sugar.rate());
         assertNull(sugar.mrp());
         assertNull(sugar.packSize(), "blank pack size is stored as nothing");
-        assertEquals(Money.ofRupees(30), salt.mrp());
+        assertNull(salt.mrp(), "MRP is no longer typed, so new products have none");
         assertEquals("Tata Salt 1 kg", salt.displayName());
         assertEquals(2, fixture.count("SELECT COUNT(*) FROM audit_log WHERE action = 'PRODUCT_CREATED'"));
     }
 
     @Test
     void cleansUpTypedText() {
-        Product p = products.create(new ProductInput("  Toor   Dal ", " तूर डाळ ", dalCategory, " KGS ", " ", "Rs. 1,20.50", "₹ 130"));
+        Product p = products.create(new ProductInput("  Toor   Dal ", " तूर डाळ ", dalCategory, " KGS ", " ", "Rs. 1,20.50"));
 
         assertEquals("Toor Dal", p.name());
         assertEquals("तूर डाळ", p.nameMr());
         assertEquals(Unit.KG, p.unit());
         assertEquals(Money.ofPaise(12050), p.rate());
-        assertEquals(Money.ofRupees(130), p.mrp());
         assertEquals("Dal & Pulses", p.categoryName());
     }
 
-    @ParameterizedTest(name = "{5}")
+    @ParameterizedTest(name = "{4}")
     @CsvSource({
-            "'', kg, 44, '', name, blank name",
-            "Sugar, '', 44, '', unit, no unit",
-            "Sugar, dozen, 44, '', unit, unknown unit",
-            "Sugar, kg, '', '', rate, no rate",
-            "Sugar, kg, abc, '', rate, rate not a number",
-            "Sugar, kg, 0, '', rate, zero rate",
-            "Sugar, kg, -5, '', rate, negative rate",
-            "Sugar, kg, 44.555, '', rate, three decimals",
-            "Sugar, kg, 44, -1, mrp, negative MRP",
-            "Sugar, kg, 44, x, mrp, MRP not a number"
+            "'', kg, 44, name, blank name",
+            "Sugar, '', 44, unit, no unit",
+            "Sugar, dozen, 44, unit, unknown unit",
+            "Sugar, kg, '', rate, no rate",
+            "Sugar, kg, abc, rate, rate not a number",
+            "Sugar, kg, 0, rate, zero rate",
+            "Sugar, kg, -5, rate, negative rate",
+            "Sugar, kg, 44.555, rate, three decimals"
     })
-    void rejectsBadInputNamingTheField(String name, String unit, String rate, String mrp, String field, String why) {
+    void rejectsBadInputNamingTheField(String name, String unit, String rate, String field, String why) {
         ValidationException error = assertThrows(ValidationException.class,
-                () -> products.create(input(name, unit, null, rate, mrp)));
+                () -> products.create(input(name, unit, null, rate)));
 
         assertEquals(field, error.field(), why);
         assertEquals(0, fixture.count("SELECT COUNT(*) FROM products"), "nothing saved");
     }
 
     @Test
-    void zeroMrpMeansNoMrp() {
-        assertNull(products.create(input("Sugar", "kg", null, "44", "0")).mrp());
+    void editingAProductKeepsItsStoredMrpExactly() {
+        Product salt = products.create(input("Tata Salt", "pcs", "1 kg", "28"));
+        fixture.setStoredMrp(salt.id(), 3050);
+
+        Product updated = products.update(salt.id(), input("Tata Salt", "pcs", "1 kg", "29"));
+
+        assertEquals(Money.ofRupees(29), updated.rate());
+        assertEquals(Money.ofPaise(3050), updated.mrp(), "the MRP is not shown in the form, so it must be kept");
+        assertEquals(3050, fixture.count("SELECT mrp_paise FROM products WHERE id = " + salt.id()));
     }
 
     @Test
-    void checkWarnsAboutRateAboveMrpWithoutSaving() {
-        ProductDetails details = products.check(input("Biscuit", "pcs", "100 g", "12", "10"));
+    void checkLeavesTheMrpEmptyWithoutSaving() {
+        ProductDetails details = products.check(input("Biscuit", "pcs", "100 g", "12"));
 
-        assertTrue(details.rateAboveMrp());
+        assertNull(details.mrp());
         assertEquals(0, fixture.count("SELECT COUNT(*) FROM products"));
     }
 
     @Test
     void sameNamePackAndUnitIsADuplicate() {
-        products.create(input("Sugar", "kg", null, "44", null));
-        products.create(input("Sugar", "pcs", "1 kg", "46", "48"));
-        products.create(input("Sugar", "pcs", "5 kg", "220", null));
+        products.create(input("Sugar", "kg", null, "44"));
+        products.create(input("Sugar", "pcs", "1 kg", "46"));
+        products.create(input("Sugar", "pcs", "5 kg", "220"));
 
         ValidationException error = assertThrows(ValidationException.class,
-                () -> products.create(input("SUGAR", "pcs", "1kg", "45", null)));
+                () -> products.create(input("SUGAR", "pcs", "1kg", "45")));
 
         assertEquals("name", error.field());
         assertTrue(error.getMessage().contains("P0002"), error.getMessage());
@@ -122,11 +126,11 @@ class ProductServiceTest {
 
     @Test
     void switchedOffDuplicateSuggestsSwitchingItOn() {
-        Product sugar = products.create(input("Sugar", "kg", null, "44", null));
+        Product sugar = products.create(input("Sugar", "kg", null, "44"));
         products.setActive(sugar.id(), false);
 
         ValidationException error = assertThrows(ValidationException.class,
-                () -> products.create(input("Sugar", "kg", null, "44", null)));
+                () -> products.create(input("Sugar", "kg", null, "44")));
 
         assertTrue(error.getMessage().contains("Switch it back on"), error.getMessage());
     }
@@ -134,7 +138,7 @@ class ProductServiceTest {
     @Test
     void unknownCategoryIsRejected() {
         ValidationException error = assertThrows(ValidationException.class,
-                () -> products.create(new ProductInput("Sugar", null, 9999L, "kg", null, "44", null)));
+                () -> products.create(new ProductInput("Sugar", null, 9999L, "kg", null, "44")));
 
         assertEquals("category", error.field());
     }
@@ -143,9 +147,9 @@ class ProductServiceTest {
 
     @Test
     void updateChangesProductAndRecordsWhatChanged() {
-        Product sugar = products.create(input("Sugar", "kg", null, "44", null));
+        Product sugar = products.create(input("Sugar", "kg", null, "44"));
 
-        Product updated = products.update(sugar.id(), input("Sugar", "kg", null, "46", "50"));
+        Product updated = products.update(sugar.id(), input("Sugar", "kg", null, "46"));
 
         assertEquals(Money.ofRupees(46), updated.rate());
         assertEquals("P0001", updated.code(), "code never changes");
@@ -156,31 +160,31 @@ class ProductServiceTest {
                 return rs.getString(1);
             }
         });
-        assertEquals("P0001: rate 44.00 -> 46.00; MRP (none) -> 50.00", details);
+        assertEquals("P0001: rate 44.00 -> 46.00", details);
     }
 
     @Test
     void updateWithNoChangesWritesNothing() {
-        Product sugar = products.create(input("Sugar", "kg", null, "44", null));
+        Product sugar = products.create(input("Sugar", "kg", null, "44"));
 
-        products.update(sugar.id(), input(" Sugar ", "KG", "", "44.00", ""));
+        products.update(sugar.id(), input(" Sugar ", "KG", "", "44.00"));
 
         assertEquals(0, fixture.count("SELECT COUNT(*) FROM audit_log WHERE action = 'PRODUCT_UPDATED'"));
     }
 
     @Test
     void updateCannotCreateADuplicate() {
-        products.create(input("Sugar", "kg", null, "44", null));
-        Product jaggery = products.create(input("Jaggery", "kg", null, "60", null));
+        products.create(input("Sugar", "kg", null, "44"));
+        Product jaggery = products.create(input("Jaggery", "kg", null, "60"));
 
-        assertThrows(ValidationException.class, () -> products.update(jaggery.id(), input("sugar", "kg", null, "60", null)));
+        assertThrows(ValidationException.class, () -> products.update(jaggery.id(), input("sugar", "kg", null, "60")));
     }
 
     // ------------------------------------------------------------------ switching off and deleting
 
     @Test
     void switchedOffProductsAreHiddenFromNormalSearch() {
-        Product sugar = products.create(input("Sugar", "kg", null, "44", null));
+        Product sugar = products.create(input("Sugar", "kg", null, "44"));
 
         products.setActive(sugar.id(), false);
 
@@ -193,7 +197,7 @@ class ProductServiceTest {
 
     @Test
     void neverBilledProductCanBeDeleted() {
-        Product sugar = products.create(input("Sugar", "kg", null, "44", null));
+        Product sugar = products.create(input("Sugar", "kg", null, "44"));
 
         products.delete(sugar.id());
 
@@ -203,7 +207,7 @@ class ProductServiceTest {
 
     @Test
     void billedProductCannotBeDeleted() {
-        Product sugar = products.create(input("Sugar", "kg", null, "44", null));
+        Product sugar = products.create(input("Sugar", "kg", null, "44"));
         fixture.putOnABill(sugar.id());
 
         assertTrue(products.isOnAnyBill(sugar.id()));
@@ -217,11 +221,11 @@ class ProductServiceTest {
 
     @Test
     void searchFindsAllTypesOfAProduct() {
-        products.create(new ProductInput("Sugar", "साखर", null, "kg", null, "44", null));
-        products.create(input("Sugar", "pcs", "1 kg", "46", "48"));
-        products.create(input("Sugar", "pcs", "5 kg", "220", null));
-        products.create(input("Salt", "pcs", "1 kg", "28", "30"));
-        products.create(input("Brown Sugar Cubes", "pcs", "250 g", "90", null));
+        products.create(new ProductInput("Sugar", "साखर", null, "kg", null, "44"));
+        products.create(input("Sugar", "pcs", "1 kg", "46"));
+        products.create(input("Sugar", "pcs", "5 kg", "220"));
+        products.create(input("Salt", "pcs", "1 kg", "28"));
+        products.create(input("Brown Sugar Cubes", "pcs", "250 g", "90"));
 
         assertEquals(4, products.search("sugar", null, false, 50).size(), "every kind of sugar");
         assertEquals(4, products.search("SUG", null, false, 50).size(), "part of a word, any case");
@@ -234,8 +238,8 @@ class ProductServiceTest {
 
     @Test
     void searchPutsNamesStartingWithTheTextFirst() {
-        products.create(input("Brown Sugar", "kg", null, "90", null));
-        products.create(input("Sugar", "kg", null, "44", null));
+        products.create(input("Brown Sugar", "kg", null, "90"));
+        products.create(input("Sugar", "kg", null, "44"));
 
         List<Product> found = products.search("sugar", null, false, 50);
 
@@ -244,7 +248,7 @@ class ProductServiceTest {
 
     @Test
     void searchTreatsPercentAndUnderscoreAsNormalCharacters() {
-        products.create(input("Sugar", "kg", null, "44", null));
+        products.create(input("Sugar", "kg", null, "44"));
 
         assertTrue(products.search("%", null, false, 50).isEmpty());
         assertTrue(products.search("_", null, false, 50).isEmpty());
@@ -252,8 +256,8 @@ class ProductServiceTest {
 
     @Test
     void searchCanFilterByCategory() {
-        products.create(new ProductInput("Toor Dal", null, dalCategory, "kg", null, "120", null));
-        products.create(input("Sugar", "kg", null, "44", null));
+        products.create(new ProductInput("Toor Dal", null, dalCategory, "kg", null, "120"));
+        products.create(input("Sugar", "kg", null, "44"));
 
         List<Product> found = products.search("", dalCategory, false, 50);
 
@@ -265,12 +269,12 @@ class ProductServiceTest {
 
     @Test
     void staffCanSearchButNotChangeProducts() {
-        Product sugar = products.create(input("Sugar", "kg", null, "44", null));
+        Product sugar = products.create(input("Sugar", "kg", null, "44"));
         fixture.signInStaff();
 
         assertFalse(products.search("sugar", null, false, 50).isEmpty());
-        assertThrows(PermissionDeniedException.class, () -> products.create(input("Salt", "pcs", null, "28", null)));
-        assertThrows(PermissionDeniedException.class, () -> products.update(sugar.id(), input("Sugar", "kg", null, "1", null)));
+        assertThrows(PermissionDeniedException.class, () -> products.create(input("Salt", "pcs", null, "28")));
+        assertThrows(PermissionDeniedException.class, () -> products.update(sugar.id(), input("Sugar", "kg", null, "1")));
         assertThrows(PermissionDeniedException.class, () -> products.setActive(sugar.id(), false));
         assertThrows(PermissionDeniedException.class, () -> products.delete(sugar.id()));
     }

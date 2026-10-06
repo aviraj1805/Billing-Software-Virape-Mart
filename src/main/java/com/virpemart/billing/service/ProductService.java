@@ -77,8 +77,8 @@ public final class ProductService {
     // ------------------------------------------------------------------ checking input
 
     /**
-     * Checks and cleans typed product details without saving anything.
-     * Screens call this first to warn about things like a rate above MRP.
+     * Checks and cleans typed product details without saving anything. The MRP is always empty here: it is no
+     * longer typed. {@link #update} keeps the MRP a product already has.
      *
      * @throws ValidationException naming the first field that has a problem
      */
@@ -108,9 +108,7 @@ public final class ProductService {
         }
 
         Money rate = Amounts.parsePositive("rate", input.rate(), "rate", true);
-        Money mrp = Amounts.parsePositive("mrp", input.mrp(), "MRP", false);
-
-        return new ProductDetails(name, nameMr, input.categoryId(), unit, packSize, rate, mrp);
+        return new ProductDetails(name, nameMr, input.categoryId(), unit, packSize, rate, null);
     }
 
     // ------------------------------------------------------------------ changing
@@ -131,13 +129,17 @@ public final class ProductService {
         });
     }
 
-    /** Saves changes to a product. Owner only. Old bills are not affected. */
+    /**
+     * Saves changes to a product. Owner only. Old bills are not affected.
+     * The product's stored MRP is kept as it is: the form no longer shows it, so it must never be wiped.
+     */
     public Product update(long id, ProductInput input) {
         User user = session.requireOwner();
-        ProductDetails details = check(input);
+        ProductDetails typed = check(input);
         return database.inTransaction(c -> {
             Product before = products.findById(c, id)
                     .orElseThrow(() -> new BusinessRuleException("This product no longer exists."));
+            ProductDetails details = typed.withMrp(before.mrp());
             checkCategory(c, details.categoryId());
             checkNotDuplicate(c, details, id);
 
@@ -234,8 +236,6 @@ public final class ProductService {
         addChange(changes, "unit", before.unit(), after.unit());
         addChange(changes, "pack size", before.packSize(), after.packSize());
         addChange(changes, "rate", before.rate().toPlainString(), after.rate().toPlainString());
-        addChange(changes, "MRP", before.mrp() == null ? null : before.mrp().toPlainString(),
-                after.mrp() == null ? null : after.mrp().toPlainString());
         return String.join("; ", changes);
     }
 

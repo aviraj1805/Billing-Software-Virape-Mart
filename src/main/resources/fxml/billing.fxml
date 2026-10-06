@@ -51,7 +51,6 @@
                     <TableColumn fx:id="itemColumn" text="Item" prefWidth="300"/>
                     <TableColumn fx:id="qtyColumn" text="Qty" prefWidth="90" styleClass="number-column"/>
                     <TableColumn fx:id="rateColumn" text="Rate" prefWidth="120" styleClass="number-column"/>
-                    <TableColumn fx:id="mrpColumn" text="MRP" prefWidth="80" styleClass="number-column"/>
                     <TableColumn fx:id="amountColumn" text="Amount" prefWidth="110" styleClass="number-column"/>
                 </columns>
                 <columnResizePolicy>
@@ -107,8 +106,6 @@
                     <Label fx:id="roundOffLabel" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
                     <Label text="Bill total" styleClass="total-label" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
                     <Label fx:id="totalLabel" styleClass="total-big" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
-                    <Label fx:id="savingsLabel" styleClass="savings" GridPane.rowIndex="3" GridPane.columnIndex="0"
-                           GridPane.columnSpan="2"/>
                     <Label fx:id="previousDuesTitle" text="Previous dues" GridPane.rowIndex="4" GridPane.columnIndex="0"/>
                     <Label fx:id="previousDuesLabel" GridPane.rowIndex="4" GridPane.columnIndex="1"/>
                     <Label fx:id="withDuesTitle" text="Total with dues" styleClass="total-label"

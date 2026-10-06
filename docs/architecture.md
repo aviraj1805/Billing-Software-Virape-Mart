@@ -48,6 +48,7 @@ starts `App`, the JavaFX application class. This is required when JavaFX is on t
 - **Line total** is quantity times rate, rounded HALF_UP to the paisa.
 - **Bill total** is the subtotal rounded to the nearest rupee. `round_off` stores the difference.
 - **Savings** is the sum of (MRP minus rate) times quantity, for lines where MRP is higher than the rate.
+  It is still worked out (`Cart.totalsOf`) but no longer shown: MRP is hidden everywhere since version 1.2.0.
 - **Saved bills never change.** Nothing financial is ever hard-deleted.
 - **Bill lines keep a snapshot** of name, Marathi name, unit, rate and MRP, so old bills stay correct
   after a product changes.
@@ -61,7 +62,7 @@ starts `App`, the JavaFX application class. This is required when JavaFX is on t
 | `settings` | Shop name, address, phone, footer, printer, paper width |
 | `users` | Username, display name, password hash and salt, role OWNER or STAFF, active flag |
 | `categories` | Category name, active flag |
-| `products` | Short code, name, Marathi name, category, unit (KG or L for loose items, PCS for packed items), pack size text, rate, optional MRP, active flag |
+| `products` | Short code, name, Marathi name, category, unit (KG or L for loose items, PCS for packed items), pack size text, rate, optional MRP (kept but no longer typed or shown; an edit keeps it), active flag |
 | `customers` | Customer number, name, phone, address, notes, active flag |
 | `bills` | Bill number, date and time, customer or walk-in, subtotal, round-off, total, paid now, added to account, status, cancel details, created by |
 | `bill_items` | Bill, product or none for one-off items, snapshot fields, quantity, rate, original rate if changed, line total |

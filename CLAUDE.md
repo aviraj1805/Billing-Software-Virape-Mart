@@ -252,7 +252,8 @@ Test anything that cannot be undone (such as cancelling a bill) on a copy of `de
 - **Khata / udhaar**: a customer's credit account at the store.
 - **Account customer**: a regular customer with a khata who may pay later.
 - **Walk-in customer**: a customer without an account; must pay in full.
-- **MRP**: Maximum Retail Price printed on a packet.
+- **MRP**: Maximum Retail Price printed on a packet. Hidden everywhere since 1.2.0 (the user's choice); the stored
+  value is kept, and `ProductService.update` keeps a product's MRP because the form no longer sends one.
 - **Loose item**: sold by weight at a rate per kg or per litre.
 - **One-off item**: an item typed directly on a bill that is not in the product list.
 - **OWNER / STAFF**: roles in the code. With no login, the app always works as OWNER; STAFF is unused for now.

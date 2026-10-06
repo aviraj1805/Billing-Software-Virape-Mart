@@ -15,14 +15,14 @@ The **first row** must have column names. Use these names (or similar ones, see 
 | Unit | Yes | How it is sold: **kg**, **litre** or **pcs** | kg |
 | Pack Size | No | Size of the packet, empty for loose items | 1 kg |
 | Rate | Yes | Your selling rate. For kg or litre items, the rate **per kg** or **per litre** | 120 |
-| MRP | No | MRP printed on the packet | 130 |
 
 Tips:
 
 - **One product per row.** Each pack size is a separate row: "Sugar" loose (kg), "Sugar" 1 kg packet (pcs),
   "Sugar" 5 kg packet (pcs).
 - **Unit** also understands kgs, kilo, ltr, liter, pc, piece, nos, pkt and packet.
-- **Rate and MRP** can be written as 120, 120.50, ₹120 or Rs 120.
+- **Rate** can be written as 120, 120.50, ₹120 or Rs 120.
+- An **MRP** column is ignored: the app no longer uses MRP.
 - **Category**: use a name from the app's list, such as Rice & Grains or Dal & Pulses.
   A new name creates a new category automatically.
 - Other column names that also work: "Item Name" or "Product" for Name, "Price" or "Selling Price" for Rate,

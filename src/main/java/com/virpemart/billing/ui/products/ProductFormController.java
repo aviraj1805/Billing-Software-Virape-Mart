@@ -8,15 +8,12 @@ import java.util.Optional;
 import com.virpemart.billing.AppContext;
 import com.virpemart.billing.model.Category;
 import com.virpemart.billing.model.Product;
-import com.virpemart.billing.model.ProductDetails;
 import com.virpemart.billing.model.Unit;
 import com.virpemart.billing.service.BusinessRuleException;
 import com.virpemart.billing.service.ProductInput;
 import com.virpemart.billing.service.ProductService;
 import com.virpemart.billing.service.ValidationException;
-import com.virpemart.billing.ui.common.Dialogs;
 import com.virpemart.billing.ui.common.FormErrors;
-import com.virpemart.billing.ui.common.Format;
 import com.virpemart.billing.ui.common.Views;
 
 import javafx.application.Platform;
@@ -53,8 +50,6 @@ public class ProductFormController {
     private Label rateLabel;
     @FXML
     private TextField rateField;
-    @FXML
-    private TextField mrpField;
     @FXML
     private Label errorLabel;
 
@@ -93,8 +88,7 @@ public class ProductFormController {
                 "category", categoryBox,
                 "unit", unitBox,
                 "packSize", packSizeField,
-                "rate", rateField,
-                "mrp", mrpField));
+                "rate", rateField));
         unitBox.getItems().setAll(Unit.values());
         unitBox.setConverter(new StringConverter<>() {
             @Override
@@ -139,7 +133,6 @@ public class ProductFormController {
             unitBox.setValue(product.unit());
             packSizeField.setText(product.packSize());
             rateField.setText(product.rate().toInputString());
-            mrpField.setText(product.mrp() == null ? "" : product.mrp().toInputString());
         }
         updateRateLabel(unitBox.getValue());
         Platform.runLater(nameField::requestFocus);
@@ -164,17 +157,8 @@ public class ProductFormController {
                 (category == null || category == NO_CATEGORY) ? null : category.id(),
                 unit == null ? null : unit.name(),
                 packSizeField.getText(),
-                rateField.getText(),
-                mrpField.getText());
+                rateField.getText());
         try {
-            ProductDetails details = products.check(input);
-            if (details.rateAboveMrp() && !Dialogs.confirm(stage, "Rate is above MRP",
-                    "The rate " + Format.money(details.rate()) + " is more than the MRP " + Format.money(details.mrp())
-                            + ".\n\nSelling above MRP is not allowed. Is this a typing mistake?",
-                    "Save anyway")) {
-                rateField.requestFocus();
-                return;
-            }
             saved = (existing == null) ? products.create(input) : products.update(existing.id(), input);
             stage.close();
         } catch (ValidationException e) {

@@ -3,7 +3,7 @@
 Offline billing software for the Virpe Mart grocery store. It runs on a single Windows laptop and
 prints bills on the store printer. It has two main areas:
 
-- **Products**: the list of items the store sells, with English and Marathi names, rates and MRP.
+- **Products**: the list of items the store sells, with English and Marathi names and rates.
 - **Billing**: bills for walk-in and account (credit) customers, with purchase history and printing.
 
 Status: **Version 1.1.0.** Products, customer khatas, billing, printing, bill history, reports, backups,

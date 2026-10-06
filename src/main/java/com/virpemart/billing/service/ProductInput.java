@@ -7,7 +7,8 @@ package com.virpemart.billing.service;
  * @param categoryId chosen category, or null for none
  * @param unit       "kg", "litre", "pcs" or a similar spelling
  * @param rate       rate text such as "44" or "44.50"
- * @param mrp        MRP text, or blank
+ *
+ * <p>There is no MRP: it is not shown or typed any more (the user's choice). A product's stored MRP is kept.
  */
 public record ProductInput(
         String name,
@@ -15,6 +16,5 @@ public record ProductInput(
         Long categoryId,
         String unit,
         String packSize,
-        String rate,
-        String mrp) {
+        String rate) {
 }

@@ -45,8 +45,8 @@ class ReportServiceTest {
     void setUp() {
         fixture = new TestFixture(temp);
         reports = fixture.services.reports();
-        Product sugar = fixture.services.products().create(new ProductInput("Sugar", null, null, "kg", null, "44", null));
-        Product salt = fixture.services.products().create(new ProductInput("Salt", null, null, "pcs", null, "28", null));
+        Product sugar = fixture.services.products().create(new ProductInput("Sugar", null, null, "kg", null, "44"));
+        Product salt = fixture.services.products().create(new ProductInput("Salt", null, null, "pcs", null, "28"));
         Cart cart = new Cart();
         cart.addProduct(sugar, Quantity.parse("1.5"));
         cart.addProduct(salt, Quantity.ofWhole(2));

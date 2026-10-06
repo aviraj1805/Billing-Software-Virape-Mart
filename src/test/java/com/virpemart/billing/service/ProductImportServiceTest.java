@@ -1,6 +1,7 @@
 package com.virpemart.billing.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -112,7 +113,7 @@ class ProductImportServiceTest {
 
     @Test
     void existingProductsAreSkippedNotChanged() throws IOException {
-        fixture.services.products().create(new ProductInput("Sugar", null, null, "kg", null, "44", null));
+        fixture.services.products().create(new ProductInput("Sugar", null, null, "kg", null, "44"));
         Path file = excelCsv("Name,Unit,Rate", "Sugar,kg,50", "Jaggery,kg,60");
 
         Result result = importer.importFile(file);
@@ -135,7 +136,7 @@ class ProductImportServiceTest {
         Product biscuit = fixture.services.products().search("parle", null, false, 10).getFirst();
         assertEquals(Unit.PCS, biscuit.unit());
         assertEquals("80 g", biscuit.packSize());
-        assertEquals(Money.ofRupees(10), biscuit.mrp());
+        assertNull(biscuit.mrp(), "an MRP column is ignored: MRP is no longer used");
         assertEquals("Biscuits & Bakery", biscuit.categoryName());
     }
 
@@ -153,7 +154,7 @@ class ProductImportServiceTest {
         Product oil = fixture.services.products().search("sunflower", null, false, 10).getFirst();
         assertEquals("Oil; Sunflower", oil.name());
         assertEquals(Money.ofRupees(1450), oil.rate());
-        assertEquals(Money.ofRupees(1500), oil.mrp());
+        assertNull(oil.mrp(), "an MRP column is ignored");
     }
 
     @Test

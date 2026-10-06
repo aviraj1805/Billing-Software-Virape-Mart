@@ -45,9 +45,6 @@
 
         <Label fx:id="rateLabel" text="Rate (₹) *" GridPane.rowIndex="5" GridPane.columnIndex="0"/>
         <TextField fx:id="rateField" promptText="e.g. 44 or 44.50" GridPane.rowIndex="5" GridPane.columnIndex="1"/>
-
-        <Label text="MRP (₹)" GridPane.rowIndex="6" GridPane.columnIndex="0"/>
-        <TextField fx:id="mrpField" promptText="Printed MRP, if any" GridPane.rowIndex="6" GridPane.columnIndex="1"/>
     </GridPane>
 
     <Label fx:id="errorLabel" styleClass="error-text" wrapText="true" managed="false" visible="false"/>

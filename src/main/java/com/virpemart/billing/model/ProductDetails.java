@@ -7,7 +7,7 @@ package com.virpemart.billing.model;
  * @param categoryId category, or null for none
  * @param packSize   free text such as "1 kg" or "500 g", or null
  * @param rate       selling rate per kg, per litre or per piece
- * @param mrp        printed MRP, or null if the product has none
+ * @param mrp        printed MRP, or null. No longer typed or shown; an edited product keeps the MRP it had
  */
 public record ProductDetails(
         String name,
@@ -18,8 +18,8 @@ public record ProductDetails(
         Money rate,
         Money mrp) {
 
-    /** True if the selling rate is higher than the MRP, which is usually a typing mistake. */
-    public boolean rateAboveMrp() {
-        return mrp != null && rate.compareTo(mrp) > 0;
+    /** The same details with the given MRP (used to keep a product's stored MRP when it is edited). */
+    public ProductDetails withMrp(Money keptMrp) {
+        return new ProductDetails(name, nameMr, categoryId, unit, packSize, rate, keptMrp);
     }
 }

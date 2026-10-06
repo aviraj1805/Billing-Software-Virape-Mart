@@ -70,8 +70,6 @@ public class ProductImportController {
     @FXML
     private TableColumn<Row, String> rateColumn;
     @FXML
-    private TableColumn<Row, String> mrpColumn;
-    @FXML
     private TableColumn<Row, String> statusColumn;
 
     private Stage stage;
@@ -98,7 +96,6 @@ public class ProductImportController {
         column(unitColumn, Row::unit);
         column(packColumn, Row::packSize);
         column(rateColumn, Row::rate);
-        column(mrpColumn, Row::mrp);
         column(statusColumn, ProductImportController::describe);
         previewTable.setPlaceholder(new Label("Choose a CSV file to see a preview here."));
         previewTable.setRowFactory(table -> new TableRow<>() {
