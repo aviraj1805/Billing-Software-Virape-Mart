@@ -238,6 +238,7 @@ Test anything that cannot be undone (such as cancelling a bill) on a copy of `de
 | 6. History and reports | Bill history, cancel with reversal, purchase history, reports | Done |
 | 7. Backup and audit | No login (user's decision), automatic owner sign-in, backups, restore, damaged-file check, activity log | Done |
 | 8. Packaging and go-live | Version 1.0.0 zip (self-contained), installation guide, user guide, troubleshooting guide, GitHub | Done (real printer and shop laptop pending) |
+| 9. Shop feedback (1.2.0) | Customer name as saved, no needless zeros, MRP hidden, categories removed, Rate box on Billing, Send on WhatsApp, Download to Excel. No database change | Done (update on the shop laptop pending) |
 
 ## Pending inputs from the user
 

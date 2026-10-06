@@ -4,6 +4,36 @@ All notable changes to this project are recorded here, newest first.
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-10-06
+
+Changes asked for by the owner after two days of use at the shop. **No database change**: the schema stays at
+version 4, and all existing data (customers, khata, products, bills) is kept exactly as it was.
+
+### Printed bill
+
+- The customer's name prints **exactly as saved** (the owner types names in Marathi). The automatic
+  English-to-Marathi conversion and its word list are removed. `bills.customer_name_mr`, filled by 1.1.0, is kept
+  but no longer read or written; old bills reprint with the saved name.
+- Numbers without needless zeros, on the bill and on every screen: `₹50` instead of `₹50.00`, `₹45.5`,
+  `1 kg` / `1.5 kg` / `0.25 kg` instead of `1.000 kg`. Display only: amounts are stored and calculated as before.
+
+### Billing
+
+- **Rate box next to Qty** (Product | Qty | Rate), filled in with the product's current rate. Enter in Qty moves to
+  Rate; Enter in Rate adds the item. A different rate is for this bill only; the product's rate never changes.
+- **Send on WhatsApp** in Recent bills (F9): the bill is copied as a picture (same design as the printed bill,
+  without "DUPLICATE COPY") and WhatsApp Desktop opens; open the customer's chat, press Ctrl+V, then Enter.
+  A copy is kept in `%LOCALAPPDATA%\VirpeMart\bill-images`. Cancelled bills cannot be sent.
+
+### Products and customers
+
+- **MRP is hidden everywhere** (Billing, Products, product form, import). Stored MRP values are kept; editing a
+  product keeps its MRP.
+- **Categories are removed** (button, window, filter, column, form box, import column). The `categories` table and
+  each product's category are kept; editing a product keeps its category.
+- **Download to Excel…** on Products and Customers: CSV files that open in Excel (Marathi included). The product
+  file can be imported back.
+
 ## [1.1.0] - 2026-10-03
 
 ### App logo

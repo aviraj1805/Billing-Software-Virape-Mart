@@ -158,14 +158,30 @@ backups are lost too. So once a week:
 
 ## 10. Installing a newer version
 
-1. Make a pendrive backup (step 9) to be extra safe.
-2. **Close the app.**
-3. Delete the old program folder `C:\VirpeMart` (this does **not** touch the shop's data).
-4. Unzip the new zip to `C:\` exactly as in step 3.
-5. Start the app. If the new version needs to upgrade the data, it first saves a backup
-   (`backups\pre-upgrade-...db`) and then upgrades by itself.
+The shop's data is in `%LOCALAPPDATA%\VirpeMart` (section 8), not in the program folder, so a new version never
+replaces it. Still, follow every step: it takes about 15 minutes. Do it when the shop is quiet.
 
-The Desktop shortcut keeps working if the new folder is again `C:\VirpeMart`.
+1. In the app, **write down**: the number of customers, the balance of 2–3 customers, the number of products, and
+   the last bill number (**Recent bills (F9)**).
+2. **Settings → Backups → Back up now to a folder or pendrive…**: save to the pendrive and wait for "Backup saved".
+3. **Close the app.** Open Task Manager (Ctrl + Shift + Esc) and make sure **VirpeMart** is not running.
+4. Press **Windows key + R**, type `%LOCALAPPDATA%`, press **Enter**. Copy the whole **VirpeMart** folder to the
+   pendrive and name the copy `VirpeMart-data-<today's date>`.
+5. **Rename** (do not delete) the old program folder `C:\VirpeMart` to `C:\VirpeMart-old` (for example
+   `C:\VirpeMart-1.1.0`).
+6. Unzip the new zip to `C:\` exactly as in step 3, so `C:\VirpeMart\VirpeMart.exe` is there again. The Desktop
+   shortcut keeps working.
+7. Start the app. Check that the version at the bottom left is the new one and that the numbers from step 1 match
+   exactly. If the new version needs to upgrade the data, it first saves a backup (`backups\pre-upgrade-...db`)
+   and then upgrades by itself.
+8. Check without making test bills (bill numbers can never be reused): open an old bill from **Recent bills (F9)**,
+   use **Settings → Print a test bill**, and look at the Billing screen with a product chosen, without saving.
+9. Keep `C:\VirpeMart-old` and the pendrive copies for at least two weeks.
+
+**If the new version has a problem**: close the app, rename `C:\VirpeMart` to `C:\VirpeMart-new`, rename
+`C:\VirpeMart-old` back to `C:\VirpeMart`, and start the app. When a version did not change the database (for
+example 1.1.0 → 1.2.0), the old version works with all the data, including bills made with the new version. Only if
+the data itself is damaged: **Settings → Backups → Restore a backup…** from the pendrive.
 
 ---
 
