@@ -21,8 +21,8 @@ import javafx.stage.Stage;
 import javafx.stage.Window;
 
 /**
- * A window showing a saved bill exactly as it prints, with a Print button. Printing from here is a reprint:
- * the copy says "DUPLICATE COPY" and the reprint is recorded.
+ * A window showing a saved bill exactly as it prints, with a Print button. Printing from here is a reprint: the
+ * paper is the same as the first print, and the reprint is recorded in the activity log.
  */
 public class ReceiptPreviewController {
 
@@ -57,7 +57,7 @@ public class ReceiptPreviewController {
      */
     public static void openBill(Window owner, AppContext context, long billNo) {
         BillDetails bill = context.services().billing().bill(billNo);
-        Receipt receipt = context.services().printing().billReceipt(billNo, true);
+        Receipt receipt = context.services().printing().billReceipt(billNo);
         PaperSize paper = context.services().settings().printerSetup().paper();
 
         Views.Loaded<ReceiptPreviewController> view = Views.load("receipt-preview.fxml", context);
@@ -79,7 +79,7 @@ public class ReceiptPreviewController {
         Image image = Images.toFx(new ReceiptRenderer(paper).toImage(receipt, DRAW_SCALE));
         receiptView.setImage(image);
         receiptView.setFitWidth(Math.min(image.getWidth() / DRAW_SCALE * SHOW_SCALE, MAX_WIDTH));
-        statusLabel.setText("Printer paper: " + paper.label() + ". A printed copy says \"DUPLICATE COPY\".");
+        statusLabel.setText("Printer paper: " + paper.label() + ".");
     }
 
     @FXML

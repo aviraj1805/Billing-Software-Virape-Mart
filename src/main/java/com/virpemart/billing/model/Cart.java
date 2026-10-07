@@ -65,10 +65,30 @@ public final class Cart {
         return lines.size() - 1;
     }
 
+    /**
+     * Adds the built-in "जमा" line (rate 0, see {@link Jama}). A bill has it at most once: if it is already there,
+     * nothing changes.
+     *
+     * @return the index of the जमा line
+     */
+    public int addJama() {
+        for (int i = 0; i < lines.size(); i++) {
+            if (lines.get(i).isJama()) {
+                return i;
+            }
+        }
+        lines.add(Jama.line());
+        return lines.size() - 1;
+    }
+
     /** Adds an item that is not in the product list, for this bill only. */
     public int addOneOff(String name, Unit unit, Quantity quantity, Money rate) {
         if (name == null || name.isBlank()) {
             throw new IllegalArgumentException("Please enter the item name.");
+        }
+        if (Jama.NAME.equals(name.strip())) {
+            throw new IllegalArgumentException(Jama.NAME + " is in the product search. Type " + Jama.NAME
+                    + " (or jama) there.");
         }
         checkQuantity(unit, quantity);
         checkRate(rate);
@@ -78,12 +98,14 @@ public final class Cart {
 
     public void setQuantity(int index, Quantity quantity) {
         CartLine line = lines.get(index);
+        checkNotJama(line);
         checkQuantity(line.unit(), quantity);
         lines.set(index, line.withQuantity(quantity));
     }
 
     /** Changes the rate of one line for this bill only. The product's saved rate is not changed. */
     public void setRate(int index, Money rate) {
+        checkNotJama(lines.get(index));
         checkRate(rate);
         lines.set(index, lines.get(index).withRate(rate));
     }
@@ -140,6 +162,14 @@ public final class Cart {
         }
         if (!unit.isLoose() && !quantity.isWhole()) {
             throw new IllegalArgumentException("This item is sold by piece, so the quantity must be a whole number.");
+        }
+    }
+
+    /** The जमा line is always 1 at rate 0; the money paid is typed in the payment window. */
+    private static void checkNotJama(CartLine line) {
+        if (line.isJama()) {
+            throw new IllegalArgumentException(Jama.NAME + " has no quantity or rate. Type the money paid in the"
+                    + " payment window (Save, F12).");
         }
     }
 

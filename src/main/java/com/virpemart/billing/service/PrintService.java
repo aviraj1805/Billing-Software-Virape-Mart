@@ -23,7 +23,8 @@ import com.virpemart.billing.repository.AuditRepository;
 
 /**
  * Prints bills. Printing always happens after a bill is saved, so a printer problem never loses a bill:
- * the bill can be printed again later. Printing again is written to the audit log.
+ * the bill can be printed again later. A bill printed again looks exactly like the first print (no "duplicate"
+ * mark, the user's choice in version 1.3.0); printing again is only written to the audit log.
  *
  * <p>Printing can take a few seconds, so screens call the print methods away from the screen thread.
  */
@@ -53,8 +54,8 @@ public final class PrintService {
     }
 
     /** How a saved bill looks on paper, for the preview. Owner and staff. */
-    public Receipt billReceipt(long billNo, boolean reprint) {
-        return ReceiptBuilder.forBill(billing.bill(billNo), settings.shopDetails(), reprint);
+    public Receipt billReceipt(long billNo) {
+        return ReceiptBuilder.forBill(billing.bill(billNo), settings.shopDetails());
     }
 
     /** A made-up bill with the given shop heading, to preview or test the printer. */
@@ -72,14 +73,14 @@ public final class PrintService {
     /**
      * Prints a saved bill on the printer chosen in Settings. Owner and staff.
      *
-     * @param reprint true when printing the bill again later; the copy is marked "DUPLICATE COPY" and the
-     *                reprint is written to the audit log
+     * @param reprint true when printing the bill again later; the paper is the same, and the reprint is written to
+     *                the audit log
      * @throws PrintFailedException if the printer did not accept the bill
      */
     public void printBill(long billNo, boolean reprint) {
         User user = session.requireSignedIn();
         BillDetails bill = billing.bill(billNo);
-        send(ReceiptBuilder.forBill(bill, settings.shopDetails(), reprint), settings.printerSetup());
+        send(ReceiptBuilder.forBill(bill, settings.shopDetails()), settings.printerSetup());
         if (reprint) {
             database.runInTransaction(c -> audit.insert(c, user.id(), "BILL_REPRINTED", "bills", bill.id(),
                     "Bill " + billNo + " printed again", DbTime.now(clock)));
@@ -88,7 +89,7 @@ public final class PrintService {
 
     /**
      * The bill as a picture, to send to the customer on WhatsApp. It is drawn exactly like the printed bill (same
-     * paper width and design), without the "DUPLICATE COPY" mark: it is the customer's own copy. Owner and staff.
+     * paper width and design). Owner and staff.
      * Making the picture is written to the audit log.
      *
      * @throws BusinessRuleException if the bill is cancelled
@@ -99,7 +100,7 @@ public final class PrintService {
         if (bill.isCancelled()) {
             throw new BusinessRuleException("Bill " + billNo + " is cancelled, so it cannot be sent to the customer.");
         }
-        Receipt receipt = ReceiptBuilder.forBill(bill, settings.shopDetails(), false);
+        Receipt receipt = ReceiptBuilder.forBill(bill, settings.shopDetails());
         BufferedImage picture = new ReceiptRenderer(settings.printerSetup().paper()).toImage(receipt, PICTURE_SCALE);
         database.runInTransaction(c -> audit.insert(c, user.id(), "BILL_SHARED", "bills", bill.id(),
                 "Bill " + billNo + " picture copied to send on WhatsApp", DbTime.now(clock)));

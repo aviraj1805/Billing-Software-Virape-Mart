@@ -153,4 +153,54 @@ class CartTest {
         assertEquals("Tata Salt", cart.lines().getFirst().name());
         assertEquals(1, cart.lines().size());
     }
+
+    // ------------------------------------------------------------------ जमा
+
+    @Test
+    void jamaIsAddedOnceAtRateZeroAndAddsNothingToTheTotal() {
+        Cart cart = new Cart();
+        cart.addProduct(SUGAR_LOOSE, Quantity.ONE);
+
+        assertEquals(1, cart.addJama());
+        assertEquals(1, cart.addJama(), "a bill has जमा at most once");
+
+        assertEquals(2, cart.lines().size());
+        CartLine jama = cart.lines().get(1);
+        assertTrue(jama.isJama());
+        assertEquals(Money.ZERO, jama.rate());
+        assertEquals(Money.ZERO, jama.lineTotal());
+        assertFalse(jama.rateChanged());
+        assertEquals(Money.parse("44"), cart.totals().total());
+        assertFalse(cart.lines().getFirst().isJama());
+    }
+
+    @Test
+    void jamaQuantityAndRateCannotBeChanged() {
+        Cart cart = new Cart();
+        cart.addJama();
+
+        assertThrows(IllegalArgumentException.class, () -> cart.setRate(0, Money.parse("500")));
+        assertThrows(IllegalArgumentException.class, () -> cart.setQuantity(0, Quantity.ofWhole(2)));
+        assertEquals(Jama.line(), cart.lines().getFirst());
+    }
+
+    @Test
+    void jamaCannotBeTypedAsAOneOffItem() {
+        Cart cart = new Cart();
+
+        assertThrows(IllegalArgumentException.class,
+                () -> cart.addOneOff(" जमा ", Unit.PCS, Quantity.ONE, Money.parse("500")));
+        assertTrue(cart.isEmpty());
+    }
+
+    @Test
+    void zeroRateIsStillRejectedForOtherItems() {
+        Cart cart = new Cart();
+
+        assertThrows(IllegalArgumentException.class, () -> cart.addProduct(SALT, Quantity.ONE, Money.ZERO));
+        assertThrows(IllegalArgumentException.class,
+                () -> cart.addOneOff("Candles", Unit.PCS, Quantity.ONE, Money.ZERO));
+        cart.addProduct(SALT, Quantity.ONE);
+        assertThrows(IllegalArgumentException.class, () -> cart.setRate(0, Money.ZERO));
+    }
 }

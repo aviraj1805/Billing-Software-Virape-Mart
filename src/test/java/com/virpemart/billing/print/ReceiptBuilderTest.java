@@ -13,6 +13,7 @@ import com.virpemart.billing.model.BillDetails;
 import com.virpemart.billing.model.BillTotals;
 import com.virpemart.billing.model.Cart;
 import com.virpemart.billing.model.CartLine;
+import com.virpemart.billing.model.Jama;
 import com.virpemart.billing.model.Money;
 import com.virpemart.billing.model.PaymentMode;
 import com.virpemart.billing.model.PaymentPart;
@@ -22,6 +23,7 @@ import com.virpemart.billing.model.Unit;
 import com.virpemart.billing.print.ReceiptLine.ItemRow;
 import com.virpemart.billing.print.ReceiptLine.Pair;
 import com.virpemart.billing.print.ReceiptLine.Style;
+import com.virpemart.billing.print.ReceiptLine.Text;
 
 class ReceiptBuilderTest {
 
@@ -73,7 +75,7 @@ class ReceiptBuilderTest {
 
     @Test
     void walkInBillShowsHeadingMarathiItemsTotalAndPayment() {
-        String text = ReceiptBuilder.forBill(walkIn(List.of(cash("50"), upi("32")), null), SHOP, false)
+        String text = ReceiptBuilder.forBill(walkIn(List.of(cash("50"), upi("32")), null), SHOP)
                 .toPlainText();
 
         assertEquals("""
@@ -88,7 +90,7 @@ class ReceiptBuilderTest {
                 Item | Qty | Rate | Amount
                 1. साखर | 0.25 kg | 44 | 11
                 2. Toor Dal | 0.333 kg | 45.5 | 15.15
-                3. टाटा मीठ | 2 | 28 | 56
+                3. टाटा मीठ | 2 Pkt | 28 | 56
                 ----
                 एकूण | ₹82
                 ----
@@ -100,7 +102,7 @@ class ReceiptBuilderTest {
 
     @Test
     void walkInNameIsPrintedExactlyAsTypedWithoutALabel() {
-        String text = ReceiptBuilder.forBill(walkIn("Sunil", List.of(cash("82")), null), SHOP, false)
+        String text = ReceiptBuilder.forBill(walkIn("Sunil", List.of(cash("82")), null), SHOP)
                 .toPlainText();
 
         assertTrue(text.contains("2:05 PM\nSunil\n----"), "English letters are not changed to Marathi:\n" + text);
@@ -110,7 +112,7 @@ class ReceiptBuilderTest {
 
     @Test
     void khataBillShowsPreviousDuesPaidAndBalanceInMarathi() {
-        String text = ReceiptBuilder.forBill(khata(Money.parse("480"), List.of(cash("50")), List.of()), SHOP, false)
+        String text = ReceiptBuilder.forBill(khata(Money.parse("480"), List.of(cash("50")), List.of()), SHOP)
                 .toPlainText();
 
         assertTrue(text.contains("2:05 PM\nसुनीता पाटील | No. 9876501234\n----\nItem"), text);
@@ -129,7 +131,7 @@ class ReceiptBuilderTest {
 
     @Test
     void khataCustomerWithoutAPhonePrintsOnlyTheSavedName() {
-        String text = ReceiptBuilder.forBill(khata("Sunita Patil", null, Money.ZERO, List.of(), List.of()), SHOP, true)
+        String text = ReceiptBuilder.forBill(khata("Sunita Patil", null, Money.ZERO, List.of(), List.of()), SHOP)
                 .toPlainText();
 
         assertTrue(text.contains("2:05 PM\nSunita Patil\n----"), text);
@@ -139,16 +141,16 @@ class ReceiptBuilderTest {
 
     @Test
     void itemRowsHaveFourColumns() {
-        Receipt receipt = ReceiptBuilder.forBill(walkIn(List.of(cash("82")), null), SHOP, false);
+        Receipt receipt = ReceiptBuilder.forBill(walkIn(List.of(cash("82")), null), SHOP);
 
         assertTrue(receipt.lines().contains(new ItemRow("Item", "Qty", "Rate", "Amount", Style.SMALL)));
-        assertTrue(receipt.lines().contains(new ItemRow("3. टाटा मीठ", "2", "28", "56", Style.NORMAL)));
+        assertTrue(receipt.lines().contains(new ItemRow("3. टाटा मीठ", "2 Pkt", "28", "56", Style.NORMAL)));
     }
 
     @Test
     void allMoneyPaidWithTheBillIsOneJamaLine() {
         String text = ReceiptBuilder.forBill(
-                khata(Money.parse("480"), List.of(cash("82")), List.of(cash("18"), upi("100"))), SHOP, false)
+                khata(Money.parse("480"), List.of(cash("82")), List.of(cash("18"), upi("100"))), SHOP)
                 .toPlainText();
 
         assertTrue(text.contains("मागील बाकी | ₹480\nजमा | ₹200\nएकूण बाकी | ₹362"), text);
@@ -156,17 +158,17 @@ class ReceiptBuilderTest {
 
     @Test
     void khataWithNothingPaidAndAnAdvance() {
-        String nothing = ReceiptBuilder.forBill(khata(Money.ZERO, List.of(), List.of()), SHOP, false).toPlainText();
+        String nothing = ReceiptBuilder.forBill(khata(Money.ZERO, List.of(), List.of()), SHOP).toPlainText();
         assertTrue(nothing.contains("मागील बाकी | ₹0\nजमा | ₹0\nएकूण बाकी | ₹82"), nothing);
 
-        String advance = ReceiptBuilder.forBill(khata(Money.parse("-200"), List.of(), List.of()), SHOP, false)
+        String advance = ReceiptBuilder.forBill(khata(Money.parse("-200"), List.of(), List.of()), SHOP)
                 .toPlainText();
         assertTrue(advance.contains("मागील बाकी | -₹200\nजमा | ₹0\nएकूण बाकी | -₹118"), advance);
     }
 
     @Test
     void englishTotalsWordingIsNotPrinted() {
-        String khata = ReceiptBuilder.forBill(khata(Money.parse("-200"), List.of(cash("50")), List.of()), SHOP, false)
+        String khata = ReceiptBuilder.forBill(khata(Money.parse("-200"), List.of(cash("50")), List.of()), SHOP)
                 .toPlainText();
 
         for (String word : List.of("BILL TOTAL", "Total with dues", "Previous", "Paid now", "Balance", "Advance")) {
@@ -175,21 +177,63 @@ class ReceiptBuilderTest {
     }
 
     @Test
-    void reprintAndCancelledBillsAreMarked() {
-        String reprint = ReceiptBuilder.forBill(walkIn(List.of(cash("82")), null), SHOP, true).toPlainText();
-        assertTrue(reprint.contains("----\nDUPLICATE COPY\nBill No. 12"), reprint);
+    void printingAgainGivesTheSamePaperWithoutADuplicateMark() {
+        Receipt first = ReceiptBuilder.forBill(khata(Money.parse("480"), List.of(cash("50")), List.of()), SHOP);
+        Receipt again = ReceiptBuilder.forBill(khata(Money.parse("480"), List.of(cash("50")), List.of()), SHOP);
 
-        String cancelled = ReceiptBuilder.forBill(walkIn(List.of(cash("82")), "Wrong items"), SHOP, true)
+        assertEquals(first, again);
+        assertFalse(first.toPlainText().toUpperCase().contains("DUPLICATE"), first.toPlainText());
+        assertTrue(first.toPlainText().contains("Phone: 98765 43210\n----\nBill No. 12"), first.toPlainText());
+    }
+
+    @Test
+    void onlyACancelledBillIsMarked() {
+        String cancelled = ReceiptBuilder.forBill(walkIn(List.of(cash("82")), "Wrong items"), SHOP)
                 .toPlainText();
         assertTrue(cancelled.contains("*** CANCELLED BILL ***\nReason: Wrong items"), cancelled);
-        assertFalse(cancelled.contains("DUPLICATE"), cancelled);
+        assertFalse(cancelled.toUpperCase().contains("DUPLICATE"), cancelled);
+    }
+
+    @Test
+    void customerNameAndPhoneAreBoldAndBillNumberAndDateAreNormal() {
+        Receipt khata = ReceiptBuilder.forBill(khata(Money.ZERO, List.of(), List.of()), SHOP);
+        assertTrue(khata.lines().contains(new Pair("Bill No. 12", "30/09/2026 2:05 PM", Style.NORMAL)));
+        assertTrue(khata.lines().contains(new Pair("सुनीता पाटील", "No. 9876501234", Style.BOLD)));
+
+        Receipt noPhone = ReceiptBuilder.forBill(khata("Sunita Patil", null, Money.ZERO, List.of(), List.of()), SHOP);
+        assertTrue(noPhone.lines().contains(new Text("Sunita Patil", false, Style.BOLD)));
+
+        Receipt walkIn = ReceiptBuilder.forBill(walkIn("Sunil", List.of(cash("82")), null), SHOP);
+        assertTrue(walkIn.lines().contains(new Text("Sunil", false, Style.BOLD)));
+    }
+
+    @Test
+    void jamaBillPrintsTheNameOnlyThenWhatWasPaidAndTheDuesLeft() {
+        List<CartLine> lines = List.of(Jama.line());
+        BillTotals totals = Cart.totalsOf(lines);
+        BillDetails bill = new BillDetails(7, 12, WHEN, "C0003", "सुनीता पाटील", "9876501234", lines, totals,
+                List.of(), List.of(cash("300")), Money.ZERO, Money.parse("480"), Money.parse("180"), null);
+
+        Receipt receipt = ReceiptBuilder.forBill(bill, SHOP);
+
+        assertTrue(receipt.lines().contains(new ItemRow("1. जमा", "", "", "", Style.NORMAL)));
+        assertTrue(receipt.toPlainText().endsWith("Item | Qty | Rate | Amount\n"
+                + "1. जमा |  |  | \n"
+                + "----\n"
+                + "एकूण | ₹0\n"
+                + "----\n"
+                + "मागील बाकी | ₹480\n"
+                + "जमा | ₹300\n"
+                + "एकूण बाकी | ₹180\n"
+                + "----\n"
+                + "Thank you, visit again"), receipt.toPlainText());
     }
 
     @Test
     void emptyOptionalShopDetailsAreLeftOut() {
         ShopDetails plain = new ShopDetails("Virpe Mart", null, List.of(), null, List.of());
 
-        String text = ReceiptBuilder.forBill(walkIn(List.of(cash("82")), null), plain, false).toPlainText();
+        String text = ReceiptBuilder.forBill(walkIn(List.of(cash("82")), null), plain).toPlainText();
 
         assertTrue(text.startsWith("Virpe Mart\n----\nBill No. 12"), text);
         assertTrue(text.endsWith("Paid by Cash | ₹82"), text);
@@ -197,7 +241,7 @@ class ReceiptBuilderTest {
 
     @Test
     void subtotalRoundOffMrpAndSavingsAreNotPrinted() {
-        String text = ReceiptBuilder.forBill(khata(Money.parse("480"), List.of(cash("50")), List.of()), SHOP, false)
+        String text = ReceiptBuilder.forBill(khata(Money.parse("480"), List.of(cash("50")), List.of()), SHOP)
                 .toPlainText();
 
         for (String word : List.of("Subtotal", "Round off", "MRP", "saved", "This bill", "Sugar", "Tata Salt")) {
@@ -216,21 +260,23 @@ class ReceiptBuilderTest {
 
     @Test
     void totalIsPrintedLarge() {
-        Receipt receipt = ReceiptBuilder.forBill(walkIn(List.of(cash("82")), null), SHOP, false);
+        Receipt receipt = ReceiptBuilder.forBill(walkIn(List.of(cash("82")), null), SHOP);
 
         assertTrue(receipt.lines().contains(new Pair("एकूण", "₹82", Style.LARGE)));
     }
 
     @Test
-    void quantitiesHaveNoNeedlessZeros() {
+    void quantitiesHaveNoNeedlessZerosAndShowKgLtrOrPkt() {
         assertEquals("1 kg", ReceiptBuilder.quantity(Quantity.parse("1.000"), Unit.KG));
         assertEquals("2 kg", ReceiptBuilder.quantity(Quantity.parse("2"), Unit.KG));
         assertEquals("1.5 kg", ReceiptBuilder.quantity(Quantity.parse("1.500"), Unit.KG));
         assertEquals("0.5 kg", ReceiptBuilder.quantity(Quantity.parse("0.5"), Unit.KG));
         assertEquals("0.25 kg", ReceiptBuilder.quantity(Quantity.parse("0.250"), Unit.KG));
         assertEquals("0.333 kg", ReceiptBuilder.quantity(Quantity.parse("0.333"), Unit.KG));
-        assertEquals("1 litre", ReceiptBuilder.quantity(Quantity.ONE, Unit.L));
-        assertEquals("3", ReceiptBuilder.quantity(Quantity.ofWhole(3), Unit.PCS));
+        assertEquals("1 Ltr", ReceiptBuilder.quantity(Quantity.ONE, Unit.L));
+        assertEquals("5 Ltr", ReceiptBuilder.quantity(Quantity.ofWhole(5), Unit.L));
+        assertEquals("0.5 Ltr", ReceiptBuilder.quantity(Quantity.parse("0.500"), Unit.L));
+        assertEquals("3 Pkt", ReceiptBuilder.quantity(Quantity.ofWhole(3), Unit.PCS));
     }
 
     @Test

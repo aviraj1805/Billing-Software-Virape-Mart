@@ -11,12 +11,15 @@ import java.util.Optional;
  *   <li>{@link #KG} and {@link #L}: loose items, rate per kg or per litre, quantity with decimals (0.250).</li>
  *   <li>{@link #PCS}: packed items, rate per piece or packet, whole quantities only.</li>
  * </ul>
+ *
+ * <p>After a number the units read "kg", "Ltr" and "Pkt" (the user's wording, version 1.3.0): "2 kg", "5 Ltr",
+ * "3 Pkt", on screen and on the printed bill.
  */
 public enum Unit {
 
     KG("kg", "kg (loose)", true),
-    L("litre", "litre (loose)", true),
-    PCS("pc", "piece / packet", false);
+    L("Ltr", "litre (loose)", true),
+    PCS("Pkt", "piece / packet", false);
 
     /** Every spelling people commonly type, mapped to a unit. Keys are lower case without spaces or dots. */
     private static final Map<String, Unit> SPELLINGS = Map.ofEntries(
@@ -41,7 +44,7 @@ public enum Unit {
         this.loose = loose;
     }
 
-    /** Short name used after numbers, for example "kg" in "0.5 kg". */
+    /** Short name used after numbers: "kg" in "0.5 kg", "Ltr" in "5 Ltr", "Pkt" in "3 Pkt". */
     public String shortLabel() {
         return shortLabel;
     }

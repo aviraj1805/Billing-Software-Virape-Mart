@@ -17,10 +17,13 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import com.virpemart.billing.db.DatabaseException;
+import com.virpemart.billing.model.BillCorrection;
 import com.virpemart.billing.model.BillDetails;
 import com.virpemart.billing.model.BillSummary;
+import com.virpemart.billing.model.CancelledBill;
 import com.virpemart.billing.model.Cart;
 import com.virpemart.billing.model.CartLine;
+import com.virpemart.billing.model.Jama;
 import com.virpemart.billing.model.LedgerEntryType;
 import com.virpemart.billing.model.Money;
 import com.virpemart.billing.model.PaymentMode;
@@ -206,7 +209,7 @@ class BillingServiceTest {
             }
         });
 
-        String printed = fixture.services.printing().billReceipt(1, true).toPlainText();
+        String printed = fixture.services.printing().billReceipt(1).toPlainText();
 
         assertTrue(printed.contains("\nRamesh Patil\n"), printed);
         assertFalse(printed.contains("रमेश पतिल"), printed);
@@ -322,6 +325,110 @@ class BillingServiceTest {
 
         assertEquals(1, count("SELECT COUNT(*) FROM bill_items WHERE product_id IS NULL AND name = 'Birthday candles'"));
         assertEquals(2, count("SELECT COUNT(*) FROM products"), "no product was created");
+    }
+
+    // ------------------------------------------------------------------ जमा (money paid, no items)
+
+    @Test
+    void jamaBillRecordsTheMoneyPaidInTheKhataAndShowsTheDuesLeft() {
+        Cart cart = new Cart();
+        cart.addJama();
+
+        SavedBill bill = billing.save(new BillRequest(ramesh, null, cart.lines(), List.of(cash("300"), upi("200"))));
+
+        assertEquals(Money.ZERO, bill.totals().total());
+        assertEquals(Money.ZERO, bill.paidForBill());
+        assertEquals(Money.parse("500"), bill.paidAgainstDues());
+        assertEquals(Money.ZERO, bill.toAccount());
+        assertEquals(Money.parse("1200"), bill.previousBalance());
+        assertEquals(Money.parse("700"), bill.balanceAfter());
+        assertEquals(1, count("SELECT COUNT(*) FROM bill_items WHERE product_id IS NULL AND name = 'जमा'"
+                + " AND unit = 'PCS' AND qty_milli = 1000 AND rate_paise = 0 AND line_total_paise = 0"));
+        assertEquals(0, count("SELECT COUNT(*) FROM bill_payments"), "nothing was paid for items");
+        assertEquals(2, count("SELECT COUNT(*) FROM customer_ledger WHERE entry_type = 'PAYMENT' AND bill_id = 1"));
+        assertEquals(0, count("SELECT COUNT(*) FROM customer_ledger WHERE entry_type = 'SALE_CREDIT'"));
+
+        List<StatementLine> khata = fixture.services.ledger().statement(ramesh);
+        assertEquals(Money.parse("700"), khata.getLast().balanceAfter(), "khata and bill agree");
+        assertEquals(Money.parse("700"), fixture.services.customers().find(ramesh).orElseThrow().balance());
+        assertEquals(2, count("SELECT COUNT(*) FROM products"), "no product was created");
+
+        String printed = fixture.services.printing().billReceipt(1).toPlainText();
+        assertTrue(printed.contains("1. जमा |  |  | \n----\nएकूण | ₹0\n----\nमागील बाकी | ₹1,200\nजमा | ₹500\n"
+                + "एकूण बाकी | ₹700"), printed);
+    }
+
+    @Test
+    void jamaCanBeOnABillWithOtherItems() {
+        Cart cart = new Cart();
+        cart.addProduct(sugar, Quantity.ONE);
+        cart.addJama();
+
+        SavedBill bill = billing.save(new BillRequest(ramesh, null, cart.lines(), List.of(cash("244"))));
+
+        assertEquals(Money.parse("44"), bill.totals().total(), "जमा adds nothing to the bill");
+        assertEquals(Money.parse("200"), bill.paidAgainstDues());
+        assertEquals(Money.parse("1000"), bill.balanceAfter());
+    }
+
+    @Test
+    void jamaWithAWalkInCustomerIsAZeroBill() {
+        Cart cart = new Cart();
+        cart.addJama();
+
+        SavedBill bill = billing.save(new BillRequest(null, null, cart.lines(), List.of()));
+
+        assertEquals(Money.ZERO, bill.totals().total());
+        assertEquals(0, count("SELECT COUNT(*) FROM customer_ledger WHERE entry_type <> 'OPENING'"));
+    }
+
+    @Test
+    void jamaRateIsAlwaysZero() {
+        CartLine jamaWithRate = Jama.line().withRate(Money.parse("500"));
+
+        assertThrows(ValidationException.class,
+                () -> billing.save(new BillRequest(ramesh, null, List.of(jamaWithRate), List.of())));
+        assertEquals(0, count("SELECT COUNT(*) FROM bills"));
+    }
+
+    @Test
+    void zeroRateIsStillRejectedForProductsAndOneOffItems() {
+        CartLine product = new CartLine(sugar.id(), "Sugar", null, Unit.KG, null, Quantity.ONE, Money.ZERO,
+                sugar.rate(), null);
+        CartLine oneOff = new CartLine(null, "Candles", null, Unit.PCS, null, Quantity.ONE, Money.ZERO, null, null);
+        CartLine typedJama = new CartLine(null, " जमा ", null, Unit.PCS, null, Quantity.ONE, Money.ofRupees(5),
+                null, null);
+
+        for (CartLine line : List.of(product, oneOff, typedJama)) {
+            assertThrows(ValidationException.class,
+                    () -> billing.save(new BillRequest(ramesh, null, List.of(line), List.of())), line.name());
+        }
+        assertEquals(0, count("SELECT COUNT(*) FROM bills"));
+    }
+
+    @Test
+    void cancellingAJamaBillKeepsTheMoneyPaid() {
+        Cart cart = new Cart();
+        cart.addJama();
+        billing.save(new BillRequest(ramesh, null, cart.lines(), List.of(cash("500"))));
+
+        CancelledBill cancelled = billing.cancel(1, "Wrong customer");
+
+        assertEquals(Money.ZERO, cancelled.takenOffKhata());
+        assertEquals(Money.parse("500"), cancelled.duesPaymentKept());
+        assertEquals(Money.parse("700"), fixture.services.customers().find(ramesh).orElseThrow().balance(),
+                "like any money paid towards old dues with a bill, it stays paid");
+    }
+
+    @Test
+    void correctingAJamaBillBringsBackTheJamaLine() {
+        Cart cart = new Cart();
+        cart.addJama();
+        billing.save(new BillRequest(ramesh, null, cart.lines(), List.of(cash("500"))));
+
+        BillCorrection correction = billing.correct(1, "Bill corrected");
+
+        assertEquals(List.of(Jama.line()), correction.lines());
     }
 
     // ------------------------------------------------------------------ bad requests

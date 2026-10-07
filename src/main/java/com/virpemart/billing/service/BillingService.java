@@ -19,6 +19,7 @@ import com.virpemart.billing.model.CancelledBill;
 import com.virpemart.billing.model.Cart;
 import com.virpemart.billing.model.CartLine;
 import com.virpemart.billing.model.CustomerSummary;
+import com.virpemart.billing.model.Jama;
 import com.virpemart.billing.model.LedgerEntryType;
 import com.virpemart.billing.model.Money;
 import com.virpemart.billing.model.PaymentPart;
@@ -309,7 +310,10 @@ public final class BillingService {
 
     // ------------------------------------------------------------------ checks
 
-    /** Re-checks every line and copies product details from the product list. */
+    /**
+     * Re-checks every line and copies product details from the product list. Every rate must be above zero, except
+     * the built-in "जमा" line, whose rate is always exactly zero.
+     */
     private List<CartLine> checkLines(Connection connection, List<CartLine> requested) throws SQLException {
         List<CartLine> checked = new ArrayList<>();
         for (CartLine line : requested) {
@@ -320,10 +324,19 @@ public final class BillingService {
                                 + "\" is no longer in the product list. Remove it from the bill and add it again."));
                 clean = new CartLine(product.id(), product.name(), product.nameMr(), product.unit(),
                         product.packSize(), line.quantity(), line.rate(), product.rate(), product.mrp());
+            } else if (line.isJama()) {
+                if (line.rate() == null || !line.rate().isZero()) {
+                    throw new ValidationException("lines", Jama.NAME + " has no rate. Remove it from the bill and"
+                            + " add it again.");
+                }
+                clean = Jama.line();
             } else {
                 String name = Texts.clean(line.name());
                 if (name == null) {
                     throw new ValidationException("lines", "A one-off item has no name.");
+                }
+                if (name.equals(Jama.NAME)) {
+                    throw new ValidationException("lines", "Choose " + Jama.NAME + " from the product search.");
                 }
                 if (name.length() > MAX_NAME_LENGTH) {
                     throw new ValidationException("lines", "The item name \"" + name + "\" is too long.");
@@ -335,7 +348,7 @@ public final class BillingService {
             } catch (IllegalArgumentException e) {
                 throw new ValidationException("lines", clean.displayName() + ": " + e.getMessage());
             }
-            if (clean.rate() == null || !clean.rate().isPositive()) {
+            if (!clean.isJama() && (clean.rate() == null || !clean.rate().isPositive())) {
                 throw new ValidationException("lines", clean.displayName() + ": the rate must be more than zero.");
             }
             checked.add(clean);

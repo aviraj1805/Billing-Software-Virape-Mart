@@ -1,6 +1,7 @@
 package com.virpemart.billing.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -54,11 +55,9 @@ class PrintServiceTest {
         BufferedImage picture = printing.billPicture(1);
 
         ReceiptRenderer renderer = new ReceiptRenderer(PaperSize.ROLL_58);
-        BufferedImage asPrinted = renderer.toImage(printing.billReceipt(1, false), 3);
-        BufferedImage duplicate = renderer.toImage(printing.billReceipt(1, true), 3);
+        BufferedImage asPrinted = renderer.toImage(printing.billReceipt(1), 3);
         assertEquals(asPrinted.getWidth(), picture.getWidth(), "same paper width as the printed bill");
-        assertEquals(asPrinted.getHeight(), picture.getHeight(), "same lines as the first print");
-        assertTrue(duplicate.getHeight() > picture.getHeight(), "no DUPLICATE COPY line: it is the customer's copy");
+        assertEquals(asPrinted.getHeight(), picture.getHeight(), "same lines as the printed bill");
         assertTrue(fixture.printer.printed.isEmpty(), "nothing is sent to the printer");
         assertEquals(1, fixture.count("SELECT COUNT(*) FROM audit_log WHERE action = 'BILL_SHARED'"
                 + " AND details = 'Bill 1 picture copied to send on WhatsApp' AND user_id = " + fixture.staff.id()));
@@ -94,13 +93,21 @@ class PrintServiceTest {
     }
 
     @Test
-    void reprintIsMarkedAndAudited() {
+    void reprintIsExactlyTheSameAsTheFirstPrintAndIsAudited() {
         fixture.signInStaff();
+        List<String> before = fixture.rows("SELECT * FROM bills");
 
+        printing.printBill(1, false);
+        printing.printBill(1, true);
         printing.printBill(1, true);
 
-        assertTrue(fixture.printer.printed.getFirst().toPlainText().contains("DUPLICATE COPY"));
-        assertEquals(1, fixture.count("SELECT COUNT(*) FROM audit_log WHERE action = 'BILL_REPRINTED'"
+        assertEquals(3, fixture.printer.printed.size());
+        Receipt first = fixture.printer.printed.getFirst();
+        assertEquals(first, fixture.printer.printed.get(1), "no DUPLICATE COPY or other reprint mark");
+        assertEquals(first, fixture.printer.printed.get(2));
+        assertFalse(first.toPlainText().toUpperCase().contains("DUPLICATE"), first.toPlainText());
+        assertEquals(before, fixture.rows("SELECT * FROM bills"), "printing never changes the saved bill");
+        assertEquals(2, fixture.count("SELECT COUNT(*) FROM audit_log WHERE action = 'BILL_REPRINTED'"
                 + " AND user_id = " + fixture.staff.id()));
     }
 

@@ -15,10 +15,12 @@ import com.virpemart.billing.model.BillTotals;
 import com.virpemart.billing.model.Cart;
 import com.virpemart.billing.model.CartLine;
 import com.virpemart.billing.model.CustomerSummary;
+import com.virpemart.billing.model.Jama;
 import com.virpemart.billing.model.Money;
 import com.virpemart.billing.model.PrintAfterSave;
 import com.virpemart.billing.model.Product;
 import com.virpemart.billing.model.Quantity;
+import com.virpemart.billing.model.Unit;
 import com.virpemart.billing.service.BillingService;
 import com.virpemart.billing.service.BusinessRuleException;
 import com.virpemart.billing.service.CustomerService;
@@ -62,6 +64,9 @@ import javafx.stage.Window;
 public class BillingController {
 
     private static final int PRODUCT_RESULTS = 30;
+    /** Stands for the built-in "जमा" item in the product search list. It is never saved as a product. */
+    private static final Product JAMA_CHOICE =
+            new Product(0, "", Jama.NAME, null, null, Unit.PCS, null, Money.ZERO, null, true);
     private static final int CUSTOMER_RESULTS = 20;
     private static final int RECENT_BILLS = 5;
     private static final PseudoClass RATE_CHANGED = PseudoClass.getPseudoClass("rate-changed");
@@ -176,7 +181,7 @@ public class BillingController {
         setUpCartTable();
 
         productPopup = new SearchPopup<>(productSearch,
-                text -> products.search(text, false, PRODUCT_RESULTS),
+                text -> withJama(text, products.search(text, false, PRODUCT_RESULTS)),
                 BillingController::describeProduct,
                 this::chooseProduct);
         customerPopup = new SearchPopup<>(customerSearch,
@@ -231,11 +236,13 @@ public class BillingController {
 
     private void setUpCartTable() {
         column(lineNoColumn, line -> String.valueOf(cart.lines().indexOf(line) + 1));
-        column(itemColumn, line -> line.displayName() + (line.nameMr() == null ? "" : "   " + line.nameMr())
-                + (line.productId() == null ? "   (not in list)" : ""));
-        column(qtyColumn, line -> line.quantity().toPlainString() + " " + line.unit().shortLabel());
-        column(rateColumn, line -> Format.money(line.rate()) + (line.rateChanged() ? " *" : ""));
-        column(amountColumn, line -> Format.money(line.lineTotal()));
+        // The जमा line shows its name only, as on the printed bill: it has no quantity, rate or amount.
+        column(itemColumn, line -> line.isJama() ? line.name()
+                : line.displayName() + (line.nameMr() == null ? "" : "   " + line.nameMr())
+                        + (line.productId() == null ? "   (not in list)" : ""));
+        column(qtyColumn, line -> line.isJama() ? "" : line.quantity().toPlainString() + " " + line.unit().shortLabel());
+        column(rateColumn, line -> line.isJama() ? "" : Format.money(line.rate()) + (line.rateChanged() ? " *" : ""));
+        column(amountColumn, line -> line.isJama() ? "" : Format.money(line.lineTotal()));
         cartTable.setPlaceholder(new Label("No items yet. Type a product name above (F2)."));
         cartTable.setRowFactory(table -> {
             TableRow<CartLine> row = new TableRow<>() {
@@ -301,7 +308,29 @@ public class BillingController {
 
     // ------------------------------------------------------------------ adding items
 
+    /**
+     * Adds the built-in "जमा" item to the search results: first when the whole word is typed ("जमा" or "jama"),
+     * last when only its start is typed ("ज", "jam"), so it never pushes a real product down while typing.
+     */
+    private static List<Product> withJama(String text, List<Product> found) {
+        if (Jama.matchesFully(text)) {
+            List<Product> withJama = new ArrayList<>(found.size() + 1);
+            withJama.add(JAMA_CHOICE);
+            withJama.addAll(found);
+            return withJama;
+        }
+        if (Jama.matchesStart(text)) {
+            List<Product> withJama = new ArrayList<>(found);
+            withJama.add(JAMA_CHOICE);
+            return withJama;
+        }
+        return found;
+    }
+
     private static String describeProduct(Product p) {
+        if (p == JAMA_CHOICE) {
+            return Jama.NAME + "   ·   money paid, no items (rate 0)";
+        }
         return p.displayName() + (p.nameMr() == null ? "" : "   " + p.nameMr()) + "   ·   "
                 + Format.money(p.rate()) + " / " + p.unit().shortLabel() + "   ·   " + p.code();
     }
@@ -311,6 +340,10 @@ public class BillingController {
     }
 
     private void chooseProduct(Product product) {
+        if (product == JAMA_CHOICE) {
+            addJama();
+            return;
+        }
         chosenProduct = product;
         productPopup.setTextQuietly(describeProductShort(product));
         updateQtyUnit();
@@ -408,6 +441,35 @@ public class BillingController {
         entryLabel.setText(message);
     }
 
+    /**
+     * Adds "जमा" to the bill at once: it has no quantity or rate to type. The money paid is typed in the payment
+     * window when the bill is saved.
+     */
+    private void addJama() {
+        int index = cart.addJama();
+        refreshCart();
+        cartTable.getSelectionModel().select(index);
+        cartTable.scrollTo(index);
+        chosenProduct = null;
+        productPopup.setTextQuietly("");
+        qtyField.clear();
+        updateQtyUnit();
+        entryLabel.getStyleClass().remove("error-text");
+        entryLabel.setText(Jama.NAME + " added. Press Save (F12) and type the money paid.");
+        productSearch.requestFocus();
+    }
+
+    /** True (after telling the user) when the line is जमा, which has no quantity or rate to change. */
+    private boolean isJamaLine(CartLine line, String title) {
+        if (line.isJama()) {
+            Dialogs.warning(window(), title, Jama.NAME + " has no quantity or rate. Type the money paid in the"
+                    + " payment window (Save, F12).");
+            cartTable.requestFocus();
+            return true;
+        }
+        return false;
+    }
+
     @FXML
     private void addOneOff() {
         OneOffItemController.open(window(), context, cart).ifPresent(index -> {
@@ -427,6 +489,9 @@ public class BillingController {
             return;
         }
         CartLine line = cart.lines().get(index);
+        if (isJamaLine(line, "Change quantity")) {
+            return;
+        }
         Dialogs.askText(window(), "Change quantity", line.displayName() + "\nNew quantity (" + line.unit().shortLabel() + "):",
                 line.quantity().toPlainString()).ifPresent(text -> {
                     try {
@@ -446,6 +511,9 @@ public class BillingController {
             return;
         }
         CartLine line = cart.lines().get(index);
+        if (isJamaLine(line, "Change rate")) {
+            return;
+        }
         String prompt = line.displayName() + "\nRate for this bill only (₹ per " + line.unit().shortLabel() + ")"
                 + (line.productRate() == null ? "" : "\nNormal rate: " + Format.money(line.productRate())) + ":";
         Dialogs.askText(window(), "Change rate", prompt, line.rate().toInputString()).ifPresent(text -> {

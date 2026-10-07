@@ -3,6 +3,8 @@ package com.virpemart.billing.service;
 import java.nio.file.Path;
 import java.sql.ResultSet;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.virpemart.billing.db.Database;
 import com.virpemart.billing.db.TestDatabases;
@@ -46,6 +48,24 @@ final class TestFixture {
                 rs.next();
                 return rs.getLong(1);
             }
+        });
+    }
+
+    /** Every row of the query as text ("a | b | c"), to check that something was left exactly as it was. */
+    List<String> rows(String sql) {
+        return database.query(c -> {
+            List<String> rows = new ArrayList<>();
+            try (Statement s = c.createStatement(); ResultSet rs = s.executeQuery(sql)) {
+                int columns = rs.getMetaData().getColumnCount();
+                while (rs.next()) {
+                    StringBuilder row = new StringBuilder();
+                    for (int i = 1; i <= columns; i++) {
+                        row.append(i > 1 ? " | " : "").append(rs.getString(i));
+                    }
+                    rows.add(row.toString());
+                }
+            }
+            return rows;
         });
     }
 

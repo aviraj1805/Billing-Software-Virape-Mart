@@ -27,7 +27,7 @@ import com.virpemart.billing.print.ReceiptLine.Text;
  * Decides what a printed bill says, line by line. It does not draw anything, so it can be tested easily.
  *
  * <p>Layout, top to bottom: shop heading, bill number and date, customer (name exactly as saved, and phone
- * number), the items table (Item, Qty, Rate, Amount), the bill total, then payment. A khata customer's bill shows the previous dues,
+ * number, both bold), the items table (Item, Qty, Rate, Amount), the bill total, then payment. A khata customer's bill shows the previous dues,
  * what was paid now and the balance left, in the user's Marathi wording. Subtotal, round off, MRP and savings are
  * not printed (the user's choice); they are still saved with the bill.
  */
@@ -47,17 +47,11 @@ public final class ReceiptBuilder {
     }
 
     /**
-     * The printed form of a saved bill.
-     *
-     * @param reprint true when the bill is printed again later; it is then marked "DUPLICATE COPY"
+     * The printed form of a saved bill. Printing a bill again gives exactly the same paper (no "duplicate" mark,
+     * the user's choice in version 1.3.0); only a cancelled bill is marked.
      */
-    public static Receipt forBill(BillDetails bill, ShopDetails shop, boolean reprint) {
-        String banner = null;
-        if (bill.isCancelled()) {
-            banner = "*** CANCELLED BILL ***";
-        } else if (reprint) {
-            banner = "DUPLICATE COPY";
-        }
+    public static Receipt forBill(BillDetails bill, ShopDetails shop) {
+        String banner = bill.isCancelled() ? "*** CANCELLED BILL ***" : null;
         return new Receipt(shop.name() + " bill " + bill.billNo(), build(bill, shop, banner));
     }
 
@@ -90,7 +84,7 @@ public final class ReceiptBuilder {
         if (bill.isCancelled()) {
             out.add(centered("Reason: " + bill.cancelReason(), Style.SMALL));
         }
-        out.add(new Pair("Bill No. " + bill.billNo(), DATE_TIME.format(bill.createdAt()), Style.BOLD));
+        out.add(new Pair("Bill No. " + bill.billNo(), DATE_TIME.format(bill.createdAt()), Style.NORMAL));
         customer(out, bill);
         out.add(RULE);
         out.add(new ItemRow("Item", "Qty", "Rate", "Amount", Style.SMALL));
@@ -128,7 +122,8 @@ public final class ReceiptBuilder {
 
     /**
      * The customer's name exactly as it was saved (no conversion, the user's choice), with the phone number on the
-     * right: "उमेश विरपे   No. 9876501234". No customer number and no "Customer:" label.
+     * right: "उमेश विरपे   No. 9876501234". Both are bold (the user's choice, version 1.3.0). No customer number and
+     * no "Customer:" label.
      */
     private static void customer(List<ReceiptLine> out, BillDetails bill) {
         String name = bill.customerName();
@@ -136,15 +131,20 @@ public final class ReceiptBuilder {
             return;
         }
         if (bill.customerPhone() != null) {
-            out.add(new Pair(name, "No. " + bill.customerPhone(), Style.NORMAL));
+            out.add(new Pair(name, "No. " + bill.customerPhone(), Style.BOLD));
         } else {
-            out.add(left(name, Style.NORMAL));
+            out.add(left(name, Style.BOLD));
         }
     }
 
+    /** One row per item. The "जमा" line prints its name only: it has no quantity, rate or amount. */
     private static void items(List<ReceiptLine> out, List<CartLine> lines) {
         for (int i = 0; i < lines.size(); i++) {
             CartLine line = lines.get(i);
+            if (line.isJama()) {
+                out.add(new ItemRow((i + 1) + ". " + printedName(line), "", "", "", Style.NORMAL));
+                continue;
+            }
             out.add(new ItemRow((i + 1) + ". " + printedName(line), quantity(line.quantity(), line.unit()),
                     line.rate().toGroupedString(), line.lineTotal().toGroupedString(), Style.NORMAL));
         }
@@ -180,12 +180,9 @@ public final class ReceiptBuilder {
         out.add(new Pair(BALANCE_DUES, rupees(bill.balanceAfter()), Style.LARGE));
     }
 
-    /** "1 kg", "1.5 kg" or "0.25 kg" for loose items (no needless zeros, the user's choice), "2" for packets. */
+    /** "1 kg", "1.5 kg", "5 Ltr" or "3 Pkt": no needless zeros, with the unit (the user's choices). */
     static String quantity(Quantity quantity, Unit unit) {
-        if (unit.isLoose()) {
-            return quantity.toPlainString() + " " + unit.shortLabel();
-        }
-        return quantity.toPlainString();
+        return quantity.toPlainString() + " " + unit.shortLabel();
     }
 
     /** "₹1,250", "₹45.5" or "-₹5". */

@@ -34,4 +34,11 @@ class UnitTest {
         assertTrue(Unit.L.isLoose());
         assertFalse(Unit.PCS.isLoose());
     }
+
+    @Test
+    void unitsAfterANumberReadKgLtrAndPkt() {
+        assertEquals("kg", Unit.KG.shortLabel());
+        assertEquals("Ltr", Unit.L.shortLabel());
+        assertEquals("Pkt", Unit.PCS.shortLabel());
+    }
 }

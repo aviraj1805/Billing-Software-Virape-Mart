@@ -309,7 +309,7 @@ class BillHistoryTest {
         billing.save(new BillRequest(null, null, lines(), List.of(cash("122"))));
         billing.cancel(1, "Wrong items");
 
-        String text = fixture.services.printing().billReceipt(1, true).toPlainText();
+        String text = fixture.services.printing().billReceipt(1).toPlainText();
 
         assertTrue(text.contains("*** CANCELLED BILL ***\nReason: Wrong items"), text);
         assertFalse(text.contains("DUPLICATE"), text);

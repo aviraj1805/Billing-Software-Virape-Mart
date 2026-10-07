@@ -35,6 +35,11 @@ public record CartLine(
         return mrp.minus(rate).times(quantity);
     }
 
+    /** True for the built-in "जमा" line (rate 0, see {@link Jama}). */
+    public boolean isJama() {
+        return Jama.isJama(this);
+    }
+
     /** True if the rate was changed for this bill. */
     public boolean rateChanged() {
         return productRate != null && !productRate.equals(rate);
