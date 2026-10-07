@@ -65,7 +65,7 @@ starts `App`, the JavaFX application class. This is required when JavaFX is on t
 | `products` | Short code, name, Marathi name, category (kept but no longer shown; an edit keeps it), unit (KG or L for loose items, PCS for packed items), pack size text, rate, optional MRP (kept but no longer typed or shown; an edit keeps it), active flag |
 | `customers` | Customer number, name, phone, address, notes, active flag |
 | `bills` | Bill number, date and time, customer or walk-in, subtotal, round-off, total, paid now, added to account, status, cancel details, created by |
-| `bill_items` | Bill, product or none for one-off items, snapshot fields, quantity, rate, original rate if changed, line total |
+| `bill_items` | Bill, product or none for one-off items and the built-in "जमा" line (rate 0, see `model.Jama`), snapshot fields, quantity, rate, original rate if changed, line total |
 | `bill_payments` | Bill, mode CASH, UPI or CARD, amount |
 | `customer_ledger` | Customer, entry type, signed amount, bill, payment mode, note, user, time |
 | `audit_log` | Who did what and when: rate changes, product edits, cancellations, restores, settings |

@@ -64,6 +64,9 @@ checklist in section 1. Section 4 gives the assistant the technical facts it nee
 | **Ctrl+V pastes nothing in WhatsApp** | Something else was copied after clicking **Send on WhatsApp**, or the chat's message box was not clicked. | Click **Send on WhatsApp** again, click in the chat's message box, then press **Ctrl+V**. Or click the **+** (attach) button in the chat, choose **Photos & videos**, and pick `bill-<number>.png` from `%LOCALAPPDATA%\VirpeMart\bill-images`. |
 | **Send on WhatsApp** is greyed out | The chosen bill is cancelled. | Choose the corrected (new) bill instead. |
 | A customer's name is spelled wrong on the bill | The bill prints the name exactly as it was saved in **Customers**. | Fix the name in **Customers → Edit**. New bills use the new name; bills already saved keep the name they were saved with. |
+| **"जमा has no quantity or rate. Type the money paid in the payment window (Save, F12)."** | **Change qty** or **Change rate** was used on the **जमा** line. Its rate is always 0. | Leave the जमा line as it is. Press **F12** and type the money received in Cash, UPI or Card. To remove it, select it and press **Del**. |
+| **"जमा is in the product search. Type जमा (or jama) there."** | जमा was typed as an **Item not in list (F4)**. | Close that window. Type **जमा** or **jama** in the product search box and press **Enter**. |
+| The product search list does not show a product | Only the first 30 matches are listed. | Type more of the name, or the product code (like P0012). Scroll the list with the mouse wheel, the scroll bar, or **↓ / Page Down**. |
 | Marathi letters show as empty boxes | The Windows font "Nirmala UI" is missing (very old Windows). | Use Windows 10 or 11. |
 | Screen text is cut off or windows are too big | Windows display scaling is very high on a small screen. | Windows Settings → Display → Scale: try 100% or 125%. |
 | Wrong date or time on bills | The laptop clock or time zone is wrong. The app uses the laptop's clock. | Windows Settings → Time & language → set the time zone to **(UTC+05:30) Chennai, Kolkata, Mumbai, New Delhi** and turn on "Set time automatically". Bills already saved keep their time. |
@@ -131,8 +134,13 @@ top bar then shows "DEVELOPMENT DATA". It must **not** be set on the shop laptop
 - Paper setting: 58 mm roll (48 mm printed width), 80 mm roll (72 mm printed width) or A4 (150 mm column).
 - Items print in four columns (Item, Qty, Rate, Amount). Qty, Rate and Amount are as wide as their widest value on
   that bill; the item name gets the rest and wraps inside its column. On a 58 mm roll long names take two lines.
-- The customer's name prints exactly as saved (`bills.customer_name`, plus `bills.customer_phone`); there is no
-  conversion. `bills.customer_name_mr` holds a converted copy only on bills from version 1.1.0 and is not printed.
+- The customer's name prints exactly as saved (`bills.customer_name`, plus `bills.customer_phone`), **bold**; there is
+  no conversion. `bills.customer_name_mr` holds a converted copy only on bills from version 1.1.0 and is not printed.
+  Bill number and date print in normal letters.
+- Quantities print with their unit: `2 kg`, `5 Ltr`, `3 Pkt`. The **जमा** line prints its name only (no Qty, Rate or
+  Amount).
+- Since version 1.3.0 a bill printed again is exactly the same as the first print: there is **no "DUPLICATE COPY"
+  line**. Each reprint is still recorded in the Activity log ("printed again"). Only a cancelled bill is marked.
   For rolls the app asks the driver for a page exactly as long as the bill.
 - **Not yet tuned for a specific printer model.** When a real printer is available, report: printer brand and
   model, paper width, a photo of the test bill, and what is wrong (horizontal position, top margin, width,

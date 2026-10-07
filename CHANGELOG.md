@@ -4,6 +4,33 @@ All notable changes to this project are recorded here, newest first.
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-10-07
+
+Changes asked for by the owner. **No database change**: the schema stays at version 4, and all existing data
+(customers, khata, products, bills) is kept exactly as it was. Install it on each laptop (the shop laptop and the
+second laptop) with INSTALLATION.md section 10; each keeps its own data. Going back to 1.2.0 needs no restore.
+
+### Billing
+
+- **Product search list**: bigger (up to 12 whole rows, 16 px text), as wide as its longest row, never scrolls
+  sideways. Up/Down scroll only as far as needed (the list no longer jumps), Page Up/Page Down jump 11 rows, and a
+  click on the scroll bar now only scrolls (before, it chose the highlighted product and closed the list). Near the
+  right edge of the screen (the customer search) the list opens further left so rows are not cut off. The search
+  itself is unchanged.
+- **जमा**: a built-in item for a khata customer who only pays money. Type जमा or jama in product search and press
+  Enter: it is added at once, at rate 0 (locked). Type the money in the payment window; the bill prints मागील बाकी,
+  जमा and एकूण बाकी as usual. It is not a product row, so the product list and the database are unchanged. Zero
+  rates are still refused for products and one-off items.
+- **Units**: quantities show `2 kg`, `5 Ltr`, `3 Pkt` (before: "5 litre", "3 pc").
+
+### Printed bill
+
+- Customer name and phone number are **bold**; bill number and date-time are normal (swapped).
+- **No "DUPLICATE COPY"** line on a reprint: printing again gives exactly the same paper. Reprints are still
+  recorded in the Activity log.
+- Quantities print with their unit: `2 kg`, `5 Ltr`, `3 Pkt` (packets printed no unit before). The जमा line prints
+  its name only.
+
 ## [1.2.0] - 2026-10-06
 
 Changes asked for by the owner after two days of use at the shop. **No database change**: the schema stays at

@@ -24,13 +24,15 @@ The menu on the left has five pages: **Billing**, **Products**, **Customers**, *
 ### Add items
 
 1. Press **F2** (or click the big search box) and type part of the product name — English, Marathi or the
-   product code. A list drops down.
-2. Use **↓ ↑** to pick the product and press **Enter**.
+   product code. A list drops down (up to 12 products at a time; scroll for more).
+2. Use **↓ ↑** to pick the product and press **Enter**. **Page Down / Page Up** jump 11 rows. With the mouse, scroll
+   with the wheel or the scroll bar and **click** the product. **Esc** closes the list.
 3. Type the **quantity** and press **Enter**. The cursor moves to the **Rate** box (₹), which already shows the
    product's normal rate.
    - Loose items (sold per kg or litre): type the weight in kg with a dot. `0.250` = 250 grams, `0.5` = half kg,
      `1.25` = one and a quarter kg. The rate is per kg.
    - Packets / pieces: whole numbers only, like `1`, `2`, `10`.
+   - The quantity shows with its unit, on the screen and on the printed bill: `2 kg`, `5 Ltr`, `3 Pkt`.
 4. Press **Enter** again to add the item at that rate. To charge a different rate on this bill, just type the new
    rate (it replaces the old one) and press **Enter**. The product's normal rate does **not** change; the line shows
    the rate with a `*`, and the change is recorded in the Activity log.
@@ -44,6 +46,19 @@ Click the item in the list (or press ↓ from the empty search box), then:
 - **Change rate** — change the rate of an item already on the bill, for this bill only. The product's normal rate
   does not change. The change is recorded in the Activity log.
 - **Remove (Del)** — takes the item off the bill.
+
+### Money paid, no items: जमा
+
+When a khata customer comes **only to pay** (no shopping):
+
+1. Choose the customer (**F3**).
+2. In the product search type **जमा** (or **jama**) and press **Enter**. The line **जमा** is added at once: it has no
+   quantity, rate or amount, and the bill total stays **₹0**.
+3. Press **F12** and type the money received in **Cash / UPI / Card**, then **Enter**.
+
+The printed bill shows **1. जमा**, then **मागील बाकी** (dues before), **जमा** (money paid) and **एकूण बाकी** (dues
+left). The payment is in the customer's khata like any payment. जमा can also be added to a bill with items; it adds
+nothing to the total. Its rate cannot be changed: always type the money in the payment window.
 
 ### Item not in the product list
 
@@ -101,15 +116,15 @@ Press **F9** (or click **Recent bills (F9)** at the top). A list of the newest 2
 already chosen.
 
 - **See / print (Enter)**: shows the bill exactly as printed, with a **Print** button. So **F9 then Enter** brings
-  up the last bill. Use the **arrow keys** to choose the 2nd, 3rd or any earlier bill. A reprinted bill says
-  **DUPLICATE COPY**.
+  up the last bill. Use the **arrow keys** to choose the 2nd, 3rd or any earlier bill. A bill printed again looks
+  exactly like the first print (no "duplicate" mark).
 - **Older bill**: just type its bill number (or the customer's name or phone); the list shows the matching bills.
 - **Send on WhatsApp**: sends the chosen bill to the customer as a photo.
   1. Click **Send on WhatsApp**. The app copies the bill as a picture and opens WhatsApp.
   2. In WhatsApp, search the customer's name and open their chat.
   3. Press **Ctrl+V**: the bill photo appears. Press **Enter** to send it.
 
-  The photo looks exactly like the printed bill (without "DUPLICATE COPY"). Nothing is printed. A cancelled bill
+  The photo looks exactly like the printed bill. Nothing is printed. A cancelled bill
   cannot be sent. A copy of the photo is also kept in `%LOCALAPPDATA%\VirpeMart\bill-images`.
 - **Correct bill…**: for a bill with a mistake (wrong item, wrong quantity, wrong customer). The old bill is
   cancelled (it stays in the list marked **CANCELLED**; its number is never used again) and all its items and its

@@ -4,8 +4,10 @@ Guidance for Claude Code when working in this repository.
 
 ## Project
 
-Offline desktop billing software for Virpe Mart, the user's father's grocery store. It runs on one
-Windows laptop with one printer. Two main areas: **Products** and **Billing**, with account (credit)
+Offline desktop billing software for Virpe Mart, the user's father's grocery store. It runs on the shop
+laptop with one printer, and also on a second laptop (the user's sister's). **Each laptop keeps its own data**
+(no syncing): a new version must reach both as the same zip without touching their data. Prefer changes that need
+no database upgrade; if one is needed, it must be backward-compatible. Two main areas: **Products** and **Billing**, with account (credit)
 customers.
 
 - Business rules: `docs/requirements.md` is the source of truth. Read it before changing behaviour.
@@ -171,23 +173,29 @@ Test anything that cannot be undone (such as cancelling a bill) on a copy of `de
   (customers, old dues as the OPENING entry). Never compute a balance anywhere else.
 - Billing: `model.Cart` holds bill lines and ALL bill arithmetic (`Cart.totalsOf`); `BillingService.save`
   re-checks and recalculates everything in one transaction. `ui.common.SearchPopup` is the keyboard
-  drop-down used for product and customer search. Billing is the start screen; `BillingController.unsavedWork`
+  drop-down used for product and customer search (fixed row height, scrolls via `VirtualFlow.scrollTo` so the list
+  does not jump, only a click on a row chooses; keep its `FONT_SIZE` equal to `.search-popup` in `app.css`).
+- जमा (`model.Jama`): a built-in bill line with no product, rate locked at 0, for a customer who only pays. It is
+  **not** a product row (`products.rate_paise > 0`). `BillingController` adds it to product search results
+  (`JAMA_CHOICE`, never saved); `Cart.addJama` adds it once; `BillingService.checkLines` allows rate 0 only for it.
+  Never relax the zero-rate checks for other lines. Billing is the start screen; `BillingController.unsavedWork`
   feeds the close-window warning.
 - The main window opens maximized. Tables use `CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS` so columns share space;
   use short date formats (`Format.dateTimeShort`) and row tooltips for long text.
 - Shared validation: a service `check(...)` method validates typed input once and is reused by forms and
   imports (see `ProductService.check`).
 - Owner-only buttons are hidden for STAFF, but the service still enforces the rule.
-- Printed bill: items are `ReceiptLine.ItemRow` (Item, Qty, Rate, Amount columns). The customer line is the name
-  exactly as saved (the owner types names in Marathi; never convert a name) plus "No. phone"; never print the
+- Printed bill: items are `ReceiptLine.ItemRow` (Item, Qty, Rate, Amount columns; Qty with its unit, `Unit.shortLabel`:
+  kg / Ltr / Pkt). The customer line (bold; bill number and date are normal) is the name exactly as saved (the owner types names in Marathi; never convert a name) plus "No. phone"; never print the
   customer number. `BillingService.save` stores `customer_phone` on the bill (V4). `bills.customer_name_mr` was only
   filled by version 1.1.0 (automatic conversion, removed in 1.2.0); it is kept but never read or written.
 - Printing: `print.ReceiptBuilder` decides the bill's lines (test it with `Receipt.toPlainText()`),
   `print.ReceiptRenderer` draws them (Nirmala UI font) for paper and for preview pictures, and
-  `service.PrintService` prints, reprints (audited, "DUPLICATE COPY") and test-prints. Printing always runs
+  `service.PrintService` prints, reprints (audited only: the paper is identical, no "DUPLICATE COPY" since 1.3.0) and
+  test-prints. Printing always runs
   after the bill is saved and off the FX thread. Tests use `FakePrinter`; never print in tests.
 - Recent bills: `ui.billing.RecentBillsController` (F9 on Billing, newest 20 via `searchBills`, see/print, correct,
-  cancel, Send on WhatsApp). WhatsApp: `PrintService.billPicture` (no DUPLICATE mark, audited `BILL_SHARED`) and
+  cancel, Send on WhatsApp). WhatsApp: `PrintService.billPicture` (audited `BILL_SHARED`) and
   `ui.common.WhatsAppShare` (clipboard + PNG in `AppPaths.billImagesDir()` + opens `whatsapp://send`); the user
   pastes with Ctrl+V. Never send anything by itself. Do not screenshot the user's WhatsApp when testing. Correct = `BillingService.correct` (cancel + `BillCorrection` with customer and lines at the charged rates),
   opened through `CancelBillController.openCorrection`; `BillingController.loadCorrection` puts it on screen and holds
@@ -242,6 +250,7 @@ Test anything that cannot be undone (such as cancelling a bill) on a copy of `de
 | 7. Backup and audit | No login (user's decision), automatic owner sign-in, backups, restore, damaged-file check, activity log | Done |
 | 8. Packaging and go-live | Version 1.0.0 zip (self-contained), installation guide, user guide, troubleshooting guide, GitHub | Done (real printer and shop laptop pending) |
 | 9. Shop feedback (1.2.0) | Customer name as saved, no needless zeros, MRP hidden, categories removed, Rate box on Billing, Send on WhatsApp, Download to Excel. No database change | Done (update on the shop laptop pending) |
+| 10. Billing fixes (1.3.0) | Bigger search list with reliable keyboard/mouse scrolling, customer name/phone bold on the bill, no DUPLICATE COPY, built-in जमा (rate 0), units kg/Ltr/Pkt. No database change | Done (update on both laptops pending) |
 
 ## Pending inputs from the user
 

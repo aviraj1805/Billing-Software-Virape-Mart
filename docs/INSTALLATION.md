@@ -161,6 +161,11 @@ backups are lost too. So once a week:
 The shop's data is in `%LOCALAPPDATA%\VirpeMart` (section 8), not in the program folder, so a new version never
 replaces it. Still, follow every step: it takes about 15 minutes. Do it when the shop is quiet.
 
+**More than one laptop** (for example the shop laptop and a second laptop at home): each laptop has its **own**
+data. Update each laptop separately with the same zip and the same steps below. Copy only the **zip** between
+laptops, **never** the `%LOCALAPPDATA%\VirpeMart` folder: copying it would replace that laptop's bills, khata and
+products with the other laptop's.
+
 1. In the app, **write down**: the number of customers, the balance of 2–3 customers, the number of products, and
    the last bill number (**Recent bills (F9)**).
 2. **Settings → Backups → Back up now to a folder or pendrive…**: save to the pendrive and wait for "Backup saved".
@@ -180,7 +185,7 @@ replaces it. Still, follow every step: it takes about 15 minutes. Do it when the
 
 **If the new version has a problem**: close the app, rename `C:\VirpeMart` to `C:\VirpeMart-new`, rename
 `C:\VirpeMart-old` back to `C:\VirpeMart`, and start the app. When a version did not change the database (for
-example 1.1.0 → 1.2.0), the old version works with all the data, including bills made with the new version. Only if
+example 1.1.0 → 1.2.0 and 1.2.0 → 1.3.0), the old version works with all the data, including bills made with the new version. Only if
 the data itself is damaged: **Settings → Backups → Restore a backup…** from the pendrive.
 
 ---

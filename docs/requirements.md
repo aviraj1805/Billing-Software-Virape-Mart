@@ -22,6 +22,7 @@ It has two main areas:
 | Barcodes and scales | Not used. Products are found by name or a short product code. |
 | Language | English screens. Each product can also have a Marathi name, which is searchable and printed on the bill. |
 | One-off items | If an item is not in the product list, it can be typed directly on a bill with name, rate and quantity. It is saved on that bill only. No product is created. |
+| Product search list | (The user's request, 2026-10-07, version 1.3.0.) The drop-down under the search box shows up to **12 whole rows** (fewer if the screen has less room), is wide enough for the longest row (near the right edge of the screen it opens further left), and never scrolls sideways. **Up/Down** move one row and scroll only as far as needed; **Page Up/Page Down** move 11 rows; **Enter** or a **click** on a row chooses; the scroll bar and the mouse wheel only scroll. The search itself (what matches, and in which order) is unchanged. The customer search uses the same drop-down. |
 | Rate change on a bill | Owner and helper can change a line's rate for that bill only. The product's saved rate does not change. Every change is recorded with who made it. Since version 1.2.0 (the user's choice, 2026-10-06) the Billing screen has a **Rate box next to Qty** (Product, Qty, Rate), filled in with the product's current saved rate: Enter in Qty moves to Rate, Enter in Rate adds the item. Typing another rate there is the same as a rate change for this bill only. |
 | Round-off | The final total is rounded to the nearest rupee. |
 | MRP | **Not shown anywhere** (the user's choice, 2026-10-06, version 1.2.0): no MRP column or box in Billing or Products, no "You saved" line, and MRP is not printed. The MRP already stored for a product is **kept untouched** in the database (editing a product keeps it), and bill lines still keep it in their snapshot. New products have no MRP; an MRP column in an imported sheet is ignored. |
@@ -35,7 +36,7 @@ It has two main areas:
 | Reports | Daily sales summary with the Cash, UPI and Card split. Sales for a date range. |
 | Existing product list | Kept in Excel or Google Sheets, so the app provides a CSV import. |
 | Backups | Kept on the store laptop only. The user accepted the risk of theft or disk failure. |
-| Laptops | Developed on one laptop. The packaged app is installed on a different store laptop. |
+| Laptops | Developed on one laptop. The packaged app is installed on the store laptop and on a second laptop (the user's sister's). **Each laptop keeps its own data**; there is no syncing of data. A new version reaches each laptop as the same zip, installed by the steps in INSTALLATION.md section 10, and must keep that laptop's data. Prefer changes without a database upgrade; when one is needed, it must be backward-compatible and back up first (the migration runner does). |
 | Printer | Model not known yet. Printing works with any printer installed in Windows: 58 mm or 80 mm receipt rolls, or A4 sheets. |
 
 ## Products (confirmed in Phase 2)
@@ -89,6 +90,19 @@ These billing rules were chosen as sensible defaults and can be changed:
 - Adding the same product again increases its quantity on the existing line.
 - Held bills are kept only while the app is open; closing the app with an open or held bill asks first.
 
+### जमा: money paid without items (the user's choices, 2026-10-07, version 1.3.0)
+
+| Topic | Decision |
+|---|---|
+| Purpose | A customer with khata dues comes only to pay. The bill shows what they paid and the dues left. |
+| How it exists | A **built-in item**, not a row in the product list (products must have a rate above zero, and changing that would need a database upgrade). It does not appear in Products. **No database change**: on a bill it is saved like a one-off item (no product), named जमा, 1 piece at rate 0. |
+| Finding it | Product search: typing **जमा** or **jama** lists it first; typing only its start (ज, जम, j, ja, jam) lists it last, so it never pushes a real product down. |
+| Adding it | Choosing it adds it to the bill at once (no Qty or Rate to type). A bill has it at most once. |
+| Rate | **Locked at 0.** Change qty and Change rate refuse it; the money paid is typed in the payment window. Only the जमा line may have rate 0: products and one-off items still need a rate above zero, on screen and when saving. A one-off item cannot be named जमा. |
+| Who can use it | **No extra rules**: any bill, khata or walk-in, alone or with other items. A walk-in bill with only जमा is a ₹0 bill (a walk-in customer pays exactly the bill). |
+| Money | Uses the existing khata rule: for a khata customer, money beyond the bill total is a khata payment ("Paid with bill N") against old dues, or an advance. Reports count it as money received that day. Cancelling the bill keeps it paid, like any dues payment made with a bill. |
+| Screen and print | The line shows and prints its name only: "1. जमा" with Qty, Rate and Amount blank. Below it the usual khata lines: एकूण ₹0, मागील बाकी, जमा (money paid), एकूण बाकी. |
+
 ## Printing (built in Phase 5)
 
 The printer model and the exact bill heading were not known yet, so both are **settings the owner fills in**
@@ -108,6 +122,8 @@ The printer model and the exact bill heading were not known yet, so both are **s
     (for example a one-off item) prints its English name so the line is not blank.
   - The customer line is the customer's name **exactly as it was saved**, with the phone number on the right:
     `उमेश विरपे        No. 9876501234`. No customer number (C0003) and no "Customer:" label.
+  - **Bold** (changed by the user on 2026-10-07, version 1.3.0): the customer's name and phone number are bold; the
+    bill number and date-time are normal (before, it was the other way round). A walk-in name is bold too.
     (Changed by the user on 2026-10-06, version 1.2.0: the owner types customer names in Marathi, and the automatic
     English-to-Marathi conversion of version 1.1.0 is removed. A name is never converted or changed.)
   - A walk-in customer's typed name is printed the same way: as typed, no label, no phone.
@@ -122,20 +138,26 @@ The printer model and the exact bill heading were not known yet, so both are **s
   - These Marathi labels are the only wording for these lines; no English is printed next to them.
 - **Numbers without needless zeros** (the user's choice, 2026-10-06, version 1.2.0), on the printed bill and on every
   screen: whole rupees show as `₹50`, `₹155`, `₹1,250`; paise show without a trailing zero: `₹45.5`, `₹12.25`.
-  Quantities: `1 kg`, `2 kg`, `1.5 kg`, `0.25 kg`, `0.333 kg`. Only the text is shorter: amounts and quantities
+  Quantities: `1 kg`, `2 kg`, `1.5 kg`, `0.25 kg`, `0.333 kg`.
+- **Units after a quantity** (the user's choice, 2026-10-07, version 1.3.0), on the Billing screen and on the printed
+  bill: `kg` for kg, **`Ltr`** for litre and **`Pkt`** for packet/piece items: `2 kg`, `5 Ltr`, `3 Pkt`. (Before,
+  litre showed as "litre" and packets printed no unit.) Rates read "₹50 / Ltr", "₹28 / Pkt". Only the text changed:
+  units are stored as before (KG, L, PCS). Only the text is shorter: amounts and quantities
   are stored and calculated exactly as before (paise and thousandths), and nothing is rounded for display.
   The activity log keeps its two-decimal text (`44.00 -> 46.00`), so old and new entries read the same.
 - Printing happens when the owner presses **Print** (the "Print?" question after saving, or the Print button when
   reprinting).
 - Paper fit, centring, margins and spacing are **not tuned for a specific printer yet**. They will be adjusted after the
   printer is bought and a real test print is checked.
-- Printing a bill again is marked **"DUPLICATE COPY"** and recorded in the audit log. Anyone can reprint.
+- Printing a bill again gives **exactly the same paper** as the first print (changed by the user on 2026-10-07,
+  version 1.3.0: the "DUPLICATE COPY" line is removed, and there is no other reprint mark). Printing never changes
+  the saved bill. Each reprint is still recorded in the audit log. Anyone can reprint. A cancelled bill is still
+  marked "*** CANCELLED BILL ***".
 - A printer problem never affects the saved bill: the screen says "saved but NOT printed" and the bill can be
   reprinted from "Recent bills" (F9).
 - **Send on WhatsApp** (the user's choice, 2026-10-06, version 1.2.0): a button in **Recent bills (F9)** only.
   The shop laptop uses the **WhatsApp Desktop** app. WhatsApp offers no way for another program to attach a photo,
-  so the agreed flow is: the app draws the bill as a picture (exactly like the printed bill, same paper width, no
-  "DUPLICATE COPY" mark), copies it to the Windows clipboard, saves a copy as
+  so the agreed flow is: the app draws the bill as a picture (exactly like the printed bill, same paper width), copies it to the Windows clipboard, saves a copy as
   `%LOCALAPPDATA%\VirpeMart\bill-images\bill-<number>.png`, and opens WhatsApp (link `whatsapp://send`). The owner
   searches the customer's chat, presses Ctrl+V, then Enter. The app never chooses the chat and never sends by itself.
   A cancelled bill cannot be sent. Each picture made is recorded in the activity log ("Bill sent on WhatsApp").
