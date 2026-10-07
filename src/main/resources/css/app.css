@@ -305,7 +305,7 @@
 }
 
 .search-popup {
-    -fx-font-size: 15px;
+    -fx-font-size: 16px; /* SearchPopup.FONT_SIZE measures rows with this size */
     -fx-border-color: #2f6f4f;
     -fx-border-width: 1;
 }
