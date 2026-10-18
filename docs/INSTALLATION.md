@@ -185,7 +185,7 @@ products with the other laptop's.
 
 **If the new version has a problem**: close the app, rename `C:\VirpeMart` to `C:\VirpeMart-new`, rename
 `C:\VirpeMart-old` back to `C:\VirpeMart`, and start the app. When a version did not change the database (for
-example 1.1.0 → 1.2.0 and 1.2.0 → 1.3.0), the old version works with all the data, including bills made with the new version. Only if
+example 1.1.0 → 1.2.0, 1.2.0 → 1.3.0 and 1.3.0 → 1.4.0), the old version works with all the data, including bills made with the new version. Only if
 the data itself is damaged: **Settings → Backups → Restore a backup…** from the pendrive.
 
 ---

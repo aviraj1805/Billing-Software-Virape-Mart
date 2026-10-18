@@ -266,16 +266,17 @@ class ReceiptBuilderTest {
     }
 
     @Test
-    void looseQuantitiesHaveThreeDecimalsAndPacketsAWholeNumberWithoutAUnit() {
+    void partsOfAKgHaveThreeDecimalsAndWholeNumbersNoneWithoutAUnit() {
         assertEquals("0.250", ReceiptBuilder.quantity(Quantity.parse("0.25"), Unit.KG));
         assertEquals("0.500", ReceiptBuilder.quantity(Quantity.parse("0.5"), Unit.KG));
         assertEquals("0.750", ReceiptBuilder.quantity(Quantity.parse("0.750"), Unit.KG));
         assertEquals("0.200", ReceiptBuilder.quantity(Quantity.parse("0.2"), Unit.KG));
         assertEquals("0.333", ReceiptBuilder.quantity(Quantity.parse("0.333"), Unit.KG));
-        assertEquals("1.000", ReceiptBuilder.quantity(Quantity.parse("1"), Unit.KG));
+        assertEquals("1", ReceiptBuilder.quantity(Quantity.parse("1"), Unit.KG));
+        assertEquals("2", ReceiptBuilder.quantity(Quantity.parse("2.000"), Unit.KG));
         assertEquals("1.500", ReceiptBuilder.quantity(Quantity.parse("1.5"), Unit.KG));
         assertEquals("0.500", ReceiptBuilder.quantity(Quantity.parse("0.5"), Unit.L));
-        assertEquals("5.000", ReceiptBuilder.quantity(Quantity.ofWhole(5), Unit.L));
+        assertEquals("5", ReceiptBuilder.quantity(Quantity.ofWhole(5), Unit.L));
         assertEquals("3", ReceiptBuilder.quantity(Quantity.ofWhole(3), Unit.PCS));
         assertEquals("1", ReceiptBuilder.quantity(Quantity.ONE, Unit.PCS));
     }

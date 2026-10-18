@@ -22,7 +22,7 @@ It has two main areas:
 | Barcodes and scales | Not used. Products are found by name or a short product code. |
 | Language | English screens. Each product can also have a Marathi name, which is searchable and printed on the bill. |
 | One-off items | If an item is not in the product list, it can be typed directly on a bill with name, rate and quantity. It is saved on that bill only. No product is created. |
-| Product search list | (The user's request, 2026-10-07, version 1.3.0.) The drop-down under the search box shows up to **12 whole rows** (fewer if the screen has less room), is wide enough for the longest row (near the right edge of the screen it opens further left), and never scrolls sideways. **Up/Down** move one row and scroll only as far as needed; **Page Up/Page Down** move 11 rows; **Enter** or a **click** on a row chooses; the scroll bar and the mouse wheel only scroll. The search itself (what matches, and in which order) is unchanged. The customer search uses the same drop-down. |
+| Product search list | (The user's request, 2026-10-07, version 1.3.0.) The drop-down under the search box shows up to **12 whole rows** (fewer if the screen has less room), is wide enough for the longest row (near the right edge of the screen it opens further left), and never scrolls sideways. **Up/Down** move one row and scroll only as far as needed; **Page Up/Page Down** move 11 rows; **Enter** or a **click** on a row chooses; the scroll bar and the mouse wheel only scroll. The search itself (what matches, and in which order) is unchanged. The customer search uses the same drop-down. Since version 1.4.0 (the user's choice, 2026-10-18) each product row shows **only the Marathi name and the rate**, for example `साखर · ₹52` (no English name, code or unit); English names and codes are still searched. A product without a Marathi name shows its English name. |
 | Rate change on a bill | Owner and helper can change a line's rate for that bill only. The product's saved rate does not change. Every change is recorded with who made it. Since version 1.2.0 (the user's choice, 2026-10-06) the Billing screen has a **Rate box next to Qty** (Product, Qty, Rate), filled in with the product's current saved rate: Enter in Qty moves to Rate, Enter in Rate adds the item. Typing another rate there is the same as a rate change for this bill only. |
 | Round-off | The final total is rounded to the nearest rupee. |
 | MRP | **Not shown anywhere** (the user's choice, 2026-10-06, version 1.2.0): no MRP column or box in Billing or Products, no "You saved" line, and MRP is not printed. The MRP already stored for a product is **kept untouched** in the database (editing a product keeps it), and bill lines still keep it in their snapshot. New products have no MRP; an MRP column in an imported sheet is ignored. |
@@ -90,6 +90,17 @@ These billing rules were chosen as sensible defaults and can be changed:
 - Adding the same product again increases its quantity on the existing line.
 - Held bills are kept only while the app is open; closing the app with an open or held bill asks first.
 
+### Billing screen display and changing a line (the user's choices, 2026-10-18, version 1.4.0)
+
+| Topic | Decision |
+|---|---|
+| Item names | The bill list on the Billing screen shows each item by its **Marathi name only** (the same name the bill prints), with Qty, Rate and Amount. No English name, pack size or code. An item without a Marathi name (for example a one-off item) shows its English name; a one-off item keeps "(not in list)". The English name, code and every other product detail stay saved and searchable; the **Products** screen still shows them. |
+| Units | No "kg", "Ltr" or "Pkt" is shown after a quantity, on the Billing screen or the printed bill, and no unit label next to the Qty box (its hint still says `e.g. 0.250` for loose items). Each product's and bill line's unit is **still saved** and still decides whether decimals are allowed. The Products screen still shows the unit. |
+| Quantity text | A part of a kg or litre shows **three decimals**: `0.250`, `0.500`, `0.750`, `1.500` (250 grams is easy to read). A **whole number** shows no decimals: `1`, `2`, `3` (loose or packet). Rates and amounts keep the 1.2.0 rule (no needless zeros). |
+| Changing a line | **Double-click** a line, or select it and press **Enter** (or "Change item (Enter)"): the line goes up into the boxes at the top (product, Qty, Rate as on the bill) and its row stays **empty** (highlighted) in its place; the total leaves it out meanwhile. The usual keys change Qty and Rate; F2 and a search choose another product (Qty 1 and the new product's rate, like any new product). Enter in the Rate box puts the line back **into the same row**, never as a new row and never merged into another row of the same product. A changed rate is marked and recorded as before. |
+| While a line is up | **Esc** puts it back unchanged. Double-clicking another line puts the first back unchanged. **Save (F12) is refused** with a message until the line is put back. Hold, Held bills, Recent bills / correct, Clear bill, F4, Remove and Change rate put it back unchanged first. Closing the app counts it as unsaved work. Choosing जमा is refused until the line is put back. |
+| Other lines | An **item not in the list** opens its own window filled in; Change puts it back in its row. **जमा** cannot be changed (as before). A product deleted from the list meanwhile cannot be taken up (message). |
+
 ### जमा: money paid without items (the user's choices, 2026-10-07, version 1.3.0)
 
 | Topic | Decision |
@@ -139,12 +150,12 @@ The printer model and the exact bill heading were not known yet, so both are **s
 - **Numbers without needless zeros** (the user's choice, 2026-10-06, version 1.2.0), on the printed bill and on every
   screen: whole rupees show as `₹50`, `₹155`, `₹1,250`; paise show without a trailing zero: `₹45.5`, `₹12.25`.
   Quantities: `1 kg`, `2 kg`, `1.5 kg`, `0.25 kg`, `0.333 kg`.
-- **Units after a quantity** (the user's choice, 2026-10-07, version 1.3.0), on the Billing screen and on the printed
-  bill: `kg` for kg, **`Ltr`** for litre and **`Pkt`** for packet/piece items: `2 kg`, `5 Ltr`, `3 Pkt`. (Before,
-  litre showed as "litre" and packets printed no unit.) Rates read "₹50 / Ltr", "₹28 / Pkt". Only the text changed:
-  units are stored as before (KG, L, PCS). Only the text is shorter: amounts and quantities
-  are stored and calculated exactly as before (paise and thousandths), and nothing is rounded for display.
-  The activity log keeps its two-decimal text (`44.00 -> 46.00`), so old and new entries read the same.
+- **No unit after a quantity** (the user's choice, 2026-10-18, version 1.4.0; it replaces the 1.3.0 rule `2 kg`,
+  `5 Ltr`, `3 Pkt`): the Qty column prints the number only. A part of a kg or litre has three decimals (`0.250`,
+  `1.500`); a whole number has none (`1`, `3`). Every bill prints this way, old or new (the printed form is made
+  from the saved bill). Units are stored as before (KG, L, PCS), amounts and quantities are stored and calculated
+  exactly as before (paise and thousandths), and nothing is rounded for display. The activity log keeps its
+  two-decimal text (`44.00 -> 46.00`). The one-off item window and the Products screen still name the unit.
 - Printing happens when the owner presses **Print** (the "Print?" question after saving, or the Print button when
   reprinting).
 - Paper fit, centring, margins and spacing are **not tuned for a specific printer yet**. They will be adjusted after the
@@ -197,6 +208,10 @@ These rules were chosen as sensible defaults and can be changed:
   month shortcuts. They show the number of bills, total sales, credit given on khata, and money received split
   into Cash, UPI and Card: money paid at billing plus khata payments received that day. Cancelled bills are
   shown separately and are not counted in sales or money received.
+- **Total sales is hidden** (the user's choice, 2026-10-18, version 1.4.0): it shows `₹ ••••` with a small grey eye
+  next to it. **One click** on the eye shows the amount, the next click hides it. It is hidden again each time Reports
+  is opened. Only Total sales is hidden; the other figures stay visible. (A password for Reports was considered and
+  dropped by the user: Reports opens without a password.)
 
 ## Backups and activity log (built in Phase 7)
 

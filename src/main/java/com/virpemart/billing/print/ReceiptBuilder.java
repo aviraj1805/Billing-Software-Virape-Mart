@@ -181,8 +181,8 @@ public final class ReceiptBuilder {
     }
 
     /**
-     * "0.250", "1.500" or "3": the number only, without the unit; loose items with three decimals (the user's choices,
-     * version 1.4.0). The unit is still saved with the bill line.
+     * "0.250", "1.500", "1" or "3": the number only, without the unit; a part of a kg or litre with three decimals (the
+     * user's choices, version 1.4.0). The unit is still saved with the bill line.
      */
     static String quantity(Quantity quantity, Unit unit) {
         return quantity.toBillString(unit);

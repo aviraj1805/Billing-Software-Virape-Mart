@@ -4,6 +4,34 @@ All notable changes to this project are recorded here, newest first.
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-10-18
+
+Changes asked for by the owner. **No database change**: the schema stays at version 4, and all existing data
+(customers, khata, products, bills, settings) is kept exactly as it was. Install it on each laptop with
+INSTALLATION.md section 10; each keeps its own data. Going back to 1.3.0 needs no restore.
+
+### Billing
+
+- **Marathi names only**: the product search list shows the Marathi name and the rate (`साखर · ₹52`), without the
+  English name, code or unit. The bill list shows the Marathi name, Qty, Rate and Amount. Searching by English name
+  or code still works; the Products screen still shows everything.
+- **No units after quantities**: `0.250` instead of `0.25 kg`, `3` instead of `3 Pkt`. A part of a kg or litre has
+  three decimals (`0.250`, `1.500`); a whole number has none (`1`, `2`). The unit label next to the Qty box is gone.
+- **Change a line in its own row**: double-click a line (or Enter, or "Change item (Enter)", which replaces
+  "Change qty"). It goes up into the boxes at the top and its row stays empty until Enter puts it back into the same
+  row with the new qty, rate or product. Esc puts it back as it was. Save waits until it is back; Hold, Clear, F4 and
+  Recent bills put it back first. An "item not in list" opens its window filled in.
+- Line numbers come from the row position (two identical lines used to show the same number).
+
+### Printed bill
+
+- Qty prints the number only, with the same rule (`0.250`, `1`, `3`). Applies to reprints of old bills too.
+
+### Reports
+
+- **Total sales is hidden** as `₹ ••••`. One click on the small grey eye next to it shows it, another click hides it.
+  It is hidden again each time Reports is opened.
+
 ## [1.3.0] - 2026-10-07
 
 Changes asked for by the owner. **No database change**: the schema stays at version 4, and all existing data

@@ -57,13 +57,16 @@ class QuantityTest {
             "0.25, KG, 0.250",
             "0.5, KG, 0.500",
             "0.75, KG, 0.750",
-            "1, KG, 1.000",
+            "1, KG, 1",
+            "2, KG, 2",
+            "1.5, KG, 1.500",
             "2.125, KG, 2.125",
             "0.5, L, 0.500",
+            "5, L, 5",
             "3, PCS, 3",
             "12, PCS, 12"
     })
-    void billTextHasThreeDecimalsForLooseItemsOnly(String typed, Unit unit, String expected) {
+    void billTextHasThreeDecimalsForPartsOfAKgOrLitreOnly(String typed, Unit unit, String expected) {
         assertEquals(expected, Quantity.parse(typed).toBillString(unit));
     }
 }

@@ -61,8 +61,8 @@ import javafx.stage.Window;
  * the product's rate; type another rate for this bill only), Enter to add. Repeat. F12 to save and pay.
  * F9 opens the newest bills to see, print, correct or cancel.
  *
- * <p>Products show their Marathi name only, and quantities show without a unit, loose items with three decimals
- * ("0.250"; the user's choices, version 1.4.0).
+ * <p>Products show their Marathi name only, and quantities show without a unit; a part of a kg or litre has three
+ * decimals ("0.250", but "1"; the user's choices, version 1.4.0).
  * To change a line, double-click it (or Enter): it goes up into the boxes at the top and its row stays empty until it
  * is put back into the same row with Enter; Esc puts it back unchanged.
  * The cart and all arithmetic live in {@link Cart}; saving happens in {@link BillingService}.

@@ -64,8 +64,13 @@ checklist in section 1. Section 4 gives the assistant the technical facts it nee
 | **Ctrl+V pastes nothing in WhatsApp** | Something else was copied after clicking **Send on WhatsApp**, or the chat's message box was not clicked. | Click **Send on WhatsApp** again, click in the chat's message box, then press **Ctrl+V**. Or click the **+** (attach) button in the chat, choose **Photos & videos**, and pick `bill-<number>.png` from `%LOCALAPPDATA%\VirpeMart\bill-images`. |
 | **Send on WhatsApp** is greyed out | The chosen bill is cancelled. | Choose the corrected (new) bill instead. |
 | A customer's name is spelled wrong on the bill | The bill prints the name exactly as it was saved in **Customers**. | Fix the name in **Customers → Edit**. New bills use the new name; bills already saved keep the name they were saved with. |
-| **"जमा has no quantity or rate. Type the money paid in the payment window (Save, F12)."** | **Change qty** or **Change rate** was used on the **जमा** line. Its rate is always 0. | Leave the जमा line as it is. Press **F12** and type the money received in Cash, UPI or Card. To remove it, select it and press **Del**. |
+| **"जमा has no quantity or rate. Type the money paid in the payment window (Save, F12)."** | **Change item** (double-click / Enter) or **Change rate** was used on the **जमा** line. Its rate is always 0. | Leave the जमा line as it is. Press **F12** and type the money received in Cash, UPI or Card. To remove it, select it and press **Del**. |
 | **"जमा is in the product search. Type जमा (or jama) there."** | जमा was typed as an **Item not in list (F4)**. | Close that window. Type **जमा** or **jama** in the product search box and press **Enter**. |
+| **"Item N is being changed. Press Enter to put it back, or Esc to keep it as it was. Then save."** | Save (F12) was pressed while an item was up in the boxes at the top (after a double-click / Enter on it); its row in the list is empty (light yellow). | Press **Enter** in the Qty or Rate box to put it back with the changes, or **Esc** to put it back as it was. Then press **F12**. |
+| **"Finish changing item N first…"** | जमा was chosen while another item was being changed. | Press **Enter** (put the item back) or **Esc**, then add जमा. |
+| An item's row in the bill list is **empty and light yellow** | That item is being changed in the boxes at the top. It is not lost. | Press **Enter** in the Rate box to put it back with the changes, or **Esc** to put it back as it was. |
+| No "kg" / "Pkt" after quantities, no English names on Billing | Version 1.4.0 shows only the Marathi name and the number (the owner's choice). Part of a kg shows three decimals: `0.250` = 250 grams; a whole kg shows `1`. | Nothing to fix. The product's unit and English name are still saved: see them in **Products**. Searching by English name or code still works. |
+| **Total sales** shows `₹ ••••` in Reports | It is hidden on purpose (version 1.4.0). | Click the small grey **eye** next to it. Click again to hide it. |
 | The product search list does not show a product | Only the first 30 matches are listed. | Type more of the name, or the product code (like P0012). Scroll the list with the mouse wheel, the scroll bar, or **↓ / Page Down**. |
 | Marathi letters show as empty boxes | The Windows font "Nirmala UI" is missing (very old Windows). | Use Windows 10 or 11. |
 | Screen text is cut off or windows are too big | Windows display scaling is very high on a small screen. | Windows Settings → Display → Scale: try 100% or 125%. |
@@ -137,8 +142,9 @@ top bar then shows "DEVELOPMENT DATA". It must **not** be set on the shop laptop
 - The customer's name prints exactly as saved (`bills.customer_name`, plus `bills.customer_phone`), **bold**; there is
   no conversion. `bills.customer_name_mr` holds a converted copy only on bills from version 1.1.0 and is not printed.
   Bill number and date print in normal letters.
-- Quantities print with their unit: `2 kg`, `5 Ltr`, `3 Pkt`. The **जमा** line prints its name only (no Qty, Rate or
-  Amount).
+- Since version 1.4.0 quantities print as a number only, without a unit: a part of a kg or litre with three decimals
+  (`0.250`, `1.500`), a whole number without decimals (`1`, `3`). The unit is still saved on each bill line (`bill_items.unit`).
+  This is how every bill prints, old or new. The **जमा** line prints its name only (no Qty, Rate or Amount).
 - Since version 1.3.0 a bill printed again is exactly the same as the first print: there is **no "DUPLICATE COPY"
   line**. Each reprint is still recorded in the Activity log ("printed again"). Only a cancelled bill is marked.
   For rolls the app asks the driver for a page exactly as long as the bill.

@@ -12,8 +12,9 @@ import java.util.Optional;
  *   <li>{@link #PCS}: packed items, rate per piece or packet, whole quantities only.</li>
  * </ul>
  *
- * <p>After a number the units read "kg", "Ltr" and "Pkt" (the user's wording, version 1.3.0): "2 kg", "5 Ltr",
- * "3 Pkt", on screen and on the printed bill.
+ * <p>Short names "kg", "Ltr" and "Pkt" (the user's wording, version 1.3.0) are used where a unit is still shown, such
+ * as the Products screen and the one-off item window. Since version 1.4.0 the Billing screen and the printed bill show
+ * no unit after a quantity (see {@link Quantity#toBillString(Unit)}).
  */
 public enum Unit {
 

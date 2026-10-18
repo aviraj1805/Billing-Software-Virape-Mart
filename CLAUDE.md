@@ -180,13 +180,23 @@ Test anything that cannot be undone (such as cancelling a bill) on a copy of `de
   (`JAMA_CHOICE`, never saved); `Cart.addJama` adds it once; `BillingService.checkLines` allows rate 0 only for it.
   Never relax the zero-rate checks for other lines. Billing is the start screen; `BillingController.unsavedWork`
   feeds the close-window warning.
+- Billing display (1.4.0): products show `nameOnBill()` (Marathi name, else English) in the search list, search box
+  and bill list; the search list row is name + rate only (`describeProduct`); matching is untouched
+  (`ProductService.search`). Bill quantities use `Quantity.toBillString(unit)` everywhere (no unit; a part of a kg or
+  litre with 3 decimals, whole numbers plain). Never show `toPlainString` for a bill quantity.
+- Changing a line (1.4.0): double-click / Enter / "Change item" call `BillingController.changeItem`: the line is taken
+  out (`Cart.remove`), shown as the identity-compared `EMPTY_ROW` in its place, and loaded into the top boxes;
+  `addSelectedProduct` puts it back with `Cart.insertProduct(changingIndex, ...)` (never merges); `putBackUnchanged`
+  (`Cart.insert`) runs on Esc and before Hold, Clear, F4, Remove, Change rate, Recent bills; Save is refused while a
+  line is up. One-off lines use `OneOffItemController.openToChange` / `Cart.replaceOneOff`. Line numbers are the row
+  index (a cell factory), never `indexOf`.
 - The main window opens maximized. Tables use `CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS` so columns share space;
   use short date formats (`Format.dateTimeShort`) and row tooltips for long text.
 - Shared validation: a service `check(...)` method validates typed input once and is reused by forms and
   imports (see `ProductService.check`).
 - Owner-only buttons are hidden for STAFF, but the service still enforces the rule.
-- Printed bill: items are `ReceiptLine.ItemRow` (Item, Qty, Rate, Amount columns; Qty with its unit, `Unit.shortLabel`:
-  kg / Ltr / Pkt). The customer line (bold; bill number and date are normal) is the name exactly as saved (the owner types names in Marathi; never convert a name) plus "No. phone"; never print the
+- Printed bill: items are `ReceiptLine.ItemRow` (Item, Qty, Rate, Amount columns; Qty without a unit since 1.4.0,
+  `Quantity.toBillString`: `0.250`, `1.500`, `3`). The customer line (bold; bill number and date are normal) is the name exactly as saved (the owner types names in Marathi; never convert a name) plus "No. phone"; never print the
   customer number. `BillingService.save` stores `customer_phone` on the bill (V4). `bills.customer_name_mr` was only
   filled by version 1.1.0 (automatic conversion, removed in 1.2.0); it is kept but never read or written.
 - Printing: `print.ReceiptBuilder` decides the bill's lines (test it with `Receipt.toPlainText()`),
@@ -206,7 +216,9 @@ Test anything that cannot be undone (such as cancelling a bill) on a copy of `de
   open History tab each time it is shown (tab content does not get a new parent, so "reload when shown" there
   does not work).
 - Reports: `ReportService.sales(from, to)` (owner) returns `SalesReport` of `DaySummary` rows; FINAL bills only;
-  khata payments count on the day received. Work it out with `Background.run`.
+  khata payments count on the day received. Work it out with `Background.run`. `ReportsController` hides Total sales
+  (`₹ ••••`) until the eye button is clicked (single click toggles; hidden again on each `refresh()`). Only Total
+  sales is hidden. The user dropped a Reports password; do not add one unless asked.
 - Date boxes: `DatePicker.setConverter(Format.dateInput())` for dd/MM/yyyy.
 - Backups: `BackupService` (automatic `auto-YYYY-MM-DD.db` at open and close, retention, back up now, check and
   restore). Restore = `PendingRestore.stage`, close, `finish` at the next start; never delete the replaced data.
@@ -251,6 +263,7 @@ Test anything that cannot be undone (such as cancelling a bill) on a copy of `de
 | 8. Packaging and go-live | Version 1.0.0 zip (self-contained), installation guide, user guide, troubleshooting guide, GitHub | Done (real printer and shop laptop pending) |
 | 9. Shop feedback (1.2.0) | Customer name as saved, no needless zeros, MRP hidden, categories removed, Rate box on Billing, Send on WhatsApp, Download to Excel. No database change | Done (update on the shop laptop pending) |
 | 10. Billing fixes (1.3.0) | Bigger search list with reliable keyboard/mouse scrolling, customer name/phone bold on the bill, no DUPLICATE COPY, built-in जमा (rate 0), units kg/Ltr/Pkt. No database change | Done (update on both laptops pending) |
+| 11. Father's feedback (1.4.0) | Marathi names only on Billing, no units after quantities (parts of a kg with 3 decimals), change a line in its own row (double-click / Enter), Total sales hidden behind an eye on Reports. No database change | Done (update on both laptops pending) |
 
 ## Pending inputs from the user
 

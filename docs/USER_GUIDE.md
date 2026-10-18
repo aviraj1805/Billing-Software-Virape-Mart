@@ -24,7 +24,9 @@ The menu on the left has five pages: **Billing**, **Products**, **Customers**, *
 ### Add items
 
 1. Press **F2** (or click the big search box) and type part of the product name — English, Marathi or the
-   product code. A list drops down (up to 12 products at a time; scroll for more).
+   product code. A list drops down (up to 12 products at a time; scroll for more). The list shows only the
+   **Marathi name and the rate**, for example `साखर · ₹52`; the English name and code still work for searching.
+   (A product without a Marathi name shows its English name.)
 2. Use **↓ ↑** to pick the product and press **Enter**. **Page Down / Page Up** jump 11 rows. With the mouse, scroll
    with the wheel or the scroll bar and **click** the product. **Esc** closes the list.
 3. Type the **quantity** and press **Enter**. The cursor moves to the **Rate** box (₹), which already shows the
@@ -32,7 +34,10 @@ The menu on the left has five pages: **Billing**, **Products**, **Customers**, *
    - Loose items (sold per kg or litre): type the weight in kg with a dot. `0.250` = 250 grams, `0.5` = half kg,
      `1.25` = one and a quarter kg. The rate is per kg.
    - Packets / pieces: whole numbers only, like `1`, `2`, `10`.
-   - The quantity shows with its unit, on the screen and on the printed bill: `2 kg`, `5 Ltr`, `3 Pkt`.
+   - The quantity shows as a number only, without kg / Ltr / Pkt, on the screen and on the printed bill. Part of a kg
+     or litre shows three decimals, so grams are easy to read: `0.250`, `0.500`, `1.500`. Whole numbers show without
+     decimals: `1`, `2`, `3`.
+   - The bill list shows each item by its **Marathi name**, with Qty, Rate and Amount.
 4. Press **Enter** again to add the item at that rate. To charge a different rate on this bill, just type the new
    rate (it replaces the old one) and press **Enter**. The product's normal rate does **not** change; the line shows
    the rate with a `*`, and the change is recorded in the Activity log.
@@ -42,7 +47,17 @@ The menu on the left has five pages: **Billing**, **Products**, **Customers**, *
 
 Click the item in the list (or press ↓ from the empty search box), then:
 
-- **Change qty (Enter)** — type a new quantity.
+- **Double-click** the item, or press **Enter**, or click **Change item (Enter)** — the item goes **up into the boxes
+  at the top** (name, Qty and Rate filled in) and its row stays **empty** (light yellow) in the list. The total leaves
+  it out for now.
+  - Change the **Qty**, press **Enter**, change the **Rate** if needed, press **Enter**: the item goes back into
+    **the same row** with the new details, and the total is worked out again.
+  - To put **another product** in that row: press **F2**, type the product, Enter, then Qty and Rate as usual.
+  - **Esc** puts the item back exactly as it was.
+  - While an item is at the top, **Save (F12)** waits: first press Enter (put it back) or Esc (keep it as it was).
+    Hold, Clear, F4 and Recent bills put it back as it was first, so nothing is ever lost.
+  - An **item not in the list** opens its own window, filled in; **Change item** puts it back in the same row.
+  - **जमा** cannot be changed (it has no quantity or rate).
 - **Change rate** — change the rate of an item already on the bill, for this bill only. The product's normal rate
   does not change. The change is recorded in the Activity log.
 - **Remove (Del)** — takes the item off the bill.
@@ -144,9 +159,9 @@ already chosen.
 | F4 | Item not in the list |
 | F8 | Hold the bill |
 | F12 | Save and pay |
-| Enter | Add the item / change quantity of the selected line / save in the payment window |
+| Enter | Add the item / move the selected line up to change it / save in the payment window |
 | Del | Remove the selected line |
-| Esc | Close a window without saving |
+| Esc | Close a window without saving / put back a line that is being changed, as it was |
 
 ---
 
@@ -217,6 +232,8 @@ Bills can never be edited. If a bill is wrong or the customer returns everything
 Choose **Today**, **Yesterday**, **This month**, **Last month**, or any dates, then **Show**.
 
 - **Bills** and **Total sales** — cancelled bills are not counted (they are shown separately).
+- **Total sales** is **hidden** (`₹ ••••`) so nobody sees it by accident. Click the small grey **eye** next to it to
+  show it; click the eye again to hide it. It is hidden again every time Reports is opened.
 - **Given on khata (credit)** — the part of the bills that went on customers' khata.
 - **Money received** — Cash, UPI and Card:
   - **At billing**: paid with bills,

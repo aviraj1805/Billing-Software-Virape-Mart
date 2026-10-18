@@ -80,12 +80,12 @@ public record Quantity(long milli) implements Comparable<Quantity> {
     }
 
     /**
-     * The quantity as shown on the Billing screen and the printed bill (the user's choice, version 1.4.0): an item
-     * sold loose (kg or litre) always has three decimals, "0.250", "0.500", "1.000", so grams are easy to read; a
-     * packet shows a whole number, "3". No unit is shown.
+     * The quantity as shown on the Billing screen and the printed bill (the user's choices, version 1.4.0): a part of
+     * a kg or litre always has three decimals, "0.250", "0.500", "1.500", so grams are easy to read; a whole number
+     * has none, "1", "2", "3" (loose or packet). No unit is shown.
      */
     public String toBillString(Unit unit) {
-        return unit.isLoose() ? BigDecimal.valueOf(milli, 3).toPlainString() : toPlainString();
+        return unit.isLoose() && !isWhole() ? BigDecimal.valueOf(milli, 3).toPlainString() : toPlainString();
     }
 
     @Override
