@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import com.virpemart.billing.AppContext;
 import com.virpemart.billing.model.Cart;
+import com.virpemart.billing.model.CartLine;
 import com.virpemart.billing.model.Money;
 import com.virpemart.billing.model.Quantity;
 import com.virpemart.billing.model.Unit;
@@ -13,6 +14,7 @@ import com.virpemart.billing.ui.common.Views;
 
 import javafx.application.Platform;
 import javafx.fxml.FXML;
+import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Control;
 import javafx.scene.control.Label;
@@ -21,7 +23,10 @@ import javafx.stage.Stage;
 import javafx.stage.Window;
 import javafx.util.StringConverter;
 
-/** "Item not in list": adds a one-off item to the current bill without creating a product. */
+/**
+ * "Item not in list": adds a one-off item to the current bill without creating a product, or changes one that is
+ * already on the bill (filled in, and kept in its row).
+ */
 public class OneOffItemController {
 
     @FXML
@@ -36,10 +41,14 @@ public class OneOffItemController {
     private TextField rateField;
     @FXML
     private Label errorLabel;
+    @FXML
+    private Button addButton;
 
     private FormErrors errors;
     private Stage stage;
     private Cart cart;
+    /** The line being changed, or null when a new item is added. */
+    private Integer changeIndex;
     private Integer addedIndex;
 
     public OneOffItemController(AppContext context) {
@@ -54,6 +63,31 @@ public class OneOffItemController {
         form.stage = Views.dialog(owner, "Item not in list", view.root());
         form.stage.setResizable(false);
         Platform.runLater(form.nameField::requestFocus);
+        form.stage.showAndWait();
+        return Optional.ofNullable(form.addedIndex);
+    }
+
+    /**
+     * Opens the window filled in with a one-off line of the bill, to change it. The line stays in its row.
+     * Returns the index of the changed line, or empty if cancelled (then nothing changes).
+     */
+    public static Optional<Integer> openToChange(Window owner, AppContext context, Cart cart, int index) {
+        CartLine line = cart.lines().get(index);
+        Views.Loaded<OneOffItemController> view = Views.load("one-off-item.fxml", context);
+        OneOffItemController form = view.controller();
+        form.cart = cart;
+        form.changeIndex = index;
+        form.nameField.setText(line.name());
+        form.unitBox.setValue(line.unit());
+        form.qtyField.setText(line.quantity().toBillString(line.unit()));
+        form.rateField.setText(line.rate().toInputString());
+        form.addButton.setText("Change item " + (index + 1));
+        form.stage = Views.dialog(owner, "Change item not in list", view.root());
+        form.stage.setResizable(false);
+        Platform.runLater(() -> {
+            form.qtyField.requestFocus();
+            form.qtyField.selectAll();
+        });
         form.stage.showAndWait();
         return Optional.ofNullable(form.addedIndex);
     }
@@ -94,7 +128,9 @@ public class OneOffItemController {
             field = "qty";
             Cart.checkQuantity(unitBox.getValue(), quantity);
             field = "rate";
-            addedIndex = cart.addOneOff(nameField.getText(), unitBox.getValue(), quantity, rate);
+            addedIndex = changeIndex == null
+                    ? cart.addOneOff(nameField.getText(), unitBox.getValue(), quantity, rate)
+                    : cart.replaceOneOff(changeIndex, nameField.getText(), unitBox.getValue(), quantity, rate);
             stage.close();
         } catch (IllegalArgumentException e) {
             errors.show(e.getMessage(), field);

@@ -41,6 +41,6 @@
     <HBox spacing="10" alignment="CENTER_RIGHT">
         <Region HBox.hgrow="ALWAYS"/>
         <Button text="Cancel" cancelButton="true" onAction="#cancel"/>
-        <Button text="Add to bill" defaultButton="true" styleClass="primary" onAction="#add"/>
+        <Button fx:id="addButton" text="Add to bill" defaultButton="true" styleClass="primary" onAction="#add"/>
     </HBox>
 </VBox>

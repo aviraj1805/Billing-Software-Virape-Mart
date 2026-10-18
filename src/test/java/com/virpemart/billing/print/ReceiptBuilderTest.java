@@ -88,7 +88,7 @@ class ReceiptBuilderTest {
                 Bill No. 12 | 30/09/2026 2:05 PM
                 ----
                 Item | Qty | Rate | Amount
-                1. साखर | 0.25 | 44 | 11
+                1. साखर | 0.250 | 44 | 11
                 2. Toor Dal | 0.333 | 45.5 | 15.15
                 3. टाटा मीठ | 2 | 28 | 56
                 ----
@@ -266,15 +266,18 @@ class ReceiptBuilderTest {
     }
 
     @Test
-    void quantitiesShowTheNumberOnlyWithoutNeedlessZeros() {
-        assertEquals("1", ReceiptBuilder.quantity(Quantity.parse("1.000")));
-        assertEquals("2", ReceiptBuilder.quantity(Quantity.parse("2")));
-        assertEquals("1.5", ReceiptBuilder.quantity(Quantity.parse("1.500")));
-        assertEquals("0.5", ReceiptBuilder.quantity(Quantity.parse("0.5")));
-        assertEquals("0.25", ReceiptBuilder.quantity(Quantity.parse("0.250")));
-        assertEquals("0.2", ReceiptBuilder.quantity(Quantity.parse("0.200")));
-        assertEquals("0.333", ReceiptBuilder.quantity(Quantity.parse("0.333")));
-        assertEquals("3", ReceiptBuilder.quantity(Quantity.ofWhole(3)));
+    void looseQuantitiesHaveThreeDecimalsAndPacketsAWholeNumberWithoutAUnit() {
+        assertEquals("0.250", ReceiptBuilder.quantity(Quantity.parse("0.25"), Unit.KG));
+        assertEquals("0.500", ReceiptBuilder.quantity(Quantity.parse("0.5"), Unit.KG));
+        assertEquals("0.750", ReceiptBuilder.quantity(Quantity.parse("0.750"), Unit.KG));
+        assertEquals("0.200", ReceiptBuilder.quantity(Quantity.parse("0.2"), Unit.KG));
+        assertEquals("0.333", ReceiptBuilder.quantity(Quantity.parse("0.333"), Unit.KG));
+        assertEquals("1.000", ReceiptBuilder.quantity(Quantity.parse("1"), Unit.KG));
+        assertEquals("1.500", ReceiptBuilder.quantity(Quantity.parse("1.5"), Unit.KG));
+        assertEquals("0.500", ReceiptBuilder.quantity(Quantity.parse("0.5"), Unit.L));
+        assertEquals("5.000", ReceiptBuilder.quantity(Quantity.ofWhole(5), Unit.L));
+        assertEquals("3", ReceiptBuilder.quantity(Quantity.ofWhole(3), Unit.PCS));
+        assertEquals("1", ReceiptBuilder.quantity(Quantity.ONE, Unit.PCS));
     }
 
     @Test
@@ -291,7 +294,7 @@ class ReceiptBuilderTest {
         String text = ReceiptBuilder.sample(SHOP, WHEN).toPlainText();
 
         assertTrue(text.contains("TEST PRINT - NOT A REAL BILL"), text);
-        assertTrue(text.contains("तूर डाळ | 0.25 | 150 | 37.5"), text);
+        assertTrue(text.contains("तूर डाळ | 0.250 | 150 | 37.5"), text);
         assertTrue(text.contains("नमुना ग्राहक | No. 9876543210"), text);
         assertFalse(text.contains("Total with dues"), text);
         assertTrue(text.contains("मागील बाकी | ₹480\nजमा | ₹100\nएकूण बाकी | ₹496"), text);

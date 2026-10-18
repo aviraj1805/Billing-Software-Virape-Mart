@@ -145,7 +145,7 @@ public final class ReceiptBuilder {
                 out.add(new ItemRow((i + 1) + ". " + printedName(line), "", "", "", Style.NORMAL));
                 continue;
             }
-            out.add(new ItemRow((i + 1) + ". " + printedName(line), quantity(line.quantity()),
+            out.add(new ItemRow((i + 1) + ". " + printedName(line), quantity(line.quantity(), line.unit()),
                     line.rate().toGroupedString(), line.lineTotal().toGroupedString(), Style.NORMAL));
         }
     }
@@ -181,11 +181,11 @@ public final class ReceiptBuilder {
     }
 
     /**
-     * "1", "1.5", "0.25" or "3": the number only, without needless zeros and without the unit (the user's choice,
+     * "0.250", "1.500" or "3": the number only, without the unit; loose items with three decimals (the user's choices,
      * version 1.4.0). The unit is still saved with the bill line.
      */
-    static String quantity(Quantity quantity) {
-        return quantity.toPlainString();
+    static String quantity(Quantity quantity, Unit unit) {
+        return quantity.toBillString(unit);
     }
 
     /** "₹1,250", "₹45.5" or "-₹5". */

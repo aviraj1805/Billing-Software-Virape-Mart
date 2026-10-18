@@ -43,6 +43,7 @@ import javafx.scene.control.ChoiceDialog;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
+import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
@@ -59,6 +60,11 @@ import javafx.stage.Window;
  * <p>Fast keyboard flow: type a product (F2), Enter, type the quantity, Enter, then the rate (already filled in with
  * the product's rate; type another rate for this bill only), Enter to add. Repeat. F12 to save and pay.
  * F9 opens the newest bills to see, print, correct or cancel.
+ *
+ * <p>Products show their Marathi name only, and quantities show without a unit, loose items with three decimals
+ * ("0.250"; the user's choices, version 1.4.0).
+ * To change a line, double-click it (or Enter): it goes up into the boxes at the top and its row stays empty until it
+ * is put back into the same row with Enter; Esc puts it back unchanged.
  * The cart and all arithmetic live in {@link Cart}; saving happens in {@link BillingService}.
  */
 public class BillingController {
@@ -70,6 +76,10 @@ public class BillingController {
     private static final int CUSTOMER_RESULTS = 20;
     private static final int RECENT_BILLS = 5;
     private static final PseudoClass RATE_CHANGED = PseudoClass.getPseudoClass("rate-changed");
+    private static final PseudoClass BEING_CHANGED = PseudoClass.getPseudoClass("being-changed");
+    /** The empty row shown in place of a line that is being changed at the top. Compared by identity (==). */
+    private static final CartLine EMPTY_ROW =
+            new CartLine(null, "", null, Unit.PCS, null, Quantity.ONE, Money.ZERO, null, null);
     private static final DateTimeFormatter HELD_TIME = DateTimeFormatter.ofPattern("h:mm a", Locale.ENGLISH);
 
     /** A bill put aside to serve another customer. Kept in memory only. */
@@ -95,6 +105,9 @@ public class BillingController {
     private final List<HeldBill> held = new ArrayList<>();
     private CustomerSummary customer;
     private Product chosenProduct;
+    /** While a line is being changed at the top: its position on the bill (from 0) and the line as it was. */
+    private Integer changingIndex;
+    private CartLine changingLine;
     private SearchPopup<Product> productPopup;
     private SearchPopup<CustomerSummary> customerPopup;
 
@@ -108,8 +121,6 @@ public class BillingController {
     private TextField productSearch;
     @FXML
     private TextField qtyField;
-    @FXML
-    private Label qtyUnitLabel;
     @FXML
     private TextField rateField;
     @FXML
@@ -194,7 +205,7 @@ public class BillingController {
         productSearch.textProperty().addListener((obs, oldText, newText) -> {
             if (chosenProduct != null && !describeProductShort(chosenProduct).equals(newText)) {
                 chosenProduct = null;
-                updateQtyUnit();
+                updateEntryBoxes();
             }
         });
         qtyField.setOnAction(event -> moveToRate());
@@ -227,7 +238,7 @@ public class BillingController {
             }
         });
 
-        updateQtyUnit();
+        updateEntryBoxes();
         refreshCart();
         showWalkIn();
     }
@@ -235,14 +246,21 @@ public class BillingController {
     // ------------------------------------------------------------------ cart table
 
     private void setUpCartTable() {
-        column(lineNoColumn, line -> String.valueOf(cart.lines().indexOf(line) + 1));
-        // The जमा line shows its name only, as on the printed bill: it has no quantity, rate or amount.
-        column(itemColumn, line -> line.isJama() ? line.name()
-                : line.displayName() + (line.nameMr() == null ? "" : "   " + line.nameMr())
-                        + (line.productId() == null ? "   (not in list)" : ""));
-        column(qtyColumn, line -> line.isJama() ? "" : line.quantity().toPlainString() + " " + line.unit().shortLabel());
-        column(rateColumn, line -> line.isJama() ? "" : Format.money(line.rate()) + (line.rateChanged() ? " *" : ""));
-        column(amountColumn, line -> line.isJama() ? "" : Format.money(line.lineTotal()));
+        // The line number is the row's position, so the empty row of a line being changed keeps its number too.
+        lineNoColumn.setCellValueFactory(cell -> new ReadOnlyStringWrapper(""));
+        lineNoColumn.setCellFactory(col -> new TableCell<>() {
+            @Override
+            protected void updateItem(String text, boolean empty) {
+                super.updateItem(text, empty);
+                setText(empty ? null : String.valueOf(getIndex() + 1));
+            }
+        });
+        // Marathi name only, as on the printed bill. The जमा line and the empty row show no quantity, rate or amount.
+        column(itemColumn, line -> line == EMPTY_ROW ? "" : line.isJama() ? line.name()
+                : line.nameOnBill() + (line.productId() == null ? "   (not in list)" : ""));
+        column(qtyColumn, line -> hasNoNumbers(line) ? "" : line.quantity().toBillString(line.unit()));
+        column(rateColumn, line -> hasNoNumbers(line) ? "" : Format.money(line.rate()) + (line.rateChanged() ? " *" : ""));
+        column(amountColumn, line -> hasNoNumbers(line) ? "" : Format.money(line.lineTotal()));
         cartTable.setPlaceholder(new Label("No items yet. Type a product name above (F2)."));
         cartTable.setRowFactory(table -> {
             TableRow<CartLine> row = new TableRow<>() {
@@ -250,11 +268,12 @@ public class BillingController {
                 protected void updateItem(CartLine line, boolean empty) {
                     super.updateItem(line, empty);
                     pseudoClassStateChanged(RATE_CHANGED, !empty && line != null && line.rateChanged());
+                    pseudoClassStateChanged(BEING_CHANGED, !empty && line == EMPTY_ROW);
                 }
             };
             row.setOnMouseClicked(event -> {
                 if (event.getButton() == MouseButton.PRIMARY && event.getClickCount() == 2 && !row.isEmpty()) {
-                    changeQuantity();
+                    changeItem();
                 }
             });
             return row;
@@ -266,11 +285,22 @@ public class BillingController {
         column.setCellValueFactory(cell -> new ReadOnlyStringWrapper(value.apply(cell.getValue())));
     }
 
-    /** Shows the cart lines and totals again after any change. */
+    private static boolean hasNoNumbers(CartLine line) {
+        return line == EMPTY_ROW || line.isJama();
+    }
+
+    /**
+     * Shows the cart lines and totals again after any change. A line being changed at the top is shown as an empty
+     * row in its place, so every row keeps its position (row N of the table is line N of the bill once it is back).
+     */
     private void refreshCart() {
         int selected = cartTable.getSelectionModel().getSelectedIndex();
-        cartTable.getItems().setAll(cart.lines());
-        if (selected >= 0 && selected < cart.lines().size()) {
+        List<CartLine> rows = new ArrayList<>(cart.lines());
+        if (changingIndex != null) {
+            rows.add(changingIndex, EMPTY_ROW);
+        }
+        cartTable.getItems().setAll(rows);
+        if (selected >= 0 && selected < rows.size() && rows.get(selected) != EMPTY_ROW) {
             cartTable.getSelectionModel().select(selected);
         }
         refreshTotals();
@@ -300,7 +330,8 @@ public class BillingController {
     }
 
     private void updateLineButtons() {
-        boolean none = cartTable.getSelectionModel().getSelectedIndex() < 0;
+        boolean none = cartTable.getSelectionModel().getSelectedIndex() < 0
+                || cartTable.getSelectionModel().getSelectedItem() == EMPTY_ROW;
         qtyButton.setDisable(none);
         rateButton.setDisable(none);
         removeButton.setDisable(none);
@@ -327,42 +358,51 @@ public class BillingController {
         return found;
     }
 
+    /**
+     * One row of the search list: the Marathi name and the rate only, for example "साखर   ·   ₹44" (the user's
+     * choice, version 1.4.0). The search itself still finds English names and codes; they are just not shown.
+     */
     private static String describeProduct(Product p) {
         if (p == JAMA_CHOICE) {
             return Jama.NAME + "   ·   money paid, no items (rate 0)";
         }
-        return p.displayName() + (p.nameMr() == null ? "" : "   " + p.nameMr()) + "   ·   "
-                + Format.money(p.rate()) + " / " + p.unit().shortLabel() + "   ·   " + p.code();
+        return p.nameOnBill() + "   ·   " + Format.money(p.rate());
     }
 
+    /** What the search box shows once a product is chosen. */
     private static String describeProductShort(Product p) {
-        return p.displayName();
+        return p.nameOnBill();
     }
 
     private void chooseProduct(Product product) {
         if (product == JAMA_CHOICE) {
+            if (changingIndex != null) {
+                showEntryError("Finish changing item " + (changingIndex + 1) + " first: Enter puts it back, Esc"
+                        + " keeps it as it was.");
+                return;
+            }
             addJama();
             return;
         }
         chosenProduct = product;
         productPopup.setTextQuietly(describeProductShort(product));
-        updateQtyUnit();
-        entryLabel.getStyleClass().remove("error-text");
-        entryLabel.setText(describeProduct(product));
+        updateEntryBoxes();
+        showEntryInfo(changingPrefix() + describeProduct(product));
         qtyField.setText("1");
         rateField.setText(product.rate().toInputString());
         qtyField.requestFocus();
         qtyField.selectAll();
     }
 
-    /** Shows the unit next to the quantity; with no product chosen, the quantity and rate boxes are empty. */
-    private void updateQtyUnit() {
+    /**
+     * The hint inside the quantity box tells whether decimals are allowed; no unit is shown (the user's choice,
+     * version 1.4.0). With no product chosen, the quantity and rate boxes are empty.
+     */
+    private void updateEntryBoxes() {
         if (chosenProduct == null) {
-            qtyUnitLabel.setText("");
             qtyField.setPromptText("Qty");
             rateField.clear();
         } else {
-            qtyUnitLabel.setText(chosenProduct.unit().shortLabel());
             qtyField.setPromptText(chosenProduct.unit().isLoose() ? "e.g. 0.250" : "e.g. 2");
         }
     }
@@ -396,9 +436,18 @@ public class BillingController {
             return;
         }
         Money rate;
+        Integer changed = changingIndex;
         try {
             rate = Money.parse(rateField.getText().replace("₹", "").strip());
-            int index = cart.addProduct(chosenProduct, quantity, rate);
+            int index;
+            if (changed != null) {
+                // A changed line goes back into its own row, never into another row of the same product.
+                index = cart.insertProduct(changed, chosenProduct, quantity, rate);
+                changingIndex = null;
+                changingLine = null;
+            } else {
+                index = cart.addProduct(chosenProduct, quantity, rate);
+            }
             refreshCart();
             cartTable.getSelectionModel().select(index);
             cartTable.scrollTo(index);
@@ -412,10 +461,10 @@ public class BillingController {
         chosenProduct = null;
         productPopup.setTextQuietly("");
         qtyField.clear();
-        updateQtyUnit();
-        entryLabel.getStyleClass().remove("error-text");
-        entryLabel.setText(rate.equals(normalRate) ? "Added. Type the next product."
-                : "Added at " + Format.money(rate) + " for this bill only (normal rate " + Format.money(normalRate)
+        updateEntryBoxes();
+        String done = changed != null ? "Item " + (changed + 1) + " changed" : "Added";
+        showEntryInfo(rate.equals(normalRate) ? done + ". Type the next product."
+                : done + " at " + Format.money(rate) + " for this bill only (normal rate " + Format.money(normalRate)
                         + "). Type the next product.");
         productSearch.requestFocus();
     }
@@ -441,6 +490,16 @@ public class BillingController {
         entryLabel.setText(message);
     }
 
+    private void showEntryInfo(String message) {
+        entryLabel.getStyleClass().remove("error-text");
+        entryLabel.setText(message);
+    }
+
+    /** "Changing item 3: " while a line is being changed at the top, otherwise nothing. */
+    private String changingPrefix() {
+        return changingIndex == null ? "" : "Changing item " + (changingIndex + 1) + ": ";
+    }
+
     /**
      * Adds "जमा" to the bill at once: it has no quantity or rate to type. The money paid is typed in the payment
      * window when the bill is saved.
@@ -453,9 +512,8 @@ public class BillingController {
         chosenProduct = null;
         productPopup.setTextQuietly("");
         qtyField.clear();
-        updateQtyUnit();
-        entryLabel.getStyleClass().remove("error-text");
-        entryLabel.setText(Jama.NAME + " added. Press Save (F12) and type the money paid.");
+        updateEntryBoxes();
+        showEntryInfo(Jama.NAME + " added. Press Save (F12) and type the money paid.");
         productSearch.requestFocus();
     }
 
@@ -472,6 +530,7 @@ public class BillingController {
 
     @FXML
     private void addOneOff() {
+        putBackUnchanged();
         OneOffItemController.open(window(), context, cart).ifPresent(index -> {
             refreshCart();
             cartTable.getSelectionModel().select(index.intValue());
@@ -482,39 +541,95 @@ public class BillingController {
 
     // ------------------------------------------------------------------ changing lines
 
+    /**
+     * Double-click, Enter or "Change item": the selected line goes up into the boxes at the top (product, Qty, Rate)
+     * to be changed with the usual keys, and its row stays empty in its place (the user's choice, version 1.4.0).
+     * Enter in the Rate box puts it back into the same row; Esc puts it back unchanged. An item not in the product
+     * list opens its own window instead, filled in, because the boxes at the top only hold products from the list.
+     */
     @FXML
-    private void changeQuantity() {
+    private void changeItem() {
         int index = cartTable.getSelectionModel().getSelectedIndex();
-        if (index < 0) {
+        if (index < 0 || cartTable.getSelectionModel().getSelectedItem() == EMPTY_ROW) {
             return;
         }
+        // Another line still at the top goes back first. Its empty row was in the table, so the row number chosen
+        // is now exactly the position of the line on the bill.
+        putBackUnchanged();
         CartLine line = cart.lines().get(index);
-        if (isJamaLine(line, "Change quantity")) {
+        if (isJamaLine(line, "Change item")) {
             return;
         }
-        Dialogs.askText(window(), "Change quantity", line.displayName() + "\nNew quantity (" + line.unit().shortLabel() + "):",
-                line.quantity().toPlainString()).ifPresent(text -> {
-                    try {
-                        cart.setQuantity(index, Quantity.parse(text));
-                        refreshCart();
-                    } catch (IllegalArgumentException e) {
-                        Dialogs.warning(window(), "Change quantity", e.getMessage());
-                    }
-                });
+        if (line.productId() == null) {
+            changeOneOff(index);
+            return;
+        }
+        Optional<Product> product = products.find(line.productId());
+        if (product.isEmpty()) {
+            Dialogs.warning(window(), "Change item", "\"" + line.nameOnBill() + "\" is no longer in the product list."
+                    + " Remove it from the bill and add it again.");
+            cartTable.requestFocus();
+            return;
+        }
+        changingLine = cart.remove(index);
+        changingIndex = index;
+        chosenProduct = product.get();
+        productPopup.setTextQuietly(describeProductShort(chosenProduct));
+        updateEntryBoxes();
+        qtyField.setText(line.quantity().toBillString(line.unit()));
+        rateField.setText(line.rate().toInputString());
+        refreshCart();
+        cartTable.getSelectionModel().clearSelection();
+        cartTable.scrollTo(index);
+        showEntryInfo("Changing item " + (index + 1) + ". Change the qty or rate (F2 for another product), Enter to"
+                + " put it back. Esc keeps it as it was.");
+        qtyField.requestFocus();
+        qtyField.selectAll();
+    }
+
+    /**
+     * Puts the line that is being changed at the top back into its row exactly as it was. Called by Esc and before
+     * anything else is done with the bill, so a line is never lost. Does nothing when no line is being changed.
+     */
+    private void putBackUnchanged() {
+        if (changingIndex == null) {
+            return;
+        }
+        int index = changingIndex;
+        cart.insert(index, changingLine);
+        changingIndex = null;
+        changingLine = null;
+        chosenProduct = null;
+        productPopup.setTextQuietly("");
+        qtyField.clear();
+        updateEntryBoxes();
+        refreshCart();
+        cartTable.getSelectionModel().select(index);
+        showEntryInfo("Item " + (index + 1) + " kept as it was. Type the next product.");
+    }
+
+    /** Changes an item that is not in the product list in its own window, filled in; it stays in its row. */
+    private void changeOneOff(int index) {
+        OneOffItemController.openToChange(window(), context, cart, index).ifPresent(changed -> {
+            refreshCart();
+            cartTable.getSelectionModel().select(changed.intValue());
+            showEntryInfo("Item " + (changed + 1) + " changed. Type the next product.");
+        });
         cartTable.requestFocus();
     }
 
     @FXML
     private void changeRate() {
         int index = cartTable.getSelectionModel().getSelectedIndex();
-        if (index < 0) {
+        if (index < 0 || cartTable.getSelectionModel().getSelectedItem() == EMPTY_ROW) {
             return;
         }
+        putBackUnchanged();
         CartLine line = cart.lines().get(index);
         if (isJamaLine(line, "Change rate")) {
             return;
         }
-        String prompt = line.displayName() + "\nRate for this bill only (₹ per " + line.unit().shortLabel() + ")"
+        String prompt = line.nameOnBill() + "\nRate for this bill only (₹)"
                 + (line.productRate() == null ? "" : "\nNormal rate: " + Format.money(line.productRate())) + ":";
         Dialogs.askText(window(), "Change rate", prompt, line.rate().toInputString()).ifPresent(text -> {
             try {
@@ -530,7 +645,8 @@ public class BillingController {
     @FXML
     private void removeLine() {
         int index = cartTable.getSelectionModel().getSelectedIndex();
-        if (index >= 0) {
+        if (index >= 0 && cartTable.getSelectionModel().getSelectedItem() != EMPTY_ROW) {
+            putBackUnchanged();
             cart.remove(index);
             refreshCart();
             if (!cart.isEmpty()) {
@@ -595,6 +711,7 @@ public class BillingController {
 
     @FXML
     private void holdBill() {
+        putBackUnchanged();
         if (cart.isEmpty()) {
             Dialogs.info(window(), "Hold bill", "There is nothing to hold. Add items first.");
             return;
@@ -617,6 +734,7 @@ public class BillingController {
         dialog.setTitle("Held bills");
         dialog.setHeaderText(null);
         dialog.setContentText("Continue which bill?");
+        putBackUnchanged();
         dialog.showAndWait().ifPresent(choice -> {
             HeldBill chosen = held.remove(choices.indexOf(choice));
             if (!cart.isEmpty()) {
@@ -633,14 +751,14 @@ public class BillingController {
             }
             refreshCart();
             updateHeldButton();
-            entryLabel.getStyleClass().remove("error-text");
-            entryLabel.setText("Continuing the held bill. Type the next product.");
+            showEntryInfo("Continuing the held bill. Type the next product.");
             productSearch.requestFocus();
         });
     }
 
     @FXML
     private void clearBill() {
+        putBackUnchanged();
         if (!cart.isEmpty() && !Dialogs.confirm(window(), "Clear bill",
                 "Remove all " + cart.lines().size() + " items from this bill?", "Clear bill")) {
             return;
@@ -650,6 +768,16 @@ public class BillingController {
 
     @FXML
     private void saveAndPay() {
+        if (changingIndex != null) {
+            showEntryError("Item " + (changingIndex + 1) + " is being changed. Press Enter to put it back, or Esc to"
+                    + " keep it as it was. Then save.");
+            if (chosenProduct == null) {
+                productSearch.requestFocus();
+            } else {
+                qtyField.requestFocus();
+            }
+            return;
+        }
         if (cart.isEmpty()) {
             Dialogs.info(window(), "Save bill", "The bill has no items yet.");
             return;
@@ -691,6 +819,7 @@ public class BillingController {
      */
     @FXML
     private void recentBills() {
+        putBackUnchanged();
         if (billing.lastBillNo().isEmpty()) {
             Dialogs.info(window(), "Recent bills", "No bills have been saved yet.");
             return;
@@ -725,8 +854,7 @@ public class BillingController {
         }
         refreshCart();
         updateHeldButton();
-        entryLabel.getStyleClass().remove("error-text");
-        entryLabel.setText("Correcting bill " + oldBillNo + ". Change the items, then save (F12).");
+        showEntryInfo("Correcting bill " + oldBillNo + ". Change the items, then save (F12).");
         notes.addFirst("Bill " + oldBillNo + " is cancelled. Its items are on the screen: change what is wrong, then"
                 + " Save and pay (F12). Enter the payment again; the customer does not pay twice.");
         showBanner(String.join("  ", notes), false);
@@ -744,14 +872,15 @@ public class BillingController {
     /** Empties the bill and goes back to a walk-in customer, ready for the next customer. */
     private void resetBill() {
         cart.clear();
+        changingIndex = null;
+        changingLine = null;
         chosenProduct = null;
         productPopup.setTextQuietly("");
         customerPopup.setTextQuietly("");
         qtyField.clear();
         walkInNameField.clear();
-        updateQtyUnit();
-        entryLabel.getStyleClass().remove("error-text");
-        entryLabel.setText("Search a product and press Enter. Type the quantity, Enter. Change the rate if needed, Enter to add.");
+        updateEntryBoxes();
+        showEntryInfo("Search a product and press Enter. Type the quantity, Enter. Change the rate if needed, Enter to add.");
         showWalkIn();
         refreshCart();
         updateHeldButton();
@@ -778,8 +907,9 @@ public class BillingController {
      */
     public Optional<String> unsavedWork() {
         List<String> parts = new ArrayList<>();
-        if (!cart.isEmpty()) {
-            parts.add("the open bill (" + cart.lines().size() + (cart.lines().size() == 1 ? " item)" : " items)"));
+        int items = cart.lines().size() + (changingIndex == null ? 0 : 1);
+        if (items > 0) {
+            parts.add("the open bill (" + items + (items == 1 ? " item)" : " items)"));
         }
         if (!held.isEmpty()) {
             parts.add(held.size() + (held.size() == 1 ? " held bill" : " held bills"));
@@ -813,7 +943,16 @@ public class BillingController {
             }
             case ENTER -> {
                 if (cartTable.isFocused()) {
-                    changeQuantity();
+                    changeItem();
+                } else {
+                    return;
+                }
+            }
+            case ESCAPE -> {
+                // With a search list open, Esc only closes the list (SearchPopup handles it).
+                if (changingIndex != null && !productPopup.isShowing() && !customerPopup.isShowing()) {
+                    putBackUnchanged();
+                    productSearch.requestFocus();
                 } else {
                     return;
                 }

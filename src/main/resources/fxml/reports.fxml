@@ -10,8 +10,10 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.shape.SVGPath?>
 
-<!-- Sales report (owner): one day or a date range, with the Cash / UPI / Card split. -->
+<!-- Sales report (owner): one day or a date range, with the Cash / UPI / Card split.
+     Total sales is hidden until the small eye next to it is clicked. -->
 <VBox xmlns="http://javafx.com/javafx"
       xmlns:fx="http://javafx.com/fxml"
       fx:controller="com.virpemart.billing.ui.history.ReportsController"
@@ -48,7 +50,15 @@
                 <Label text="Bills" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
                 <Label fx:id="billsLabel" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
                 <Label text="Total sales" styleClass="total-label" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
-                <Label fx:id="salesLabel" styleClass="total-big" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+                <HBox alignment="CENTER_RIGHT" spacing="6" GridPane.rowIndex="1" GridPane.columnIndex="1">
+                    <Button fx:id="eyeButton" styleClass="eye-button" onAction="#toggleSales" focusTraversable="false">
+                        <graphic>
+                            <SVGPath styleClass="eye-icon" scaleX="0.75" scaleY="0.75"
+                                     content="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+                        </graphic>
+                    </Button>
+                    <Label fx:id="salesLabel" styleClass="total-big"/>
+                </HBox>
                 <Label text="Given on khata (credit)" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
                 <Label fx:id="onKhataLabel" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
                 <Label text="Cancelled bills (not counted)" styleClass="muted" GridPane.rowIndex="3"

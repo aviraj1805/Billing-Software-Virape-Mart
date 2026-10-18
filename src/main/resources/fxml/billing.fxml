@@ -39,7 +39,6 @@
                 <TextField fx:id="productSearch" styleClass="search-field" HBox.hgrow="ALWAYS"
                            promptText="Type product name, Marathi name or code  (F2)"/>
                 <TextField fx:id="qtyField" styleClass="qty-field" prefWidth="110" promptText="Qty"/>
-                <Label fx:id="qtyUnitLabel" minWidth="40"/>
                 <Label text="₹" minWidth="-Infinity"/>
                 <TextField fx:id="rateField" styleClass="qty-field" prefWidth="110" promptText="Rate"/>
                 <Button text="Add" onAction="#addSelectedProduct" minWidth="-Infinity"/>
@@ -61,14 +60,14 @@
             </TableView>
 
             <HBox spacing="8" alignment="CENTER_LEFT">
-                <Button fx:id="qtyButton" text="Change qty (Enter)" onAction="#changeQuantity"/>
+                <Button fx:id="qtyButton" text="Change item (Enter)" onAction="#changeItem"/>
                 <Button fx:id="rateButton" text="Change rate" onAction="#changeRate"/>
                 <Button fx:id="removeButton" text="Remove (Del)" styleClass="danger" onAction="#removeLine"/>
                 <Region HBox.hgrow="ALWAYS"/>
                 <Button text="+ Item not in list (F4)" onAction="#addOneOff"/>
             </HBox>
             <Label styleClass="hint"
-                   text="F2 product   ·   F3 khata customer   ·   F4 item not in list   ·   F8 hold   ·   F9 recent bills   ·   F12 save and pay   ·   Del remove line"/>
+                   text="F2 product   ·   F3 khata customer   ·   F4 item not in list   ·   F8 hold   ·   F9 recent bills   ·   F12 save and pay   ·   Enter change line   ·   Del remove line"/>
         </VBox>
 
         <!-- ============ right: customer and totals ============ -->

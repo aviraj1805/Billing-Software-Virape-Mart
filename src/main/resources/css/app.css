@@ -300,6 +300,11 @@
     -fx-text-fill: #8a4b00;
 }
 
+/* The empty row of a line that is being changed in the boxes at the top. */
+.cart-table .table-row-cell:being-changed {
+    -fx-background-color: #fff6d6;
+}
+
 .cart-table {
     -fx-font-size: 15px;
 }
@@ -376,4 +381,19 @@
 .table-row-cell:import-error:selected,
 .table-row-cell:import-skipped:selected {
     -fx-background-color: -fx-selection-bar;
+}
+
+/* Reports: the small eye next to Total sales. Plain and grey on purpose, so it does not draw attention. */
+.eye-button {
+    -fx-background-color: transparent;
+    -fx-padding: 2;
+    -fx-cursor: hand;
+}
+
+.eye-button .eye-icon {
+    -fx-fill: #b8b8b8;
+}
+
+.eye-button:hover .eye-icon {
+    -fx-fill: #7a7a7a;
 }

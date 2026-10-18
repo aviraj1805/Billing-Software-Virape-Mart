@@ -5,6 +5,7 @@ import java.util.function.Function;
 
 import com.virpemart.billing.AppContext;
 import com.virpemart.billing.model.DaySummary;
+import com.virpemart.billing.model.Money;
 import com.virpemart.billing.model.PaymentMode;
 import com.virpemart.billing.model.SalesReport;
 import com.virpemart.billing.service.ReportService;
@@ -25,11 +26,23 @@ import javafx.scene.layout.GridPane;
 /**
  * The owner's sales report: totals for one day or a date range, money received split into Cash, UPI and Card
  * (at billing and khata payments), and a day-by-day table. The report is worked out away from the screen thread.
+ *
+ * <p>Total sales stays hidden until the small eye next to it is clicked; another click hides it again, and it is
+ * hidden again each time Reports is opened (the user's choices, version 1.4.0). This keeps the figure from being seen
+ * by accident at the counter.
  */
 public class ReportsController {
 
+    /** Shown instead of Total sales until the eye is clicked. */
+    static final String HIDDEN_AMOUNT = "₹ ••••";
+
     private final AppContext context;
     private final ReportService reports;
+
+    /** True while Total sales is shown; false again each time Reports is opened. */
+    private boolean salesShown;
+    /** Total sales of the report on screen, or null before the first report. */
+    private Money sales;
 
     @FXML
     private DatePicker fromPicker;
@@ -97,9 +110,21 @@ public class ReportsController {
         toPicker.setValue(today);
     }
 
-    /** Works the report out again for the chosen dates. Called each time the Reports tab is opened. */
+    /** Works the report out again for the chosen dates, with Total sales hidden. Called each time Reports is opened. */
     public void refresh() {
+        salesShown = false;
         load();
+    }
+
+    /** The eye next to Total sales: one click shows the amount, the next click hides it again. */
+    @FXML
+    private void toggleSales() {
+        salesShown = !salesShown;
+        showSales();
+    }
+
+    private void showSales() {
+        salesLabel.setText(salesShown && sales != null ? Format.money(sales) : HIDDEN_AMOUNT);
     }
 
     @FXML
@@ -163,7 +188,8 @@ public class ReportsController {
         periodLabel.setText(report.from().equals(report.to()) ? Format.date(report.from())
                 : Format.date(report.from()) + "  to  " + Format.date(report.to()));
         billsLabel.setText(String.valueOf(total.bills()));
-        salesLabel.setText(Format.money(total.sales()));
+        sales = total.sales();
+        showSales();
         onKhataLabel.setText(Format.money(total.onKhata()));
         cancelledLabel.setText(total.cancelledBills() == 0 ? "None"
                 : total.cancelledBills() + "  ·  " + Format.money(total.cancelledTotal()));
