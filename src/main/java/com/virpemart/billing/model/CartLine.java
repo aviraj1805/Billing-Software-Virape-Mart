@@ -50,6 +50,14 @@ public record CartLine(
         return packSize == null ? name : name + " " + packSize;
     }
 
+    /**
+     * The name shown on the Billing screen and printed on the bill: the Marathi name only. An item without a Marathi
+     * name (for example a one-off item) shows its English name with pack size, so it is never blank.
+     */
+    public String nameOnBill() {
+        return nameMr != null ? nameMr : displayName();
+    }
+
     public CartLine withQuantity(Quantity newQuantity) {
         return new CartLine(productId, name, nameMr, unit, packSize, newQuantity, rate, productRate, mrp);
     }

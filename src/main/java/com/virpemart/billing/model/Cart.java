@@ -66,6 +66,28 @@ public final class Cart {
     }
 
     /**
+     * Puts a product at one position of the bill, used when a line was taken up to be changed and is now put back
+     * (the user's choice, version 1.4.0: the changed item goes back into its own row). Same checks and the same
+     * changed-rate marking as {@link #addProduct(Product, Quantity, Money)}, but it never joins another line of the
+     * same product, so the line stays exactly where it was.
+     *
+     * @param index where the line goes, from 0 to the number of lines
+     * @return the index of the line
+     */
+    public int insertProduct(int index, Product product, Quantity quantity, Money rate) {
+        checkRate(rate);
+        checkQuantity(product.unit(), quantity);
+        lines.add(index, new CartLine(product.id(), product.name(), product.nameMr(), product.unit(),
+                product.packSize(), quantity, rate, product.rate(), product.mrp()));
+        return index;
+    }
+
+    /** Puts a line back unchanged at its old position, after it was taken out with {@link #remove(int)}. */
+    public void insert(int index, CartLine line) {
+        lines.add(index, line);
+    }
+
+    /**
      * Adds the built-in "जमा" line (rate 0, see {@link Jama}). A bill has it at most once: if it is already there,
      * nothing changes.
      *
@@ -83,6 +105,20 @@ public final class Cart {
 
     /** Adds an item that is not in the product list, for this bill only. */
     public int addOneOff(String name, Unit unit, Quantity quantity, Money rate) {
+        lines.add(oneOffLine(name, unit, quantity, rate));
+        return lines.size() - 1;
+    }
+
+    /** Changes an item that is not in the product list, keeping it in its row. Same checks as {@link #addOneOff}. */
+    public int replaceOneOff(int index, String name, Unit unit, Quantity quantity, Money rate) {
+        if (lines.get(index).productId() != null || lines.get(index).isJama()) {
+            throw new IllegalArgumentException("Only an item that is not in the list can be changed here.");
+        }
+        lines.set(index, oneOffLine(name, unit, quantity, rate));
+        return index;
+    }
+
+    private static CartLine oneOffLine(String name, Unit unit, Quantity quantity, Money rate) {
         if (name == null || name.isBlank()) {
             throw new IllegalArgumentException("Please enter the item name.");
         }
@@ -92,8 +128,7 @@ public final class Cart {
         }
         checkQuantity(unit, quantity);
         checkRate(rate);
-        lines.add(new CartLine(null, name.strip(), null, unit, null, quantity, rate, null, null));
-        return lines.size() - 1;
+        return new CartLine(null, name.strip(), null, unit, null, quantity, rate, null, null);
     }
 
     public void setQuantity(int index, Quantity quantity) {
@@ -110,8 +145,9 @@ public final class Cart {
         lines.set(index, lines.get(index).withRate(rate));
     }
 
-    public void remove(int index) {
-        lines.remove(index);
+    /** Takes a line off the bill and returns it, so it can be put back with {@link #insert(int, CartLine)}. */
+    public CartLine remove(int index) {
+        return lines.remove(index);
     }
 
     public void clear() {

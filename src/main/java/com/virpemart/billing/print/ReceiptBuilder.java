@@ -145,7 +145,7 @@ public final class ReceiptBuilder {
                 out.add(new ItemRow((i + 1) + ". " + printedName(line), "", "", "", Style.NORMAL));
                 continue;
             }
-            out.add(new ItemRow((i + 1) + ". " + printedName(line), quantity(line.quantity(), line.unit()),
+            out.add(new ItemRow((i + 1) + ". " + printedName(line), quantity(line.quantity()),
                     line.rate().toGroupedString(), line.lineTotal().toGroupedString(), Style.NORMAL));
         }
     }
@@ -155,7 +155,7 @@ public final class ReceiptBuilder {
      * prints its English name with pack size, so no line is ever blank.
      */
     static String printedName(CartLine line) {
-        return line.nameMr() != null ? line.nameMr() : line.displayName();
+        return line.nameOnBill();
     }
 
     /** Only the final total ("एकूण") is printed; subtotal, round off and savings are not. */
@@ -180,9 +180,12 @@ public final class ReceiptBuilder {
         out.add(new Pair(BALANCE_DUES, rupees(bill.balanceAfter()), Style.LARGE));
     }
 
-    /** "1 kg", "1.5 kg", "5 Ltr" or "3 Pkt": no needless zeros, with the unit (the user's choices). */
-    static String quantity(Quantity quantity, Unit unit) {
-        return quantity.toPlainString() + " " + unit.shortLabel();
+    /**
+     * "1", "1.5", "0.25" or "3": the number only, without needless zeros and without the unit (the user's choice,
+     * version 1.4.0). The unit is still saved with the bill line.
+     */
+    static String quantity(Quantity quantity) {
+        return quantity.toPlainString();
     }
 
     /** "₹1,250", "₹45.5" or "-₹5". */

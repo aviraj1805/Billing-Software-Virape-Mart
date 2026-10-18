@@ -27,4 +27,12 @@ public record Product(
     public String displayName() {
         return packSize == null ? name : name + " " + packSize;
     }
+
+    /**
+     * The name shown on the Billing screen: the Marathi name only, or the English name with pack size when there is
+     * no Marathi name (same rule as {@link CartLine#nameOnBill()}).
+     */
+    public String nameOnBill() {
+        return nameMr != null ? nameMr : displayName();
+    }
 }

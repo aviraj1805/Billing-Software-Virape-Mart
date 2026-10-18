@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 
 class CartTest {
@@ -202,5 +204,155 @@ class CartTest {
                 () -> cart.addOneOff("Candles", Unit.PCS, Quantity.ONE, Money.ZERO));
         cart.addProduct(SALT, Quantity.ONE);
         assertThrows(IllegalArgumentException.class, () -> cart.setRate(0, Money.ZERO));
+    }
+
+    // ------------------------------------------------------------------ changing a line in its own row (1.4.0)
+
+    @Test
+    void aLineTakenOutAndPutBackUnchangedIsExactlyAsBefore() {
+        Cart cart = new Cart();
+        cart.addProduct(SUGAR_LOOSE, Quantity.parse("0.5"));
+        cart.addProduct(SALT, Quantity.ofWhole(2), Money.parse("25"));
+        cart.addProduct(DAL, Quantity.ONE);
+        List<CartLine> before = List.copyOf(cart.lines());
+        BillTotals totalsBefore = cart.totals();
+
+        CartLine taken = cart.remove(1);
+        assertEquals(2, cart.lines().size());
+        assertEquals(Money.parse("67.5"), cart.totals().subtotal(), "the total drops while the item is out");
+        cart.insert(1, taken);
+
+        assertEquals(before, cart.lines());
+        assertEquals(totalsBefore, cart.totals());
+    }
+
+    @Test
+    void aChangedProductGoesBackIntoItsOwnRowWithNewTotals() {
+        Cart cart = new Cart();
+        cart.addProduct(SUGAR_LOOSE, Quantity.parse("0.5"));   // 22.00
+        cart.addProduct(SALT, Quantity.ofWhole(1));             // 28.00
+        cart.addProduct(DAL, Quantity.ONE);                     // 45.50
+
+        cart.remove(1);
+        int index = cart.insertProduct(1, SALT, Quantity.ofWhole(3), Money.parse("28"));
+
+        assertEquals(1, index);
+        assertEquals(3, cart.lines().size());
+        assertEquals("Tata Salt", cart.lines().get(1).name());
+        assertEquals(Quantity.ofWhole(3), cart.lines().get(1).quantity());
+        assertFalse(cart.lines().get(1).rateChanged());
+        assertEquals("Toor Dal", cart.lines().get(2).name());
+        assertEquals(Money.parse("151.5"), cart.totals().subtotal());
+        assertEquals(Money.parse("152"), cart.totals().total());
+    }
+
+    @Test
+    void aDifferentProductCanTakeTheRowAndRoundsCorrectly() {
+        Product oil = new Product(4, "P0004", "Oil", "तेल", null, Unit.KG, null, Money.parse("47"), null, true);
+        Cart cart = new Cart();
+        cart.addProduct(SALT, Quantity.ofWhole(2));             // 56.00
+        cart.addProduct(SUGAR_LOOSE, Quantity.ONE);             // 44.00
+
+        cart.remove(1);
+        cart.insertProduct(1, oil, Quantity.parse("0.333"), Money.parse("47"));
+
+        assertEquals("Oil", cart.lines().get(1).name());
+        assertEquals(Money.parse("15.65"), cart.lines().get(1).lineTotal(), "0.333 x 47 = 15.651, HALF_UP");
+        assertEquals(Money.parse("71.65"), cart.totals().subtotal());
+        assertEquals(Money.parse("72"), cart.totals().total());
+        assertEquals(Money.parse("0.35"), cart.totals().roundOff());
+    }
+
+    @Test
+    void puttingAProductBackNeverJoinsAnotherRowOfTheSameProduct() {
+        Cart cart = new Cart();
+        cart.addProduct(SALT, Quantity.ofWhole(2));
+        cart.addProduct(SUGAR_LOOSE, Quantity.ONE);
+
+        cart.remove(1);
+        cart.insertProduct(1, SALT, Quantity.ofWhole(1), Money.parse("28"));
+
+        assertEquals(2, cart.lines().size(), "no row is added or lost");
+        assertEquals(Quantity.ofWhole(2), cart.lines().get(0).quantity());
+        assertEquals(Quantity.ofWhole(1), cart.lines().get(1).quantity());
+    }
+
+    @Test
+    void aRateTypedWhenPuttingBackIsMarkedAsChanged() {
+        Cart cart = new Cart();
+        cart.addProduct(SALT, Quantity.ofWhole(2));
+
+        cart.remove(0);
+        cart.insertProduct(0, SALT, Quantity.ofWhole(2), Money.parse("26"));
+
+        assertTrue(cart.lines().getFirst().rateChanged());
+        assertEquals(Money.parse("28"), cart.lines().getFirst().productRate());
+        assertEquals(Money.parse("52"), cart.totals().total());
+    }
+
+    @Test
+    void puttingBackChecksQuantityAndRateAndChangesNothingWhenWrong() {
+        Cart cart = new Cart();
+        cart.addProduct(SUGAR_LOOSE, Quantity.ONE);
+
+        assertThrows(IllegalArgumentException.class,
+                () -> cart.insertProduct(0, SALT, Quantity.parse("1.5"), Money.parse("28")));
+        assertThrows(IllegalArgumentException.class,
+                () -> cart.insertProduct(0, SALT, Quantity.ZERO, Money.parse("28")));
+        assertThrows(IllegalArgumentException.class,
+                () -> cart.insertProduct(0, SALT, Quantity.ONE, Money.ZERO));
+        assertEquals(1, cart.lines().size());
+    }
+
+    @Test
+    void aOneOffItemIsChangedInItsOwnRow() {
+        Cart cart = new Cart();
+        cart.addProduct(SALT, Quantity.ofWhole(1));
+        cart.addOneOff("Candles", Unit.PCS, Quantity.ofWhole(2), Money.parse("15"));
+        cart.addProduct(SUGAR_LOOSE, Quantity.ONE);
+
+        int index = cart.replaceOneOff(1, " Agarbatti ", Unit.PCS, Quantity.ofWhole(3), Money.parse("10"));
+
+        assertEquals(1, index);
+        assertEquals(3, cart.lines().size());
+        assertEquals("Agarbatti", cart.lines().get(1).name());
+        assertEquals(Money.parse("30"), cart.lines().get(1).lineTotal());
+        assertEquals(Money.parse("102"), cart.totals().total());
+    }
+
+    @Test
+    void changingAOneOffItemKeepsTheUsualChecks() {
+        Cart cart = new Cart();
+        cart.addOneOff("Candles", Unit.PCS, Quantity.ofWhole(2), Money.parse("15"));
+        cart.addProduct(SALT, Quantity.ONE);
+        cart.addJama();
+        CartLine before = cart.lines().getFirst();
+
+        assertThrows(IllegalArgumentException.class,
+                () -> cart.replaceOneOff(0, "Candles", Unit.PCS, Quantity.parse("1.5"), Money.parse("15")));
+        assertThrows(IllegalArgumentException.class,
+                () -> cart.replaceOneOff(0, "Candles", Unit.PCS, Quantity.ONE, Money.ZERO));
+        assertThrows(IllegalArgumentException.class,
+                () -> cart.replaceOneOff(0, " ", Unit.PCS, Quantity.ONE, Money.parse("15")));
+        assertThrows(IllegalArgumentException.class,
+                () -> cart.replaceOneOff(0, "जमा", Unit.PCS, Quantity.ONE, Money.parse("15")));
+        assertThrows(IllegalArgumentException.class,
+                () -> cart.replaceOneOff(1, "Candles", Unit.PCS, Quantity.ONE, Money.parse("15")), "a product");
+        assertThrows(IllegalArgumentException.class,
+                () -> cart.replaceOneOff(2, "Candles", Unit.PCS, Quantity.ONE, Money.parse("15")), "जमा");
+        assertEquals(before, cart.lines().getFirst());
+    }
+
+    @Test
+    void nameOnBillIsTheMarathiNameOrElseTheEnglishName() {
+        assertEquals("साखर", SUGAR_LOOSE.nameOnBill());
+        assertEquals("Tata Salt 1 kg", SALT.nameOnBill());
+        Cart cart = new Cart();
+        cart.addProduct(SUGAR_LOOSE, Quantity.ONE);
+        cart.addProduct(SALT, Quantity.ONE);
+        cart.addOneOff("Candles", Unit.PCS, Quantity.ONE, Money.parse("15"));
+        assertEquals("साखर", cart.lines().get(0).nameOnBill());
+        assertEquals("Tata Salt 1 kg", cart.lines().get(1).nameOnBill());
+        assertEquals("Candles", cart.lines().get(2).nameOnBill());
     }
 }
